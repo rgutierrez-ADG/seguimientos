@@ -1,103 +1,103 @@
 Fecha ,Año,Número,Tipo de Auditoría ,Clasificación ,Requisito,Tipo de Hallazgo ,Tipo de acción ,Area responsable de tratamiento,Responsable,Plazo ,Estado de Plan de acción,Fecha Cierre,Dias sin resolver 
-28/02/2025,2025,391,Interna,FRITO,4.15.1,No Conformidad Menor,Correctiva,Mantenimineto,Gimenez Mario,29/04/2025,En proceso,,392
+28/02/2025,2025,391,Interna,FRITO,4.15.1,No Conformidad Menor,Correctiva,Mantenimineto,Gimenez Mario,29/04/2025,En proceso,,402
 28/02/2025,2025,392,Interna,FRITO,4.15.6,No Conformidad Menor,Correctiva,Insumos,Erole Emilse,29/04/2025,Cerrado,31/03/2025,31
 14/02/2025,2025,393,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,15/04/2025,Cerrado,23/03/2025,37
 14/02/2025,2025,394,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Calidad,Malacarne Nerea,15/04/2025,Cerrado,21/03/2025,35
 14/02/2025,2025,395,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Mantenimineto,Gimenez Mario,15/04/2025,Cerrado,17/05/2025,92
 14/02/2025,2025,396,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Poes,Fernandez Natacha,15/04/2025,Cerrado,23/04/2025,68
 14/02/2025,2025,397,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Poes,Fernandez Natacha,15/04/2025,Cerrado,19/05/2025,94
-18/03/2025,2025,398,Interna,DIRECCION-GESTION,1.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,374
-18/03/2025,2025,399,Interna,DIRECCION-GESTION,1.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,374
+18/03/2025,2025,398,Interna,DIRECCION-GESTION,1.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,384
+18/03/2025,2025,399,Interna,DIRECCION-GESTION,1.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,384
 18/03/2025,2025,400,Interna,DIRECCION-GESTION,2.1,No Conformidad Menor,Inmediata,Desarrollo,Rosso Bernardo,17/05/2025,Cerrado,15/05/2025,58
 18/03/2025,2025,401,Interna,DIRECCION-GESTION,2.1,No Conformidad Menor,Inmediata,Desarrollo,Rosso Bernardo,17/05/2025,Cerrado,15/05/2025,58
-18/03/2025,2025,402,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,374
+18/03/2025,2025,402,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,384
 18/03/2025,2025,403,Interna,DIRECCION-GESTION,2.1,Observación,Correctiva,Capital Humano,Rodriguez Viviana,17/05/2025,Cerrado,19/05/2025,62
-18/03/2025,2025,404,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,Ing Procesos,Bosso María Belén,17/05/2025,No iniciado,,374
-18/03/2025,2025,405,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,374
+18/03/2025,2025,404,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,Ing Procesos,Bosso María Belén,17/05/2025,No iniciado,,384
+18/03/2025,2025,405,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,No iniciado,,384
 18/03/2025,2025,406,Interna,DIRECCION-GESTION,3.2,No Conformidad Menor,Inmediata,SGCIA,Dip Mayra,17/05/2025,Cerrado,30/07/2025,134
-18/03/2025,2025,407,Interna,DIRECCION-GESTION,3.2,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,No iniciado,,374
+18/03/2025,2025,407,Interna,DIRECCION-GESTION,3.2,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,No iniciado,,384
 18/03/2025,2025,408,Interna,DIRECCION-GESTION,3.4,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,17/05/2025,Cerrado,15/08/2025,150
 18/03/2025,2025,409,Interna,DIRECCION-GESTION,3.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,Cerrado,17/05/2025,60
 18/03/2025,2025,410,Interna,DIRECCION-GESTION,3.6,No Conformidad Menor,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,Cerrado,11/07/2025,115
-18/03/2025,2025,411,Interna,DIRECCION-GESTION,3.6,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,No iniciado,,374
-18/03/2025,2025,412,Interna,DIRECCION-GESTION,3.10,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,17/05/2025,No iniciado,,374
+18/03/2025,2025,411,Interna,DIRECCION-GESTION,3.6,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,Cerrado,1/04/2026,379
+18/03/2025,2025,412,Interna,DIRECCION-GESTION,3.10,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,17/05/2025,No iniciado,,384
 18/03/2025,2025,413,Interna,DIRECCION-GESTION,4.2,No Conformidad Menor,Correctiva,Desarrollo,Dip Mayra,17/05/2025,Cerrado,25/03/2025,7
 18/03/2025,2025,414,Interna,DIRECCION-GESTION,4.12,No Conformidad Menor,Inmediata,Medio Ambiente,Caprin Ricardo,17/05/2025,Cerrado,21/04/2025,34
-18/03/2025,2025,415,Interna,DIRECCION-GESTION,4.14,No Conformidad Menor,Correctiva,GIP,Dip Mayra,17/05/2025,En proceso,,374
-18/03/2025,2025,416,Interna,DIRECCION-GESTION,4.14,No Conformidad Menor,Correctiva,GIP,Dip Mayra,17/05/2025,En proceso,,374
+18/03/2025,2025,415,Interna,DIRECCION-GESTION,4.14,No Conformidad Menor,Correctiva,GIP,Dip Mayra,17/05/2025,En proceso,,384
+18/03/2025,2025,416,Interna,DIRECCION-GESTION,4.14,No Conformidad Menor,Correctiva,GIP,Dip Mayra,17/05/2025,En proceso,,384
 18/03/2025,2025,417,Interna,DIRECCION-GESTION,5.1,No Conformidad Menor,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,Cerrado,16/03/2026,363
-18/03/2025,2025,418,Interna,DIRECCION-GESTION,5.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,En proceso,,374
-18/03/2025,2025,419,Interna,DIRECCION-GESTION,5.4,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,No iniciado,,374
+18/03/2025,2025,418,Interna,DIRECCION-GESTION,5.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,17/05/2025,En proceso,,384
+18/03/2025,2025,419,Interna,DIRECCION-GESTION,5.4,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,17/05/2025,Cerrado,1/04/2026,379
 25/03/2025,2025,420,Interna,MANTENIMIENTO,4.6.1,No Conformidad Menor,Inmediata,Mantenimineto,Gimenez Mario,24/05/2025,Cerrado,29/06/2025,96
 25/03/2025,2025,421,Interna,MANTENIMIENTO,4.6.3,Observación,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,Cerrado,16/06/2025,83
-25/03/2025,2025,422,Interna,MANTENIMIENTO,4.6.3,Oportunidad de Mejora,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,No iniciado,,367
-25/03/2025,2025,423,Interna,MANTENIMIENTO,4.7.1,Oportunidad de Mejora,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,No iniciado,,367
+25/03/2025,2025,422,Interna,MANTENIMIENTO,4.6.3,Oportunidad de Mejora,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,No iniciado,,377
+25/03/2025,2025,423,Interna,MANTENIMIENTO,4.7.1,Oportunidad de Mejora,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,No iniciado,,377
 25/03/2025,2025,424,Interna,MANTENIMIENTO,4.7.2,Observación,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,Cerrado,7/07/2025,104
 25/03/2025,2025,425,Interna,MANTENIMIENTO,4.7.3,No Conformidad Menor,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,Cerrado,19/05/2025,55
 25/03/2025,2025,426,Interna,MANTENIMIENTO,4.7.5,Observación,Correctiva,Mantenimineto,Gimenez Mario,24/05/2025,Cerrado,12/05/2025,48
 7/04/2025,2025,427,Interna,PASTA,4.6.2,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,6/06/2025,Cerrado,26/05/2025,49
-7/04/2025,2025,428,Interna,PASTA,4.10.4.1,No Conformidad Menor,Inmediata,Ing Procesos,Bosso María Belén,6/06/2025,En proceso,,354
-7/04/2025,2025,429,Interna,PASTA,4.11.3,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,6/06/2025,En proceso,,354
-7/04/2025,2025,430,Interna,PASTA,6.1.6,No Conformidad Menor,Inmediata,Ing Procesos,Bosso María Belén,6/06/2025,En proceso,,354
+7/04/2025,2025,428,Interna,PASTA,4.10.4.1,No Conformidad Menor,Inmediata,Ing Procesos,Bosso María Belén,6/06/2025,En proceso,,364
+7/04/2025,2025,429,Interna,PASTA,4.11.3,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,6/06/2025,En proceso,,364
+7/04/2025,2025,430,Interna,PASTA,6.1.6,No Conformidad Menor,Inmediata,Ing Procesos,Bosso María Belén,6/06/2025,En proceso,,364
 7/04/2025,2025,431,Interna,PASTA,6.2.2,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,6/06/2025,Cerrado,30/06/2025,84
 7/04/2025,2025,432,Interna,PASTA,4.3.4,Observación,Correctiva,Ing Procesos,Bosso María Belén,6/06/2025,Cerrado,30/05/2025,53
 7/04/2025,2025,433,Interna,PASTA,4.5.2,Observación,Correctiva,Mantenimineto,Gimenez Mario,6/06/2025,Cerrado,12/05/2025,35
 7/04/2025,2025,434,Interna,PASTA,4.9.3.2,Observación,Correctiva,Poes,Fernandez Natacha,6/06/2025,Cerrado,30/04/2025,23
-7/04/2025,2025,435,Interna,PASTA,5.2.1,Observación,Inmediata,Desarrollo,Rosso Bernardo,6/06/2025,No iniciado,,354
+7/04/2025,2025,435,Interna,PASTA,5.2.1,Observación,Inmediata,Desarrollo,Rosso Bernardo,6/06/2025,No iniciado,,364
 7/04/2025,2025,436,Interna,PASTA,6.3.1,Observación,Inmediata,Calidad,Malacarne Nerea,6/06/2025,Cerrado,11/06/2025,65
-7/04/2025,2025,437,Interna,PASTA,6.1.3,Oportunidad de Mejora,Inmediata,Calidad,Malacarne Nerea,6/06/2025,No iniciado,,354
-7/04/2025,2025,438,Interna,PASTA,6.3.1,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,6/06/2025,Cerrado,22/12/2025,259
-10/04/2025,2025,439,Interna,ENVASADO,4.6.2,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,9/06/2025,En proceso,,351
+7/04/2025,2025,437,Interna,PASTA,6.1.3,Oportunidad de Mejora,Inmediata,Calidad,Malacarne Nerea,6/06/2025,Cerrado,31/03/2026,358
+7/04/2025,2025,438,Interna,PASTA,6.3.1,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,6/06/2025,Cerrado,31/03/2026,358
+10/04/2025,2025,439,Interna,ENVASADO,4.6.2,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,9/06/2025,En proceso,,361
 10/04/2025,2025,440,Interna,ENVASADO,4.9.3.3,No Conformidad Menor,Correctiva,Poes,Fernandez Natacha,9/06/2025,Cerrado,23/05/2025,43
 10/04/2025,2025,441,Interna,ENVASADO,4.10.3.3,No Conformidad Menor,Inmediata,Calidad,Malacarne Nerea,9/06/2025,Cerrado,14/07/2025,95
 10/04/2025,2025,442,Interna,ENVASADO,6.11,Observación,Inmediata,Calidad,Malacarne Nerea,9/06/2025,Cerrado,29/04/2025,19
-10/04/2025,2025,443,Interna,ENVASADO,4.4.6,Oportunidad de Mejora,Inmediata,Ing Procesos,Bosso María Belén,9/06/2025,En proceso,,351
-10/04/2025,2025,444,Interna,ENVASADO,4.5.3,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,9/06/2025,No iniciado,,351
-10/04/2025,2025,445,Interna,ENVASADO,4.11,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,9/06/2025,En proceso,,351
-12/06/2025,2025,446,Interna,ACOPIO,6.1,No Conformidad Menor,Correctiva,Acopio,Formiga Marcelo,11/08/2025,No iniciado,,288
-12/06/2025,2025,447,Interna,ACOPIO,6.1,No Conformidad Menor,Inmediata,Acopio,Formiga Marcelo,11/08/2025,No iniciado,,288
-12/06/2025,2025,448,Interna,ACOPIO,6.1,No Conformidad Menor,Inmediata,Acopio,Formiga Marcelo,11/08/2025,No iniciado,,288
+10/04/2025,2025,443,Interna,ENVASADO,4.4.6,Oportunidad de Mejora,Inmediata,Ing Procesos,Bosso María Belén,9/06/2025,En proceso,,361
+10/04/2025,2025,444,Interna,ENVASADO,4.5.3,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,9/06/2025,No iniciado,,361
+10/04/2025,2025,445,Interna,ENVASADO,4.11,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,9/06/2025,En proceso,,361
+12/06/2025,2025,446,Interna,ACOPIO,6.1,No Conformidad Menor,Correctiva,Acopio,Formiga Marcelo,11/08/2025,No iniciado,,298
+12/06/2025,2025,447,Interna,ACOPIO,6.1,No Conformidad Menor,Inmediata,Acopio,Formiga Marcelo,11/08/2025,No iniciado,,298
+12/06/2025,2025,448,Interna,ACOPIO,6.1,No Conformidad Menor,Inmediata,Acopio,Formiga Marcelo,11/08/2025,No iniciado,,298
 17/06/2025,2025,449,Interna,HPS1 y HPS2,4.1.4,No Conformidad Menor,Inmediata,Planta HPS,Quiroga Mónica,16/08/2025,Cerrado,22/09/2025,97
-17/06/2025,2025,450,Interna,HPS1 y HPS2,4.3.2,Oportunidad de Mejora,Correctiva,Planta HPS,Quiroga Mónica,16/08/2025,No iniciado,,283
-17/06/2025,2025,451,Interna,HPS1 y HPS2,4.8.5,Oportunidad de Mejora,Correctiva,Planta HPS,Quiroga Mónica,16/08/2025,No iniciado,,283
-31/07/2025,2025,452,Interna,MANI TOSTADO,2.10.2,Observación,Inmediata,Calidad,Malacarne Nerea,29/09/2025,No iniciado,,239
-31/07/2025,2025,453,Interna,MANI TOSTADO,2.11.1,Observación,Inmediata,Planta PE,Mignola Sergio,29/09/2025,No iniciado,,239
+17/06/2025,2025,450,Interna,HPS1 y HPS2,4.3.2,Oportunidad de Mejora,Correctiva,Planta HPS,Quiroga Mónica,16/08/2025,No iniciado,,293
+17/06/2025,2025,451,Interna,HPS1 y HPS2,4.8.5,Oportunidad de Mejora,Correctiva,Planta HPS,Quiroga Mónica,16/08/2025,No iniciado,,293
+31/07/2025,2025,452,Interna,MANI TOSTADO,2.10.2,Observación,Inmediata,Calidad,Malacarne Nerea,29/09/2025,No iniciado,,249
+31/07/2025,2025,453,Interna,MANI TOSTADO,2.11.1,Observación,Inmediata,Planta PE,Mignola Sergio,29/09/2025,No iniciado,,249
 31/07/2025,2025,454,Interna,MANI TOSTADO,4.3.4,Observación,Inmediata,Planta PE,Mignola Sergio,29/09/2025,Cerrado,16/11/2025,108
-31/07/2025,2025,455,Interna,MANI TOSTADO,4.11,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,29/09/2025,No iniciado,,239
+31/07/2025,2025,455,Interna,MANI TOSTADO,4.11,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,29/09/2025,No iniciado,,249
 7/08/2025,2025,456,Interna,BLANCHEADO,4.3.2,No Conformidad Menor,Inmediata,Mantenimineto,Gimenez Mario,6/10/2025,Cerrado,2/09/2025,26
 7/08/2025,2025,457,Interna,BLANCHEADO,4.9.3,No Conformidad Menor,Correctiva,Poes,Fernandez Natacha,6/10/2025,Cerrado,8/09/2025,32
 7/08/2025,2025,458,Interna,BLANCHEADO,4.10.3,No Conformidad Menor,Correctiva,Planta Blancheado,Quiroga Mónica,6/10/2025,Cerrado,15/09/2025,39
 7/08/2025,2025,459,Interna,BLANCHEADO,6.1,No Conformidad Menor,Correctiva,Planta Blancheado,Quiroga Mónica,6/10/2025,Cerrado,1/09/2025,25
-7/08/2025,2025,460,Interna,BLANCHEADO,4.15,Oportunidad de Mejora,Correctiva,Planta Blancheado,Quiroga Mónica,6/10/2025,No iniciado,,232
-7/08/2025,2025,461,Interna,BLANCHEADO,4.6,Oportunidad de Mejora,Correctiva,Mantenimineto,Gimenez Mario,6/10/2025,No iniciado,,232
+7/08/2025,2025,460,Interna,BLANCHEADO,4.15,Oportunidad de Mejora,Correctiva,Planta Blancheado,Quiroga Mónica,6/10/2025,No iniciado,,242
+7/08/2025,2025,461,Interna,BLANCHEADO,4.6,Oportunidad de Mejora,Correctiva,Mantenimineto,Gimenez Mario,6/10/2025,No iniciado,,242
 7/08/2025,2025,462,Interna,BLANCHEADO,3.2,Oportunidad de Mejora,Correctiva,Poes,Fernandez Natacha,6/10/2025,Cerrado,8/08/2025,1
 7/08/2025,2025,463,Interna,BLANCHEADO,3.2,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,6/10/2025,Cerrado,6/09/2025,30
-27/08/2025,2025,464,Interna,Capital Humano ,7.7.1,No Conformidad Menor,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
+27/08/2025,2025,464,Interna,Capital Humano ,7.7.1,No Conformidad Menor,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
 27/08/2025,2025,465,Interna,Capital Humano ,7.1.2,No Conformidad Menor,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,Cerrado,10/09/2025,14
-27/08/2025,2025,466,Interna,Capital Humano ,7.1.4,No Conformidad Menor,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
-27/08/2025,2025,467,Interna,Capital Humano ,7.2.1,Observación,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
-27/08/2025,2025,468,Interna,Capital Humano ,1.2.1,Observación,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,En proceso,,212
-27/08/2025,2025,469,Interna,Capital Humano ,7.4.1,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
+27/08/2025,2025,466,Interna,Capital Humano ,7.1.4,No Conformidad Menor,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
+27/08/2025,2025,467,Interna,Capital Humano ,7.2.1,Observación,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
+27/08/2025,2025,468,Interna,Capital Humano ,1.2.1,Observación,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,En proceso,,222
+27/08/2025,2025,469,Interna,Capital Humano ,7.4.1,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
 27/08/2025,2025,470,Interna,Capital Humano ,7.1.2,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,Cerrado,10/09/2025,14
-27/08/2025,2025,471,Interna,Capital Humano ,7.2.5,Oportunidad de Mejora,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
-27/08/2025,2025,472,Interna,Capital Humano ,7.2.5,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
-27/08/2025,2025,473,Interna,Capital Humano ,7.3.3,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
-27/08/2025,2025,474,Interna,Capital Humano ,2.1.1,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
-27/08/2025,2025,475,Interna,Capital Humano ,7.1.3,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,212
-26/09/2025,2025,476,Interna,GRANOLA,4.11,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,477,Interna,GRANOLA,4.6.2,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,478,Interna,GRANOLA,4.9.2.1,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,479,Interna,GRANOLA,4.9.5.1,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,480,Interna,GRANOLA,5.5.3,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,481,Interna,GRANOLA,6.1.5,Observación,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
+27/08/2025,2025,471,Interna,Capital Humano ,7.2.5,Oportunidad de Mejora,Inmediata,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
+27/08/2025,2025,472,Interna,Capital Humano ,7.2.5,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
+27/08/2025,2025,473,Interna,Capital Humano ,7.3.3,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
+27/08/2025,2025,474,Interna,Capital Humano ,2.1.1,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
+27/08/2025,2025,475,Interna,Capital Humano ,7.1.3,Oportunidad de Mejora,Correctiva,Capital Humano,Rodriguez Viviana,26/10/2025,No iniciado,,222
+26/09/2025,2025,476,Interna,GRANOLA,4.11,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,477,Interna,GRANOLA,4.6.2,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,478,Interna,GRANOLA,4.9.2.1,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,479,Interna,GRANOLA,4.9.5.1,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,480,Interna,GRANOLA,5.5.3,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,481,Interna,GRANOLA,6.1.5,Observación,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
 26/09/2025,2025,482,Interna,GRANOLA,4.1.4,Observación,Correctiva,Planta PA,Mignola Sergio,25/11/2025,Cerrado,26/10/2025,30
-26/09/2025,2025,483,Interna,GRANOLA,4.9.3.1,Observación,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,484,Interna,GRANOLA,4.9.3.2,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,485,Interna,GRANOLA,4.10.3,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,486,Interna,GRANOLA,4.15.2,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-26/09/2025,2025,487,Interna,GRANOLA,5.5.2,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,182
-11/06/2025,2025,488,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Planta PA,Mignola Sergio,10/08/2025,En proceso,,289
-11/06/2025,2025,489,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Planta PA,Mignola Sergio,10/08/2025,En proceso,,289
+26/09/2025,2025,483,Interna,GRANOLA,4.9.3.1,Observación,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,484,Interna,GRANOLA,4.9.3.2,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,485,Interna,GRANOLA,4.10.3,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,486,Interna,GRANOLA,4.15.2,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+26/09/2025,2025,487,Interna,GRANOLA,5.5.2,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,25/11/2025,No iniciado,,192
+11/06/2025,2025,488,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Planta PA,Mignola Sergio,10/08/2025,En proceso,,299
+11/06/2025,2025,489,Externa,LA ANONIMA,-,No Conformidad Menor,Correctiva,Planta PA,Mignola Sergio,10/08/2025,En proceso,,299
 9/09/2025,2025,490,Externa,DANONE,-,No Conformidad Menor,Correctiva,Planta PA,Mignola Sergio,8/11/2025,Cerrado,5/11/2025,57
 9/09/2025,2025,491,Externa,DANONE,-,No Conformidad Menor,Correctiva,Planta PA,Mignola Sergio,8/11/2025,Cerrado,5/11/2025,57
 9/09/2025,2025,492,Externa,DANONE,-,No Conformidad Menor,Correctiva,Planta PA,Mignola Sergio,8/11/2025,Cerrado,5/11/2025,57
@@ -122,48 +122,48 @@ Fecha ,Año,Número,Tipo de Auditoría ,Clasificación ,Requisito,Tipo de Hallaz
 17/10/2025,2025,511,Externa,IMPORTACO ,NC3,No Conformidad Menor,Correctiva,Planta Blancheado,Quiroga Mnónica,16/12/2025,Cerrado,5/12/2025,49
 17/10/2025,2025,512,Externa,IMPORTACO ,NC 3,No Conformidad Mayor,Inmediata,Planta Blancheado,Quiroga Mnónica,16/12/2025,Cerrado,6/12/2025,50
 17/10/2025,2025,513,Externa,IMPORTACO ,NC4,No Conformidad Menor,Correctiva,Planta Blancheado,Quiroga Mnónica,16/12/2025,Cerrado,7/12/2025,51
-17/10/2025,2025,514,Interna,Envasado,4.3,No Conformidad Menor,Inmediata,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,161
-17/10/2025,2025,515,Interna,Envasado,4.6,No Conformidad Menor,Inmediata,Planta PE,Mignola Sergio,16/12/2025,En proceso,,161
+17/10/2025,2025,514,Interna,Envasado,4.3,No Conformidad Menor,Inmediata,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,171
+17/10/2025,2025,515,Interna,Envasado,4.6,No Conformidad Menor,Inmediata,Planta PE,Mignola Sergio,16/12/2025,En proceso,,171
 17/10/2025,2025,516,Interna,Envasado,5.2,No Conformidad Menor,Inmediata,Planta PE,Mignola Sergio,16/12/2025,Cerrado,18/10/2025,1
-17/10/2025,2025,517,Interna,Envasado,5.6,No Conformidad Menor,Inmediata,Calidad,Malacarne Nerea,16/12/2025,No iniciado,,161
+17/10/2025,2025,517,Interna,Envasado,5.6,No Conformidad Menor,Inmediata,Calidad,Malacarne Nerea,16/12/2025,No iniciado,,171
 17/10/2025,2025,518,Interna,Envasado,6.1,No Conformidad Menor,Correctiva,Planta PE,Mignola Sergio,16/12/2025,Cerrado,18/10/2025,1
-17/10/2025,2025,519,Interna,Envasado,4.1,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,161
+17/10/2025,2025,519,Interna,Envasado,4.1,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,171
 17/10/2025,2025,520,Interna,Envasado,4.11,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,16/12/2025,Cerrado,18/10/2025,1
-17/10/2025,2025,521,Interna,Envasado,6.1,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,161
-17/10/2025,2025,522,Interna,Envasado,6.1,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,161
-17/10/2025,2025,523,Interna,Envasado,6.4,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,16/12/2025,No iniciado,,161
-17/10/2025,2025,524,Interna,Envasado,6.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,16/12/2025,En proceso,,161
-1/12/2025,2025,525,Interna,GRAGEADO,3.8.1 ,No Conformidad Menor,Inmediata,Calidad,Malacarne Nerea,30/01/2026,No iniciado,,116
-1/12/2025,2025,526,Interna,GRAGEADO,4.3.2 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,116
-1/12/2025,2025,527,Interna,GRAGEADO,4.9.3.2 ,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,30/01/2026,No iniciado,,116
-1/12/2025,2025,528,Interna,GRAGEADO,4.11.2,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,30/01/2026,No iniciado,,116
-1/12/2025,2025,529,Interna,GRAGEADO,4.11.3 ,No Conformidad Menor,Inmediata,Calidad,Malacarne Nerea,30/01/2026,No iniciado,,116
-1/12/2025,2025,530,Interna,GRAGEADO,4.11.5 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,116
-1/12/2025,2025,531,Interna,GRAGEADO,6.1.1 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,116
-1/12/2025,2025,532,Interna,GRAGEADO,6.1.3 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,116
-1/12/2025,2025,533,Interna,GRAGEADO,6.2.2 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,116
-1/12/2025,2025,534,Interna,GRAGEADO,5.6.3 ,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,30/01/2026,No iniciado,,116
+17/10/2025,2025,521,Interna,Envasado,6.1,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,171
+17/10/2025,2025,522,Interna,Envasado,6.1,Oportunidad de Mejora,Correctiva,Planta PE,Mignola Sergio,16/12/2025,No iniciado,,171
+17/10/2025,2025,523,Interna,Envasado,6.4,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,16/12/2025,No iniciado,,171
+17/10/2025,2025,524,Interna,Envasado,6.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,16/12/2025,En proceso,,171
+1/12/2025,2025,525,Interna,GRAGEADO,3.8.1 ,No Conformidad Menor,Inmediata,Calidad,Malacarne Nerea,30/01/2026,No iniciado,,126
+1/12/2025,2025,526,Interna,GRAGEADO,4.3.2 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,126
+1/12/2025,2025,527,Interna,GRAGEADO,4.9.3.2 ,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,30/01/2026,No iniciado,,126
+1/12/2025,2025,528,Interna,GRAGEADO,4.11.2,No Conformidad Menor,Inmediata,Poes,Fernandez Natacha,30/01/2026,No iniciado,,126
+1/12/2025,2025,529,Interna,GRAGEADO,4.11.3 ,No Conformidad Menor,Inmediata,Calidad,Malacarne Nerea,30/01/2026,No iniciado,,126
+1/12/2025,2025,530,Interna,GRAGEADO,4.11.5 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,126
+1/12/2025,2025,531,Interna,GRAGEADO,6.1.1 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,126
+1/12/2025,2025,532,Interna,GRAGEADO,6.1.3 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,126
+1/12/2025,2025,533,Interna,GRAGEADO,6.2.2 ,No Conformidad Menor,Inmediata,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,126
+1/12/2025,2025,534,Interna,GRAGEADO,5.6.3 ,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,30/01/2026,No iniciado,,126
 1/12/2025,2025,535,Interna,GRAGEADO,4.1.4 ,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,30/01/2026,Cerrado,2/12/2025,1
-1/12/2025,2025,536,Interna,GRAGEADO,6.1.1 ,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,116
-18/03/2026,2026,537,Interna,MAC Y MAP,4.4.6,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,17/05/2026,No iniciado,,9
-18/03/2026,2026,538,Interna,MAC Y MAP,4.10.3.4,Observación,Correctiva,Ing Procesos,Bosso María Belén,17/05/2026,No iniciado,,9
-18/03/2026,2026,539,Interna,MAC Y MAP,6.1.6,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,17/05/2026,No iniciado,,9
-23/03/2026,2026,540,Interna,DIRECCION-GESTION,1.1,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,541,Interna,DIRECCION-GESTION,3.1,No Conformidad Menor,Correctiva,Calidad,Malacarne Nerea,22/05/2026,No iniciado,,4
-23/03/2026,2026,542,Interna,DIRECCION-GESTION,3.2,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,543,Interna,DIRECCION-GESTION,3.4,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,544,Interna,DIRECCION-GESTION,3.4,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,545,Interna,DIRECCION-GESTION,3.4,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,546,Interna,DIRECCION-GESTION,3.7,No Conformidad Menor,Correctiva,Calidad,Malacarne Nerea,22/05/2026,No iniciado,,4
-23/03/2026,2026,547,Interna,DIRECCION-GESTION,3.14,No Conformidad Menor,Correctiva,GIP,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,548,Interna,DIRECCION-GESTION,5.1,No Conformidad Menor,Correctiva,Desarrollo,Rosso Bernardo,22/05/2026,No iniciado,,4
-23/03/2026,2026,549,Interna,DIRECCION-GESTION,1.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,550,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,Poes,Fernandez Natacha,22/05/2026,No iniciado,,4
-23/03/2026,2026,551,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,22/05/2026,No iniciado,,4
-23/03/2026,2026,552,Interna,DIRECCION-GESTION,3.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,553,Interna,DIRECCION-GESTION,3.6,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,22/05/2026,No iniciado,,4
-23/03/2026,2026,554,Interna,DIRECCION-GESTION,3.9,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,555,Interna,DIRECCION-GESTION,4.12,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,556,Interna,DIRECCION-GESTION,4.14,Oportunidad de Mejora,Correctiva,GIP,Dip Mayra,22/05/2026,No iniciado,,4
-23/03/2026,2026,557,Interna,DIRECCION-GESTION,5.1,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,22/05/2026,No iniciado,,4
-23/03/2026,2026,558,Interna,DIRECCION-GESTION,5.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,4
+1/12/2025,2025,536,Interna,GRAGEADO,6.1.1 ,Oportunidad de Mejora,Correctiva,Planta PA,Mignola Sergio,30/01/2026,No iniciado,,126
+18/03/2026,2026,537,Interna,MAC Y MAP,4.4.6,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,17/05/2026,No iniciado,,19
+18/03/2026,2026,538,Interna,MAC Y MAP,4.10.3.4,Observación,Correctiva,Ing Procesos,Bosso María Belén,17/05/2026,No iniciado,,19
+18/03/2026,2026,539,Interna,MAC Y MAP,6.1.6,No Conformidad Menor,Correctiva,Ing Procesos,Bosso María Belén,17/05/2026,No iniciado,,19
+23/03/2026,2026,540,Interna,DIRECCION-GESTION,1.1,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,541,Interna,DIRECCION-GESTION,3.1,No Conformidad Menor,Correctiva,Calidad,Malacarne Nerea,22/05/2026,No iniciado,,14
+23/03/2026,2026,542,Interna,DIRECCION-GESTION,3.2,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,En proceso,,14
+23/03/2026,2026,543,Interna,DIRECCION-GESTION,3.4,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,544,Interna,DIRECCION-GESTION,3.4,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,545,Interna,DIRECCION-GESTION,3.4,No Conformidad Menor,Correctiva,SGCIA,Dip Mayra,22/05/2026,En proceso,,14
+23/03/2026,2026,546,Interna,DIRECCION-GESTION,3.7,No Conformidad Menor,Correctiva,Calidad,Malacarne Nerea,22/05/2026,No iniciado,,14
+23/03/2026,2026,547,Interna,DIRECCION-GESTION,3.14,No Conformidad Menor,Correctiva,GIP,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,548,Interna,DIRECCION-GESTION,5.1,No Conformidad Menor,Correctiva,Desarrollo,Rosso Bernardo,22/05/2026,No iniciado,,14
+23/03/2026,2026,549,Interna,DIRECCION-GESTION,1.1,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,550,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,Poes,Fernandez Natacha,22/05/2026,No iniciado,,14
+23/03/2026,2026,551,Interna,DIRECCION-GESTION,2.1,Oportunidad de Mejora,Correctiva,Calidad,Malacarne Nerea,22/05/2026,No iniciado,,14
+23/03/2026,2026,552,Interna,DIRECCION-GESTION,3.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,553,Interna,DIRECCION-GESTION,3.6,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,22/05/2026,No iniciado,,14
+23/03/2026,2026,554,Interna,DIRECCION-GESTION,3.9,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,555,Interna,DIRECCION-GESTION,4.12,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,556,Interna,DIRECCION-GESTION,4.14,Oportunidad de Mejora,Correctiva,GIP,Dip Mayra,22/05/2026,No iniciado,,14
+23/03/2026,2026,557,Interna,DIRECCION-GESTION,5.1,Oportunidad de Mejora,Correctiva,Desarrollo,Rosso Bernardo,22/05/2026,No iniciado,,14
+23/03/2026,2026,558,Interna,DIRECCION-GESTION,5.4,Oportunidad de Mejora,Correctiva,SGCIA,Dip Mayra,22/05/2026,No iniciado,,14
