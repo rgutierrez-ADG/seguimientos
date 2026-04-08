@@ -8,6 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -265,6 +267,68 @@ td{padding:9px 12px;vertical-align:middle}
 .tab-badge.y26{background:#fff3e0;color:#e65100}
 
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ─── TREATMENT MODAL ─── */
+.treat-overlay{position:fixed;inset:0;background:rgba(0,20,45,.65);z-index:2500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.treat-overlay.show{display:flex}
+.treat-modal{
+  background:#fff;border-radius:16px;width:96%;max-width:760px;max-height:92vh;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 24px 64px #00000050;
+}
+.treat-header{
+  background:linear-gradient(90deg,#0d47a1,#1565c0,#1976d2);
+  padding:18px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.treat-badge{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#1565c0;background:#fff;padding:3px 10px;border-radius:6px;white-space:nowrap}
+.treat-htitle{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#fff;flex:1}
+.treat-close{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.treat-close:hover{background:rgba(255,255,255,.35)}
+.treat-body{overflow-y:auto;padding:20px 24px;flex:1;display:flex;flex-direction:column;gap:14px}
+.treat-section{background:#f4f7fb;border:1px solid #dce6f0;border-radius:10px;padding:14px 16px}
+.treat-section-title{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.treat-desc{font-size:12px;color:#1a2533;line-height:1.7;white-space:pre-wrap;background:#fff;border-radius:7px;padding:10px 12px;border:1px solid #dce6f0;max-height:100px;overflow-y:auto}
+.treat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.treat-field{display:flex;flex-direction:column;gap:4px}
+.treat-field.full{grid-column:1/-1}
+.treat-label{font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px}
+.treat-input,.treat-select,.treat-textarea{
+  background:#fff;border:1.5px solid #c5d5e8;color:#1a2533;
+  padding:8px 10px;border-radius:7px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;
+  transition:border .15s;outline:none;
+}
+.treat-input:focus,.treat-select:focus,.treat-textarea:focus{border-color:#1565c0}
+.treat-textarea{resize:vertical;min-height:72px}
+.treat-readonly{background:#f0f4f8;color:#607080;cursor:default}
+.treat-footer{padding:14px 24px;border-top:1px solid #dce6f0;display:flex;align-items:center;gap:10px;flex-shrink:0;background:#fafcff}
+.treat-save{background:linear-gradient(135deg,#1565c0,#0d47a1);border:none;color:#fff;padding:10px 24px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;transition:opacity .2s}
+.treat-save:hover{opacity:.88}
+.treat-cancel{background:none;border:1.5px solid #c5d5e8;color:#607080;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600;transition:all .2s}
+.treat-cancel:hover{border-color:#607080}
+.treat-alert-tag{margin-left:auto;font-size:10px;padding:3px 9px;border-radius:10px;font-weight:700;background:#fff3e0;color:#e65100;border:1px solid #ffcc8088;display:flex;align-items:center;gap:4px}
+.treat-pending-dot{width:6px;height:6px;border-radius:50%;background:#e65100;display:inline-block;animation:pulse 1s infinite}
+/* alert pill on table rows */
+.alert-pill{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 7px;border-radius:8px;background:#fff3e0;color:#e65100;border:1px solid #ffcc8055;font-weight:700;cursor:pointer}
+.alert-pill-rev{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a755}
+/* clickable chip */
+.hchip-link{cursor:pointer;transition:opacity .15s}
+.hchip-link:hover{opacity:.75;text-decoration:underline dotted}
+/* ─── ATTACHMENTS ─── */
+.attach-section{background:#f0f7ff;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;margin-top:4px}
+.attach-section-title{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:#1565c0;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.attach-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.attach-item{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #bbdefb;border-radius:7px;padding:6px 10px;font-size:11px}
+.attach-item-icon{font-size:16px;flex-shrink:0}
+.attach-item-name{flex:1;font-weight:600;color:#1a2533;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attach-item-size{font-size:10px;color:#607080;white-space:nowrap}
+.attach-del{background:none;border:none;color:#c62828;cursor:pointer;font-size:16px;line-height:1;padding:0 2px;opacity:.7}
+.attach-del:hover{opacity:1}
+.attach-btn{background:#e3f0ff;border:1px solid #90caf9;color:#1565c0;padding:6px 14px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;transition:background .15s}
+.attach-btn:hover{background:#bbdefb}
+/* pill in table */
+.attach-pill{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 6px;border-radius:6px;background:#e3f0ff;color:#1565c0;border:1px solid #90caf955;font-weight:700;cursor:pointer;margin-left:4px}
+.attach-pill:hover{background:#bbdefb}
+
 @media(max-width:900px){
   [style*="grid-template-columns:1fr 1.4fr 1fr"]{grid-template-columns:1fr!important}
 
@@ -289,15 +353,17 @@ td{padding:9px 12px;vertical-align:middle}
     </div>
   </div>
   <div class="topbar-right">
+    <button class="tb-btn" onclick="openEmailConfig()" id="emailConfigBtn" title="Configurar alertas por email">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Alertas Email
+    </button>
     <button class="tb-btn" onclick="openPdf()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Exportar PDF
     </button>
-    <label class="tb-btn">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Cargar CSV
-      <input type="file" accept=".csv" onchange="loadCSV(event)">
-    </label>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar CSV
+    </button>
     <div class="upd-box">
       <div class="upd-lbl">Actualización</div>
       <div class="upd-val" id="updVal">—</div>
@@ -354,6 +420,10 @@ td{padding:9px 12px;vertical-align:middle}
   <button class="tab-btn" id="tab-ext2026" onclick="switchTab('ext2026')">
     🔍 AUDITORÍAS EXTERNAS 2026
     <span class="tab-badge" style="background:#fff3e0;color:#e65100" id="badge-ext2026">—</span>
+  </button>
+  <button class="tab-btn" id="tab-descargas" onclick="switchTab('descargas')" style="margin-left:auto">
+    📥 Descargas Realizadas
+    <span class="tab-badge" style="background:#e8f5e9;color:#2e7d32" id="badge-descargas">0</span>
   </button>
 </div>
 
@@ -557,6 +627,34 @@ td{padding:9px 12px;vertical-align:middle}
     </div>
   </div>
 
+  <!-- ─── PANEL DESCARGAS ─── -->
+  <div id="panelDescargas" style="display:none">
+    <div class="sec-title"><span>📥 Descargas Realizadas</span><span class="sec-line"></span></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:14px 18px;background:#f4f7fb;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+        <span style="font-size:11px;color:var(--dim)">Historial de hojas de tratamiento generadas en esta sesión.</span>
+        <button class="btn-sm" onclick="clearDescargas()" style="margin-left:auto">🗑 Limpiar historial</button>
+      </div>
+      <div id="descargasListWrap">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="background:#f0f4f8">
+              <th style="padding:9px 14px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;border-bottom:2px solid var(--border);text-align:left">#</th>
+              <th style="padding:9px 14px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;border-bottom:2px solid var(--border);text-align:left">Archivo</th>
+              <th style="padding:9px 14px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;border-bottom:2px solid var(--border);text-align:left">Hallazgo</th>
+              <th style="padding:9px 14px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;border-bottom:2px solid var(--border);text-align:left">Verificado por</th>
+              <th style="padding:9px 14px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;border-bottom:2px solid var(--border);text-align:left">Fecha descarga</th>
+              <th style="padding:9px 14px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-weight:600;border-bottom:2px solid var(--border);text-align:left">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="descargasBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--dim);padding:32px;font-size:12px">No hay descargas en esta sesión.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /main -->
 
 <div class="toast" id="toast"><div class="td2" id="td2"></div><span id="tmsg">OK</span></div>
@@ -580,10 +678,43 @@ function switchTab(tab){
   ACTIVE_TAB = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+tab)?.classList.add('active');
-  Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
-  CHARTS = {};
+
+  const mainContent = document.getElementById('mainContent');
+  const comingFromDescargas = document.getElementById('panelDescargas').style.display !== 'none';
+
+  if(tab === 'descargas'){
+    // Destruir charts antes de ocultar los canvas (evita errores internos de Chart.js)
+    Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
+    CHARTS = {};
+    Array.from(mainContent.children).forEach(el=>{
+      el.style.display = el.id==='panelDescargas' ? '' : 'none';
+    });
+    renderDescargasTab();
+    return;
+  }
+
+  // Mostrar contenido normal, ocultar descargas
+  Array.from(mainContent.children).forEach(el=>{
+    el.style.display = el.id==='panelDescargas' ? 'none' : '';
+  });
+
   populateFilters();
-  renderAll();
+
+  if(comingFromDescargas){
+    // Esperar 2 frames para que el browser repinte los contenedores
+    // antes de que Chart.js lea sus dimensiones
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
+        CHARTS = {};
+        renderAll();
+      });
+    });
+  } else {
+    Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
+    CHARTS = {};
+    renderAll();
+  }
 }
 
 function updateTabBadges(){
@@ -601,10 +732,14 @@ function updateTabBadges(){
 
 
 window.addEventListener('DOMContentLoaded', () => {
+  STORE.load();
   updateClock();
   populateFilters();
   renderAll();
   autoLoadCSV();
+  // Update descargas badge from persisted data
+  const bd = document.getElementById('badge-descargas');
+  if(bd) bd.textContent = DESCARGAS_LOG.length || '0';
 });
 
 function autoLoadCSV(){
@@ -932,7 +1067,7 @@ function renderTable(){
   st('filterCount', rows.length + ' registros');
 
   if(!rows.length){
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--dim);padding:24px">Sin registros con los filtros aplicados</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--dim);padding:24px">Sin registros con los filtros aplicados</td></tr>';
     return;
   }
 
@@ -951,12 +1086,29 @@ function renderTable(){
     const dias = parseInt(r.dias)||0;
     const diasCol = dias>200?'var(--red)':dias>100?'var(--amber)':'var(--text)';
 
+    const tr = TREATMENTS[r.num];
+    const atts = loadAttachments(r.num);
+    const attachPill = atts.length
+      ? `<span class="attach-pill" onclick="openTreatmentSheet('${r.num}')" title="${atts.length} archivo(s) adjunto(s)">📎 ${atts.length}</span>`
+      : '';
+    let alertPill = '';
+    if(tr){
+      if(tr.pendingReview){
+        alertPill = `<span class="alert-pill" onclick="openTreatmentSheet('${r.num}')" title="Pendiente revisión del responsable">⚠ Revisar</span>`;
+      } else {
+        alertPill = `<span class="alert-pill alert-pill-rev" onclick="openTreatmentSheet('${r.num}')" title="Tratamiento guardado">✓ Tratamiento</span>`;
+      }
+    }
+
     return `<tr>
       <td><span class="rk">${i+1}</span></td>
       <td><span class="num-badge" style="cursor:pointer;text-decoration:underline dotted" title="Ver descripción" data-num="${r.num}" data-desc="${encodeURIComponent(r.desc||'')}" onclick="showDescEl(this)">${r.num}</span></td>
       <td style="font-size:11px;color:var(--dim)">${r.fecha}</td>
       <td style="font-size:11px;max-width:120px">${r.clasif}</td>
-      <td><span class="hallazgo-chip ${hCls}">${hLabel}</span></td>
+      <td>
+        <span class="hallazgo-chip ${hCls} hchip-link" onclick="openTreatmentSheet('${r.num}')" title="Abrir hoja de tratamiento">${hLabel}</span>
+        ${alertPill}${attachPill}
+      </td>
       <td style="font-size:11px;font-weight:600">${r.area}</td>
       <td style="font-size:11px">${r.resp}</td>
       <td style="font-size:11px;color:var(--dim)">${r.plazo}</td>
@@ -966,7 +1118,348 @@ function renderTable(){
   }).join('');
 }
 
-// ═══ CSV UPLOAD ═════════════════════════════════════════════════════════════
+// ═══ EMAILJS — ALERTAS POR EMAIL ════════════════════════════════════════════
+let EMAIL_CFG = JSON.parse(localStorage.getItem('sgcia_email_cfg') || '{"serviceId":"service_2bplw7r","templateId":"template_ss9n07r","publicKey":"_DYALGXX2UWf8GgUm","toEmail":"rgutierrez@maniagro.com","onSave":true,"onDownload":true}');
+
+// Plantilla de email que el usuario pega en EmailJS
+const EMAIL_TEMPLATE_CONTENT = `Asunto: 📋 {{event_type}} — Hallazgo N° {{num}} | {{clasif}}
+
+Hola,
+
+Se registró una nueva actividad en el Sistema SGCIA - Tratamiento de Hallazgos.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DETALLE DEL HALLAZGO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+N° de Hallazgo:     {{num}}
+Clasificación:      {{clasif}}
+Tipo:               {{hallazgo}}
+Área responsable:   {{area}}
+Responsable:        {{resp}}
+Plazo:              {{plazo}}
+Estado actual:      {{estado}}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRATAMIENTO REGISTRADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Evento:             {{event_type}}
+Causa raíz:         {{causa}}
+Acción correctiva:  {{accion}}
+Responsable impl.:  {{resp_impl}}
+Fecha objetivo:     {{fecha_impl}}
+Verificado por:     {{verificador}}
+Fecha verificación: {{fecha_verif}}
+
+Registrado el {{fecha_hora}} desde el dashboard SGCIA - Maniagro Argentina.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Este es un mensaje automático generado por el SGCIA Dashboard.
+`;
+
+function openEmailConfig(){
+  const cfg = EMAIL_CFG;
+  document.getElementById('ejsServiceId').value  = cfg.serviceId  || '';
+  document.getElementById('ejsTemplateId').value = cfg.templateId || '';
+  document.getElementById('ejsPublicKey').value  = cfg.publicKey  || '';
+  document.getElementById('ejsToEmail').value    = cfg.toEmail    || '';
+  document.getElementById('ejsOnSave').checked     = cfg.onSave !== false;
+  document.getElementById('ejsOnDownload').checked = cfg.onDownload !== false;
+  document.getElementById('ejsStatus').style.display = 'none';
+  document.getElementById('emailConfigOverlay').style.display = 'flex';
+}
+
+function closeEmailConfig(){
+  document.getElementById('emailConfigOverlay').style.display = 'none';
+}
+
+function saveEmailConfig(){
+  EMAIL_CFG = {
+    serviceId:   document.getElementById('ejsServiceId').value.trim(),
+    templateId:  document.getElementById('ejsTemplateId').value.trim(),
+    publicKey:   document.getElementById('ejsPublicKey').value.trim(),
+    toEmail:     document.getElementById('ejsToEmail').value.trim(),
+    onSave:      document.getElementById('ejsOnSave').checked,
+    onDownload:  document.getElementById('ejsOnDownload').checked,
+  };
+  localStorage.setItem('sgcia_email_cfg', JSON.stringify(EMAIL_CFG));
+  _updateEmailBtn();
+  showToast('✓ Configuración de alertas guardada', false);
+  closeEmailConfig();
+}
+
+function copyEmailTemplate(){
+  navigator.clipboard.writeText(EMAIL_TEMPLATE_CONTENT).then(()=>{
+    showToast('✓ Plantilla copiada al portapapeles — pegala en EmailJS', false);
+  }).catch(()=>{
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = EMAIL_TEMPLATE_CONTENT;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✓ Plantilla copiada', false);
+  });
+}
+
+function _updateEmailBtn(){
+  const btn = document.getElementById('emailConfigBtn');
+  if(!btn) return;
+  const active = EMAIL_CFG.publicKey && EMAIL_CFG.toEmail;
+  btn.style.background = active ? 'rgba(46,125,50,.35)' : '';
+  btn.title = active
+    ? `Alertas activas → ${EMAIL_CFG.toEmail}`
+    : 'Configurar alertas por email';
+}
+
+// Inicializar EmailJS
+function _initEmailJS(){
+  if(!window.emailjs) return false;
+  if(!EMAIL_CFG.publicKey) return false;
+  try{ emailjs.init(EMAIL_CFG.publicKey); return true; }
+  catch(e){ return false; }
+}
+
+// Construir parámetros del template desde un record + treatment
+function _buildEmailParams(num, eventType){
+  const r  = DATA.find(d=>d.num===String(num)) || {};
+  const t  = TREATMENTS[num] || {};
+  const fImpl = t.fechaImpl
+    ? t.fechaImpl.split('-').reverse().join('/') : (r.plazo||'—');
+  const fVerif = t.fechaVerif
+    ? t.fechaVerif.split('-').reverse().join('/') : '—';
+  const ahora = new Date().toLocaleString('es-AR',{
+    day:'2-digit',month:'2-digit',year:'numeric',
+    hour:'2-digit',minute:'2-digit'
+  });
+  return {
+    to_email:     EMAIL_CFG.toEmail,
+    event_type:   eventType,
+    num:          r.num        || num,
+    clasif:       r.clasif     || '—',
+    hallazgo:     r.hallazgo   || '—',
+    area:         r.area       || '—',
+    resp:         r.resp       || '—',
+    plazo:        r.plazo      || '—',
+    estado:       r.estado     || '—',
+    causa:        t.causa      || '(sin completar)',
+    accion:       t.accion     || '(sin completar)',
+    resp_impl:    t.respImpl   || r.resp || '—',
+    fecha_impl:   fImpl,
+    verificador:  t.verificador|| '—',
+    fecha_verif:  fVerif,
+    fecha_hora:   ahora,
+  };
+}
+
+// Enviar alerta — silencioso (no bloquea el flujo)
+async function sendEmailAlert(num, eventType){
+  if(!EMAIL_CFG.serviceId || !EMAIL_CFG.templateId || !EMAIL_CFG.publicKey || !EMAIL_CFG.toEmail) return;
+  if(!_initEmailJS()) return;
+  try{
+    const params = _buildEmailParams(num, eventType);
+    await emailjs.send(EMAIL_CFG.serviceId, EMAIL_CFG.templateId, params);
+    showToast('📧 Alerta enviada a ' + EMAIL_CFG.toEmail, false);
+  }catch(err){
+    console.warn('EmailJS error:', err);
+    showToast('⚠ No se pudo enviar la alerta por email: ' + (err.text||err.message||'error'), true);
+  }
+}
+
+// Email de prueba
+async function testEmail(){
+  const svcId  = document.getElementById('ejsServiceId').value.trim();
+  const tplId  = document.getElementById('ejsTemplateId').value.trim();
+  const pubKey = document.getElementById('ejsPublicKey').value.trim();
+  const toMail = document.getElementById('ejsToEmail').value.trim();
+
+  if(!svcId || !tplId || !pubKey || !toMail){
+    _ejsStatus('⚠ Completá todos los campos antes de probar', false);
+    return;
+  }
+
+  _ejsStatus('⏳ Enviando email de prueba...', null);
+  try{
+    if(!window.emailjs){ _ejsStatus('⚠ EmailJS no cargó — verificá tu conexión', false); return; }
+    emailjs.init(pubKey);
+    const now = new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    await emailjs.send(svcId, tplId, {
+      to_email:    toMail,
+      event_type:  '🧪 Email de Prueba — SGCIA Dashboard',
+      num:         '000', clasif: 'TEST', hallazgo: 'Prueba de configuración',
+      area:        'SGCIA', resp: 'Sistema', plazo: '—', estado: 'Activo',
+      causa:       'Este es un email de prueba para verificar la configuración.',
+      accion:      'Si recibís este mensaje, la configuración es correcta.',
+      resp_impl:   'Sistema SGCIA', fecha_impl: '—',
+      verificador: '—', fecha_verif: '—', fecha_hora: now,
+    });
+    _ejsStatus('✓ Email de prueba enviado correctamente a ' + toMail, true);
+  }catch(err){
+    _ejsStatus('✗ Error: ' + (err.text || err.message || JSON.stringify(err)), false);
+  }
+}
+
+function _ejsStatus(msg, ok){
+  const el = document.getElementById('ejsStatus');
+  el.style.display = 'block';
+  el.style.background = ok === null ? '#e3f0ff' : ok ? '#e8f5e9' : '#ffebee';
+  el.style.border = ok === null ? '1px solid #90caf9' : ok ? '1px solid #a5d6a7' : '1px solid #ef9a9a';
+  el.style.color  = ok === null ? '#1565c0' : ok ? '#2e7d32' : '#c62828';
+  el.textContent  = msg;
+}
+
+// Cargar config al inicio
+(function(){
+  EMAIL_CFG = JSON.parse(localStorage.getItem('sgcia_email_cfg') ||
+    '{"serviceId":"service_2bplw7r","templateId":"template_ss9n07r","publicKey":"_DYALGXX2UWf8GgUm","toEmail":"rgutierrez@maniagro.com","onSave":true,"onDownload":true}');
+  window.addEventListener('DOMContentLoaded', _updateEmailBtn);
+})();
+
+
+let TREATMENTS = {};   // keyed by r.num
+let ATTACHMENTS = {};  // keyed by r.num, lazy-loaded from localStorage
+
+// ═══ PERSISTENCIA (localStorage) ════════════════════════════════════════════
+const STORE = {
+  save(){
+    try{
+      localStorage.setItem('sgcia_treatments', JSON.stringify(TREATMENTS));
+      // Descarga log sin blobs (se regenera el docx si se necesita re-descargar)
+      const desc = DESCARGAS_LOG.map(({blob, ...d})=>d);
+      localStorage.setItem('sgcia_descargas', JSON.stringify(desc));
+    }catch(e){ console.warn('Error guardando estado:', e.message); }
+  },
+  load(){
+    try{
+      const t = localStorage.getItem('sgcia_treatments');
+      if(t) Object.assign(TREATMENTS, JSON.parse(t));
+      const d = localStorage.getItem('sgcia_descargas');
+      if(d) DESCARGAS_LOG = JSON.parse(d);
+    }catch(e){ console.warn('Error cargando estado:', e.message); }
+  },
+  saveAttachments(num, files){
+    try{
+      localStorage.setItem('sgcia_att_'+num, JSON.stringify(files));
+      ATTACHMENTS[num] = files;
+      return true;
+    }catch(e){
+      showToast('⚠ Sin espacio para guardar adjunto: '+e.message, true);
+      return false;
+    }
+  },
+  loadAttachments(num){
+    if(ATTACHMENTS[num] !== undefined) return ATTACHMENTS[num];
+    try{
+      const d = localStorage.getItem('sgcia_att_'+num);
+      ATTACHMENTS[num] = d ? JSON.parse(d) : [];
+    }catch(e){ ATTACHMENTS[num] = []; }
+    return ATTACHMENTS[num];
+  },
+  clearAttachment(num, idx){
+    const files = this.loadAttachments(num);
+    files.splice(idx, 1);
+    this.saveAttachments(num, files);
+  }
+};
+
+// Helper global para acceder a attachments desde renderTable
+function loadAttachments(num){ return STORE.loadAttachments(num); }
+
+
+function exportCSV(){
+  const headers = [
+    'Fecha','Año','Número','Tipo de Auditoría','Clasificación','Requisito',
+    'Tipo de Hallazgo','Tipo de acción','Area responsable de tratamiento',
+    'Responsable','Plazo','Estado de Plan de acción','Fecha Cierre',
+    'Dias sin resolver','Descripción',
+    'Causa Raíz','Acción Correctiva','Responsable Implementación',
+    'Fecha Implementación','Evidencia','Verificador','Observaciones'
+  ];
+  const escape = v => {
+    const s = String(v||'');
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? '"' + s.replace(/"/g,'""') + '"' : s;
+  };
+  const rows = DATA.map(r => {
+    const tr = TREATMENTS[r.num] || {};
+    return [
+      r.fecha, r.anio, r.num, r.tipoAud, r.clasif, r.req,
+      r.hallazgo, r.accion, r.area, r.resp, r.plazo,
+      r.estado, r.fechaCierre, r.dias, r.desc,
+      tr.causa||'', tr.accion||'', tr.respImpl||'',
+      tr.fechaImpl||'', tr.evidencia||'', tr.verificador||'', tr.observaciones||''
+    ].map(escape).join(',');
+  });
+  const csv = [headers.map(escape).join(','), ...rows].join('\r\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'SGCIA_R-SIG-AC01_' + new Date().toLocaleDateString('es-AR').replace(/\//g,'-') + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ CSV exportado correctamente', false);
+}
+
+// ═══ TREATMENT SHEET ═══════════════════════════════════════════════════════
+let CURRENT_TREAT_NUM = null;
+
+function openTreatmentSheet(num){
+  const r = DATA.find(d => d.num === String(num));
+  if(!r) return;
+  CURRENT_TREAT_NUM = r.num;
+
+  // Populate readonly info
+  document.getElementById('tBadgeNum').textContent = 'N° ' + r.num;
+  document.getElementById('tTipoHallazgo').value = r.hallazgo || '';
+  document.getElementById('tClasif').value = r.clasif || '';
+  document.getElementById('tArea').value   = r.area   || '';
+  document.getElementById('tResp').value   = r.resp   || '';
+  document.getElementById('tPlazo').value  = r.plazo  || '';
+  document.getElementById('tReq').value    = r.req    || '';
+  document.getElementById('tDescText').textContent = r.desc || '(Sin descripción disponible.)';
+
+  // Load saved treatment if exists
+  const tr = TREATMENTS[r.num] || {};
+  document.getElementById('tCausa').value        = tr.causa        || '';
+  document.getElementById('tAccion').value       = tr.accion       || '';
+  document.getElementById('tRespImpl').value     = tr.respImpl     || r.resp || '';
+  document.getElementById('tEvidencia').value    = tr.evidencia    || '';
+  document.getElementById('tVerificador').value  = tr.verificador  || '';
+  document.getElementById('tFechaVerif').value   = tr.fechaVerif   || '';
+  document.getElementById('tObservaciones').value= tr.observaciones|| '';
+
+  // Fecha impl: pre-fill with plazo
+  const fi = document.getElementById('tFechaImpl');
+  if(tr.fechaImpl){ fi.value = tr.fechaImpl; }
+  else if(r.plazo){ try{ const p=r.plazo.split('/'); fi.value=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; }catch{fi.value='';} }
+  else { fi.value=''; }
+
+  updateTreatAlertTag(r.num);
+  checkVerificador();
+  renderAttachList();
+  // Reset buttons
+  
+  document.getElementById('tPendingAlert').style.display='none';
+  document.getElementById('treatOverlay').classList.add('show');
+}
+
+function updateTreatAlertTag(num){
+  const tag = document.getElementById('tPendingAlert');
+  const tr  = TREATMENTS[num];
+  tag.style.display = tr && tr.pendingReview ? 'flex' : 'none';
+}
+
+function closeTreat(){
+  document.getElementById('treatOverlay').classList.remove('show');
+  CURRENT_TREAT_NUM = null;
+}
+
+function closeTreatIfBg(e){
+  if(e.target === document.getElementById('treatOverlay')) closeTreat();
+}
+
+// ═══ CSV UPLOAD (kept for backward compat but hidden) ══════════════════════
 function loadCSV(evt){
   const file = evt.target.files[0]; if(!file) return;
   const prog = document.getElementById('uprog');
@@ -980,7 +1473,6 @@ function loadCSV(evt){
       Papa.parse(e.target.result, {
         header: true, skipEmptyLines: true,
         complete(res){
-          // Normalizar claves: eliminar espacios y caracteres invisibles de los encabezados
           const normalizedData = res.data.map(row => {
             const norm = {};
             Object.keys(row).forEach(k => { norm[k.trim()] = (row[k]||'').trim(); });
@@ -999,21 +1491,83 @@ function loadCSV(evt){
               desc: clean('Descripción'),
             };
           }).filter(r=>r.num);
-          // fin normalización
+
+          // ── ANÁLISIS DE CAMBIOS respecto a DATA anterior ─────────────────
+          const prevNums  = new Set(DATA.map(r=>r.num));
+          const newNums   = new Set(parsed.map(r=>r.num));
+          const added     = parsed.filter(r=>!prevNums.has(r.num));
+          const removed   = DATA.filter(r=>!newNums.has(r.num));
+
+          // Hallazgos que cambiaron de estado
+          const stateChanged = [];
+          parsed.forEach(newR => {
+            const oldR = DATA.find(d=>d.num===newR.num);
+            if(oldR && oldR.estado !== newR.estado){
+              stateChanged.push({ num: newR.num, from: oldR.estado, to: newR.estado });
+            }
+          });
+
+          // ── SINCRONIZAR treatments con nuevo estado del CSV ───────────────
+          stateChanged.forEach(ch => {
+            if(TREATMENTS[ch.num]){
+              if(ch.to === 'Cerrado'){
+                // El CSV dice que ya está cerrado → quitar alerta pendiente
+                TREATMENTS[ch.num].pendingReview = false;
+              }
+            }
+          });
+          // Limpiar treatments de hallazgos eliminados del CSV
+          removed.forEach(r => {
+            if(TREATMENTS[r.num]){
+              delete TREATMENTS[r.num];
+              localStorage.removeItem('sgcia_att_'+r.num);
+            }
+          });
+          STORE.save();
+
           DATA = parsed;
+
+          // ── MOSTRAR RESUMEN DE CAMBIOS ────────────────────────────────────
+          const totalPrev = prevNums.size;
+          const changes = [];
+          if(added.length)        changes.push(`+${added.length} nuevos`);
+          if(removed.length)      changes.push(`-${removed.length} eliminados`);
+          if(stateChanged.length) changes.push(`${stateChanged.length} con cambio de estado`);
+          const summary = changes.length ? `  ·  ${changes.join('  ·  ')}` : '  ·  Sin cambios';
+
+          // Mostrar detalle en el progress overlay
+          let detailHtml = `<div class="uprog-item"><span class="uprog-dot ok" id="ud0"></span><span>${parsed.length} registros cargados${summary}</span></div>`;
+          if(stateChanged.length){
+            detailHtml += stateChanged.slice(0,5).map(ch=>
+              `<div class="uprog-item"><span class="uprog-dot ok"></span><span style="font-size:10px">N° ${ch.num}: ${ch.from} → <strong>${ch.to}</strong></span></div>`
+            ).join('');
+            if(stateChanged.length>5) detailHtml += `<div class="uprog-item"><span class="uprog-dot ok"></span><span style="font-size:10px">...y ${stateChanged.length-5} más</span></div>`;
+          }
+
+          ic.innerHTML = detailHtml;
+          prog.querySelector('.uprog-title').textContent = `✓ CSV cargado: ${file.name}`;
+
           ACTIVE_TAB = 'resumen';
           document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
           document.getElementById('tab-resumen')?.classList.add('active');
+          // Asegurarse de que el panel descargas quede oculto
+          const pd = document.getElementById('panelDescargas');
+          if(pd) pd.style.display = 'none';
+          Array.from(document.getElementById('mainContent').children).forEach(el=>{
+            el.style.display = el.id==='panelDescargas' ? 'none' : '';
+          });
           Object.values(CHARTS).forEach(c=>{try{c.destroy();}catch(e){}});
           CHARTS = {};
-          document.getElementById('ud0').className = 'uprog-dot ok';
-          document.querySelector('#uprog .uprog-title').textContent = `✓ ${parsed.length} registros cargados`;
-          setTimeout(()=>prog.classList.remove('show'), 3000);
+          setTimeout(()=>prog.classList.remove('show'), 5000);
           updateTabBadges();
           populateFilters();
           renderAll();
           updateClock();
-          showToast(`✓ ${parsed.length} registros cargados`, false);
+
+          const toastMsg = changes.length
+            ? `✓ ${parsed.length} registros · ${changes.join(' · ')}`
+            : `✓ ${parsed.length} registros cargados (sin cambios)`;
+          showToast(toastMsg, false);
         }
       });
     }catch(err){
@@ -1226,6 +1780,608 @@ function drawGauge(canvas, pct, color, label){
 
 
 function st(id,val){const e=document.getElementById(id);if(e)e.textContent=val;}
+
+
+// ═══ EMBEDDED IMAGES ════════════════════════════════════════════════════════
+const IMG_LOGO_B64    = "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Y2xSTsUXHAwpOBiqtFAc7LVpqN/YbvsN7c2u7732ed49x9TtIzRc6he3kivc3tzPIvKvNO7EH1BJOKq0UD9o7WND+2tW/wCgvqH/AIFP/wDFVGup36TtcLf3i3DLsaVZ3DsvoWzkj2qnijFIOeXceHZJPNVmWRWyrbjlW65z1zT7i6ubyfzbm4lnk6b5pCzYHbJOahopi5mWJL+7mtFtZbq5e3T7sLSsUXHTCk4FFtf3tnu+yXU8G/73kysu/wCuCM/j61XooDmZPHe3cNpJaxXU6W8n+siWVgj9vmUHB6Dr6Ulvcz2cnm21xLBIvG+FyrY9Mg5qLNGaQc7LR1G98iW3+23PkysWki899rseSWGcEnuTUEMsltIssErRSLyrxsVZT6gjkVHRTDmZNcXNzeSebc3Es8jfxzSFmwO2Sc1DRRQS3cKKKKQgooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/2Q==";
+const IMG_AUDITOR_B64 = "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";
+
+// ═══ DOCX HELPERS ════════════════════════════════════════════════════════════
+function b64ToUint8(b64){
+  const bin=atob(b64), arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return arr;
+}
+
+
+// ═══ DOCX PURO — sin dependencias externas (JSZip + OOXML manual) ═════════
+async function buildTreatmentDocx(num){
+  if(!window.JSZip) throw new Error('JSZip no cargó. Recargá la página.');
+  const rec = DATA.find(d=>d.num===String(num));
+  if(!rec) throw new Error('Registro no encontrado');
+  const t = TREATMENTS[num]||{};
+
+  // ── Helpers XML ──────────────────────────────────────────────────────────
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const bdr = (col='BFBFBF',sz=4) =>
+    `<w:top w:val="single" w:sz="${sz}" w:space="0" w:color="${col}"/>` +
+    `<w:left w:val="single" w:sz="${sz}" w:space="0" w:color="${col}"/>` +
+    `<w:bottom w:val="single" w:sz="${sz}" w:space="0" w:color="${col}"/>` +
+    `<w:right w:val="single" w:sz="${sz}" w:space="0" w:color="${col}"/>`;
+
+  function rpr({b=false,sz=18,col='1A2533',it=false}={}){
+    return `<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/><w:color w:val="${col}"/>${b?'<w:b/><w:bCs/>':''}${it?'<w:i/>':''}</w:rPr>`;
+  }
+  function run(text, opts={}){
+    const t2 = esc(String(text||''));
+    if(!t2) return `<w:r>${rpr(opts)}<w:t xml:space="preserve"> </w:t></w:r>`;
+    const parts = t2.split('&#xA;');
+    let c='';
+    parts.forEach((p,i)=>{ if(i>0)c+='<w:br/>'; c+=`<w:t xml:space="preserve">${p||' '}</w:t>`; });
+    return `<w:r>${rpr(opts)}${c}</w:r>`;
+  }
+  function p(runs, {al='left',sp0=40,sp1=40}={}){
+    const jc = al!=='left'?`<w:jc w:val="${al}"/>`:'';
+    const sp = `<w:spacing w:before="${sp0}" w:after="${sp1}"/>`;
+    const dr = `<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr>`;
+    const rs = Array.isArray(runs)?runs.join(''):runs;
+    return `<w:p><w:pPr>${jc}${sp}${dr}</w:pPr>${rs}</w:p>`;
+  }
+  function tcPr({w=2000,span=1,bg=null,col='BFBFBF',bsz=4,pad=null,va='top'}={}){
+    let s=`<w:tcW w:w="${w}" w:type="dxa"/>`;
+    if(span>1)s+=`<w:gridSpan w:val="${span}"/>`;
+    if(bg)s+=`<w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>`;
+    s+=`<w:tcBorders>${bdr(col,bsz)}</w:tcBorders>`;
+    if(pad)s+=`<w:tcMar><w:top w:w="${pad.t||80}" w:type="dxa"/><w:left w:w="${pad.l||120}" w:type="dxa"/><w:bottom w:w="${pad.b||80}" w:type="dxa"/><w:right w:w="${pad.r||120}" w:type="dxa"/></w:tcMar>`;
+    s+=`<w:vAlign w:val="${va}"/>`;
+    return `<w:tcPr>${s}</w:tcPr>`;
+  }
+  function tc(content, opts={}){
+    return `<w:tc>${tcPr(opts)}${typeof content==='string'?content:content.join('')}</w:tc>`;
+  }
+  function tr(h, ...cells){ return `<w:tr><w:trPr><w:trHeight w:val="${h}" w:hRule="atLeast"/></w:trPr>${cells.join('')}</w:tr>`; }
+  function tbl(widths, rows){
+    const tw = widths.reduce((a,b)=>a+b,0);
+    const grid = widths.map(w=>`<w:gridCol w:w="${w}"/>`).join('');
+    return `<w:tbl><w:tblPr><w:tblW w:w="${tw}" w:type="dxa"/><w:tblInd w:w="0" w:type="dxa"/><w:tblBorders>${bdr()}</w:tblBorders><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="0" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${grid}</w:tblGrid>${rows.join('')}</w:tbl>`;
+  }
+  const BW=11000;
+  const [BC1,BC2,BC3] = [Math.round(BW*.22),Math.round(BW*.16),Math.round(BW*.34)];
+  const BC4 = BW-BC1-BC2-BC3;
+  function hdrC(text,span=1,bg='1565C0'){ const w=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:BC1; return tc(p(run(text,{b:true,sz:19,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w,span,bg,col:'888888',bsz:6}); }
+  function lblC(text,span=1){ const w=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:BC1; return tc(p(run(text,{b:true,sz:17}),{sp0:60,sp1:60}),{w,span,bg:'F0F4F8'}); }
+  function valC(text,span=1,pad=null){ const ww=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:span===1?BC1:BC4; return tc(p(run(text||'',{sz:17}),{sp0:60,sp1:60}),{w:ww,span,pad}); }
+  // tcX: cell con ancho EXPLÍCITO (evita el bug de ancho BC1 en columnas 2/3/4)
+  function tcX(w, text, opts={}){
+    const {b=false,col='1A2533',bg=null} = opts;
+    return tc(p(run(text||'',{b,sz:17,col}),{sp0:60,sp1:60}),{w,bg:bg||null});
+  }
+  function lblX(w, text){ return tc(p(run(text||'',{b:true,sz:17}),{sp0:60,sp1:60}),{w,bg:'F0F4F8'}); }
+
+  // ── Data prep ──────────────────────────────────────────────────────────────
+  const isInt=(rec.tipoAud||'').toLowerCase().includes('interna');
+  const Y='\u2612',N='\u2610', chk=v=>v?Y:N;
+  const acTipo=rec.accion||'Correctiva';
+  const isC=acTipo.toLowerCase().includes('correct'), isP=acTipo.toLowerCase().includes('prevent');
+  const hoy=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const fVerifStr=t.fechaVerif?t.fechaVerif.split('-').reverse().join('/'):'';
+  const fImplStr=t.fechaImpl?t.fechaImpl.split('-').reverse().join('/'):(rec.plazo||'');
+  const gap=`<w:p><w:pPr><w:spacing w:before="80" w:after="0"/></w:pPr></w:p>`;
+
+  // ── Tables ──────────────────────────────────────────────────────────────────
+  const t1=tbl([BC1,BC2,BC3,BC4],[
+    tr(320,hdrC('DESCRIPCI\u00d3N DEL HALLAZGO',4)),
+    tr(380,tc(
+      p(run(`${chk(false)}  Proveedor`,{sz:16}),{sp0:30,sp1:20})+
+      p(run(`${chk(isInt)}  Auditor\u00eda interna   Proceso/Planta: ${rec.clasif||''}`,{sz:16,b:isInt}),{sp0:20,sp1:20})+
+      p(run(`${chk(!isInt&&rec.tipoAud==='Externa')}  Auditor\u00eda externa   Cliente/Ente certificador`,{sz:16}),{sp0:20,sp1:30}),
+      {w:BW,span:4})),
+    tr(700,tc(
+      p(run(`N\u00b0 de Hallazgo: ${rec.num}`,{b:true,sz:18}),{sp0:80,sp1:40})+
+      p(run(`Requisito: ${rec.req||'-'}   |   Tipo: ${rec.hallazgo||''}`,{sz:16,col:'445566'}),{sp0:20,sp1:40})+
+      p(run(' '),{sp0:20,sp1:20})+
+      p(run(rec.desc||'',{sz:16}),{sp0:40,sp1:80}),
+      {w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
+    tr(280,lblC('Detectado por'),valC(''),lblC('\u00c1rea'),valC('SGCIA')),
+    tr(280,valC('Equipo Auditor'),valC(''),valC(''),valC(rec.fecha||'')),
+  ]);
+
+  const t2=tbl([BC1,BC2,BC3,BC4],[
+    tr(320,hdrC('TRATAMIENTO DE HALLAZGO',4)),
+    tr(320,hdrC('CORRECCI\u00d3N  (Acci\u00f3n inmediata)',4,'37474F')),
+    tr(280,lblC('Resoluci\u00f3n (a completar por el \u00e1rea auditada):',4)),
+    tr(500,tc(p(run(t.correccion||'',{sz:16}),{sp0:80,sp1:200}),{w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
+    tr(300,
+      lblX(BC1,'Tomada Por'),
+      tcX(BC2,t.respImpl||rec.resp||''),
+      tcX(BC3,rec.area||''),
+      tcX(BC4,fImplStr)
+    ),
+  ]);
+
+  const t3=tbl([BC1,BC2,BC3,BC4],[
+    tr(320,tc(p(run(`ACCI\u00d3N  ${chk(isC)} CORRECTIVA    ${chk(isP)} PREVENTIVA    ${chk(!isC&&!isP)} NO APLICABLE`,{b:true,sz:18}),{sp0:80,sp1:80}),{w:BW,span:4,bg:'E8EEF6'})),
+    tr(280,lblC('Causas que originaron el Hallazgo (a completar por el \u00e1rea auditada):',4)),
+    tr(500,tc(p(run(t.causa||'',{sz:16}),{sp0:80,sp1:200}),{w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
+    tr(300,
+      lblX(BC1,'Responsable'),
+      tcX(BC2,t.respImpl||rec.resp||''),
+      tcX(BC3,rec.area||''),
+      tcX(BC4,fImplStr)
+    ),
+  ]);
+
+  const t4=tbl([BC1,BC2,BC3,BC4],[
+    tr(280,lblC('Descripci\u00f3n de la Acci\u00f3n (a completar por el \u00e1rea auditada):',4)),
+    tr(500,tc(p(run(t.accion||'',{sz:16}),{sp0:80,sp1:200}),{w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
+    tr(280,lblC('Plan de Acci\u00f3n:',4)),
+    tr(400,tc(p(run(t.observaciones||'',{sz:16}),{sp0:80,sp1:160}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    tr(280,
+      lblX(BC1,'Responsable'),
+      tc(p(run(t.respImpl||rec.resp||'',{sz:17}),{sp0:60,sp1:60}),{w:BC2+BC3,span:2}),
+      tc(p(run('Fecha Objetivo',{b:true,sz:17}),{sp0:40,sp1:10})+p(run(fImplStr,{sz:16}),{sp0:10,sp1:40}),{w:BC4,bg:'F0F4F8'})
+    ),
+  ]);
+
+  const t5=tbl([BC1,BC2,BC3,BC4],[
+    tr(320,hdrC('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n (a completar por equipo auditor):',4,'37474F')),
+    tr(400,tc(p(run('')),{w:BW,span:4,pad:{t:60,b:80,l:150,r:150}})),
+    tr(300,
+      lblX(BC1,'Aprobaci\u00f3n de Cierre'),
+      tcX(BC2,t.verificador||''),
+      tcX(BC3,t.evidencia||''),
+      tcX(BC4,fVerifStr)
+    ),
+    tr(320,hdrC('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',4,'37474F')),
+    tr(400,tc(p(run('')),{w:BW,span:4,pad:{t:60,b:80,l:150,r:150}})),
+    tr(300,
+      lblX(BC1,'Aprobaci\u00f3n de Cierre'),
+      tcX(BC2,t.verificador||''),
+      tcX(BC3,t.evidencia||''),
+      tcX(BC4,fVerifStr)
+    ),
+  ]);
+
+  // ── Header ──────────────────────────────────────────────────────────────────
+  const HW=11000, [HL,HT,HR,HC]=[1500, HW-1500-1300-1300, 1300, 1300];
+  const EMU_W=1079500, EMU_H=762000;
+  const logoImg=`<w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${EMU_W}" cy="${EMU_H}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="Logo"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="Logo"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId1" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${EMU_W}" cy="${EMU_H}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>`;
+
+  const hdrTbl=tbl([HL,HT,HR,HC],[
+    tr(340,
+      tc(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr/>${logoImg}</w:r></w:p>`,{w:HL,col:'888888',bsz:6,va:'center'}),
+      tc(p(run('Sistema Integrado de Gesti\u00f3n',{b:true,sz:19,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Revisi\u00f3n 7',{sz:16,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('R-SIG-AU 04',{b:true,sz:16,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+    ),
+    tr(320,
+      tc(p(run(''),{sp0:20,sp1:20}),{w:HL,col:'888888',bsz:6}),
+      tc(p(run('TRATAMIENTO DE HALLAZGOS',{b:true,sz:20,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Fecha:',{sz:15,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run(hoy,{sz:15,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('P\u00e1g. 1 de 1',{sz:15,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+    ),
+  ]);
+
+  const FW=11000, FC=Math.round(FW/3);
+  const ftrTbl=tbl([FC,FC,FW-FC-FC],[
+    tr(280,
+      tc(p(run('Elabor\u00f3',{b:true,sz:17,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FC,bg:'7030A0',col:'7030A0'}),
+      tc(p(run('Revis\u00f3',{b:true,sz:17,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FC,bg:'7030A0',col:'7030A0'}),
+      tc(p(run('Aprob\u00f3',{b:true,sz:17,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FW-FC-FC,bg:'7030A0',col:'7030A0'}),
+    ),
+    tr(400,
+      tc(p(run('Supervisor del SGCIA: Augusto Fambrini',{sz:16}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:16}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Responsable del SGCIA: M. Elisa Andrada',{sz:16}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:16}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Gerente de Planta industrial: Gaspar Menichetti',{sz:16}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:16}),{sp0:20,sp1:40}),{w:FW-FC-FC}),
+    ),
+  ]);
+
+  // ── Namespaces ────────────────────────────────────────────────────────────
+  const NS=`xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" mc:Ignorable="w14 wp14"`;
+
+  // ── Archivos adjuntos ─────────────────────────────────────────────────────
+  const attachFiles = STORE.loadAttachments(num);
+  let t6 = '';
+  let attachImgRels = '';
+  const attachImgRids = [];
+
+  if(attachFiles.length){
+    // Tabla de anexos
+    // attachment table has 2 columns
+  const attTW = BW;
+  const attC1 = Math.round(attTW/2);
+  const attC2 = attTW - attC1;
+  function hdrAtt(text){ return tc(p(run(text,{b:true,sz:19,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w:attTW,span:2,bg:'455A64',col:'888888',bsz:6}); }
+  const annexRows = [tr(320, hdrAtt('ARCHIVOS ADJUNTOS / ANEXOS'))];
+
+    // 2-column image grid: collect pairs then build rows
+    const imgItems = [];
+    const nonImgItems = [];
+
+    attachFiles.forEach((f, i) => {
+      const isImg = f.type && f.type.startsWith('image/');
+      if(isImg){
+        const rId = 'rIdAtt'+(i+1);
+        attachImgRids.push({rId, name:'att_'+i+'_'+f.name, data: f.data, type: f.type});
+        attachImgRels += `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/att_${i}_${esc(f.name)}"/>`;
+        // 2 images per row → each cell ~half width. 914400 EMU = 1 inch.
+        // Cell width = (BW/2) DXA * 914400/1440 EMU ~ 3506600 EMU; height ~2800000 EMU
+        const cellW = Math.round(BW/2);
+        const imgW  = 3500000;
+        const imgH  = 2625000; // 3:4 ratio approx
+        const imgXml = `<w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${imgW}" cy="${imgH}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${10+i}" name="Attach${i}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${10+i}" name="Attach${i}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rId}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${imgW}" cy="${imgH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>`;
+        const cellContent =
+          `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="40" w:after="20"/></w:pPr><w:r><w:rPr/>${imgXml}</w:r></w:p>` +
+          p(run(f.name, {b:true,sz:16}), 'center', {before:20,after:40});
+        imgItems.push({cellW, cellContent});
+      } else {
+        nonImgItems.push(f);
+      }
+    });
+
+    // Non-image files: list them (filename only, no size)
+    if(nonImgItems.length){
+      nonImgItems.forEach((f,i)=>{
+        annexRows.push(tr(280,
+          tc(p(run((i+1)+'. '+f.name, {b:true,sz:17}),{sp0:60,sp1:60}),{w:attTW,span:2,bg:'F5F5F5'})
+        ));
+      });
+    }
+
+    // Image pairs: 2 per row, titles shown below each image
+    for(let i=0; i<imgItems.length; i+=2){
+      const a = imgItems[i];
+      const b2 = imgItems[i+1];
+      if(b2){
+        annexRows.push(tr(2400,
+          tc(a.cellContent, {w:attC1, pad:{t:60,b:60,l:80,r:40}}),
+          tc(b2.cellContent, {w:attC2, pad:{t:60,b:60,l:40,r:80}}),
+        ));
+      } else {
+        // Last image alone (odd count)
+        annexRows.push(tr(2400,
+          tc(a.cellContent, {w:attC1, pad:{t:60,b:60,l:80,r:40}}),
+          tc(p(run('')), {w:attC2, pad:{t:60,b:60,l:40,r:80}}),
+        ));
+      }
+    }
+
+    t6 = tbl([attC1, attC2], annexRows);
+  }
+
+  const docBody = t1+gap+t2+gap+t3+gap+t4+gap+t5+(t6?gap+t6:'');
+  const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${docBody}<w:sectPr><w:headerReference w:type="default" r:id="rId3"/><w:footerReference w:type="default" r:id="rId4"/><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1000" w:bottom="1800" w:left="1000" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+
+  const hdrXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>${hdrTbl}<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:p></w:hdr>`;
+  const ftrXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}>${ftrTbl}</w:ftr>`;
+
+  // ── Build ZIP ──────────────────────────────────────────────────────────────
+  function b64Arr(b){const d=atob(b),a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);return a;}
+
+  const zip=new JSZip();
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`);
+  zip.file('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
+  zip.file('word/_rels/document.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>${attachImgRels}</Relationships>`);
+  zip.file('word/_rels/header1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.jpg"/></Relationships>`);
+  zip.file('word/_rels/footer1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`);
+  zip.file('word/styles.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>`);
+  zip.file('word/settings.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:defaultTabStop w:val="720"/></w:settings>`);
+  zip.file('word/document.xml', docXml);
+  zip.file('word/header1.xml',  hdrXml);
+  zip.file('word/footer1.xml',  ftrXml);
+  zip.file('word/media/logo.jpg', b64Arr(IMG_LOGO_B64), {binary:true});
+
+  // Embeber imágenes adjuntas
+  attachImgRids.forEach(att => {
+    const ext = att.name.split('.').pop().toLowerCase();
+    zip.file(`word/media/${att.name}`, b64Arr(att.data), {binary:true});
+  });
+
+  return zip.generateAsync({
+    type:'blob',
+    mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  });
+}
+
+// ═══ DESCARGAS HISTORIAL ═════════════════════════════════════════════════════
+let DESCARGAS_LOG = [];
+
+function checkVerificador(){
+  const v = (document.getElementById('tVerificador')||{}).value||'';
+  const btn = document.getElementById('btnDescargaWord');
+  if(!btn) return;
+  if(v.trim()){
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor  = 'pointer';
+    btn.title = 'Descargar hoja de tratamiento en Word';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.45';
+    btn.style.cursor  = 'not-allowed';
+    btn.title = "Completá 'Eficacia Verificada por' para habilitar la descarga";
+  }
+}
+
+// Guardar datos (sin descargar) — muestra la alerta de revisión pendiente
+function saveTreatData(){
+  if(!CURRENT_TREAT_NUM) return;
+  const causa  = document.getElementById('tCausa').value.trim();
+  const accion = document.getElementById('tAccion').value.trim();
+  if(!causa || !accion){
+    showToast('⚠ Completá al menos la Causa Raíz y la Acción Correctiva', true);
+    return;
+  }
+  _persistTreatment(true);
+  STORE.save();
+  // Alerta por email — solo si está configurado y la opción está activa
+  if(EMAIL_CFG.onSave) sendEmailAlert(CURRENT_TREAT_NUM, '📋 Tratamiento guardado — Pendiente de revisión');
+  // Update table without destroying charts
+  renderTableOnly();
+  updateTabBadges();
+  showToast('✓ Datos guardados · Alerta de revisión pendiente generada', false);
+  document.getElementById('tPendingAlert').style.display = 'flex';
+}
+
+// Actualiza solo la tabla sin tocar los gráficos
+function renderTableOnly(){
+  const currentRenderTable = renderTable;
+  renderTable();
+}
+
+
+function _collectFormData(){
+  return {
+    causa:         document.getElementById('tCausa').value.trim(),
+    accion:        document.getElementById('tAccion').value.trim(),
+    correccion:    document.getElementById('tCausa').value.trim(),
+    respImpl:      document.getElementById('tRespImpl').value.trim(),
+    fechaImpl:     document.getElementById('tFechaImpl').value,
+    evidencia:     document.getElementById('tEvidencia').value.trim(),
+    verificador:   document.getElementById('tVerificador').value.trim(),
+    fechaVerif:    document.getElementById('tFechaVerif').value,
+    observaciones: document.getElementById('tObservaciones').value.trim(),
+    savedAt:       new Date().toISOString(),
+  };
+}
+
+function _persistTreatment(pendingReview){
+  const num = CURRENT_TREAT_NUM;
+  if(!num) return;
+  const data = _collectFormData();
+  data.pendingReview = pendingReview;
+  TREATMENTS[num] = data;
+}
+
+// Descarga real: requiere verificador
+async function downloadTreatmentNow(){
+  const num = CURRENT_TREAT_NUM;
+  if(!num){ showToast('⚠ Error: no hay hallazgo seleccionado', true); return; }
+
+  const verificador = document.getElementById('tVerificador').value.trim();
+  if(!verificador){
+    showToast('⚠ Completá el campo "Eficacia Verificada por" primero', true);
+    return;
+  }
+  const causa  = document.getElementById('tCausa').value.trim();
+  const accion = document.getElementById('tAccion').value.trim();
+  if(!causa || !accion){
+    showToast('⚠ Completá la Causa Raíz y la Acción Correctiva', true);
+    return;
+  }
+
+  const btn  = document.getElementById('btnDescargaWord');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generando...';
+  btn.disabled = true;
+
+  // Persist
+  _persistTreatment(true);
+  STORE.save();
+  renderTableOnly();
+  updateTabBadges();
+
+  const r2 = DATA.find(d=>d.num===num) || {};
+  const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
+  LAST_DOCX_NAME = 'R-SIG-AU04_N'+num+'_'+(r2.clasif||'').replace(/[^a-zA-Z0-9]/g,'_')+'_'+dateStr+'.docx';
+
+  try {
+    LAST_DOCX_BLOB = await buildTreatmentDocx(num);
+
+    // ── DESCARGA — append al DOM antes de click (fix para Chrome/Firefox) ──
+    const url = URL.createObjectURL(LAST_DOCX_BLOB);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = LAST_DOCX_NAME;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 5000);
+
+    // Registrar en historial de descargas con snapshot para re-descarga
+    DESCARGAS_LOG.push({
+      idx:        DESCARGAS_LOG.length + 1,
+      nombre:     LAST_DOCX_NAME,
+      num,
+      clasif:     r2.clasif||'—',
+      hallazgo:   r2.hallazgo||'—',
+      verificador,
+      fecha:      new Date().toLocaleString('es-AR'),
+      blob:       LAST_DOCX_BLOB,
+      snapshot:   JSON.parse(JSON.stringify(TREATMENTS[num]||{})),
+    });
+    STORE.save();
+    renderDescargasTab();
+    document.getElementById('badge-descargas').textContent = DESCARGAS_LOG.length;
+
+    showToast('✓ Descargando: ' + LAST_DOCX_NAME, false);
+    // Alerta por email — si está configurado y la opción está activa
+    if(EMAIL_CFG.onDownload) sendEmailAlert(num, '✅ Tratamiento completo — Documento Word generado');
+    
+    document.getElementById('tPendingAlert').style.display = 'flex';
+
+  } catch(err){
+    console.error('DOCX error:', err);
+    showToast('⚠ Error al generar Word: ' + err.message, true);
+  } finally {
+    btn.innerHTML = orig;
+    btn.disabled  = !document.getElementById('tVerificador').value.trim();
+    if(!btn.disabled){ btn.style.opacity='1'; btn.style.cursor='pointer'; }
+  }
+}
+
+// ═══ PESTAÑA DESCARGAS ═══════════════════════════════════════════════════════
+function renderDescargasTab(){
+  const tbody = document.getElementById('descargasBody');
+  if(!tbody) return;
+  if(!DESCARGAS_LOG.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:32px;font-size:12px">No hay descargas en esta sesión.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = [...DESCARGAS_LOG].reverse().map((d,i)=>`
+    <tr style="border-bottom:1px solid #eef2f7">
+      <td style="padding:9px 14px"><span style="font-family:var(--display);font-size:13px;font-weight:700;color:var(--blue);background:#1565c012;padding:2px 7px;border-radius:5px">${d.idx}</span></td>
+      <td style="padding:9px 14px;font-size:11px;color:var(--text);font-weight:600;max-width:260px;word-break:break-all">${d.nombre}</td>
+      <td style="padding:9px 14px">
+        <span style="font-size:10px;font-weight:700;color:var(--blue)">N° ${d.num}</span>
+        <div style="font-size:10px;color:var(--dim)">${d.clasif}</div>
+      </td>
+      <td style="padding:9px 14px;font-size:11px;color:var(--text)">${d.verificador}</td>
+      <td style="padding:9px 14px;font-size:11px;color:var(--dim)">${d.fecha}</td>
+      <td style="padding:9px 14px">
+        <button onclick="reDownload(${DESCARGAS_LOG.length-1-i})" style="background:linear-gradient(135deg,#2e7d32,#1b5e20);border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M5 20h14"/></svg>
+          Re-descargar
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+async function reDownload(idx){
+  const d = DESCARGAS_LOG[idx];
+  if(!d){ showToast('⚠ Registro no encontrado', true); return; }
+
+  const doDownload = (blob) => {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href = url; a.download = d.nombre; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 5000);
+    showToast('✓ Re-descargando: '+d.nombre, false);
+  };
+
+  if(d.blob){
+    doDownload(d.blob);
+    return;
+  }
+
+  // Regenerar desde snapshot
+  if(!d.snapshot && !TREATMENTS[d.num]){
+    showToast('⚠ No hay datos guardados para regenerar este documento', true);
+    return;
+  }
+  // Usar snapshot o tratamiento actual
+  const savedTreat = TREATMENTS[d.num];
+  const savedNum   = CURRENT_TREAT_NUM;
+  CURRENT_TREAT_NUM = d.num;
+  if(d.snapshot) TREATMENTS[d.num] = d.snapshot;
+
+  showToast('⏳ Regenerando documento...', false);
+  try{
+    const blob = await buildTreatmentDocx(d.num);
+    d.blob = blob;
+    doDownload(blob);
+  }catch(err){
+    showToast('⚠ Error regenerando: '+err.message, true);
+  }finally{
+    CURRENT_TREAT_NUM = savedNum;
+  }
+}
+
+function clearDescargas(){
+  if(!confirm('¿Limpiar el historial de descargas de esta sesión?')) return;
+  DESCARGAS_LOG = [];
+  localStorage.removeItem('sgcia_descargas');
+  document.getElementById('badge-descargas').textContent = '0';
+  renderDescargasTab();
+}
+
+// ═══ ARCHIVOS ADJUNTOS ═══════════════════════════════════════════════════════
+function getFileIcon(type){
+  if(type.startsWith('image/')) return '🖼️';
+  if(type.includes('pdf'))      return '📄';
+  if(type.includes('word')||type.includes('docx')) return '📝';
+  if(type.includes('excel')||type.includes('xlsx')||type.includes('spreadsheet')) return '📊';
+  return '📎';
+}
+function formatBytes(b){ return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B'; }
+
+function renderAttachList(){
+  const num = CURRENT_TREAT_NUM;
+  const list = document.getElementById('tAttachList');
+  if(!num || !list) return;
+  const files = STORE.loadAttachments(num);
+  if(!files.length){
+    list.innerHTML = '<div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div>';
+    return;
+  }
+  list.innerHTML = files.map((f,i)=>`
+    <div class="attach-item">
+      <span class="attach-item-icon">${getFileIcon(f.type)}</span>
+      <span class="attach-item-name" title="${f.name}">${f.name}</span>
+      <span class="attach-item-size">${formatBytes(f.size)}</span>
+      <button class="attach-del" onclick="removeAttachment(${i})" title="Quitar">×</button>
+    </div>`).join('');
+}
+
+function handleAttachFiles(evt){
+  const num = CURRENT_TREAT_NUM;
+  if(!num) return;
+  const files = Array.from(evt.target.files);
+  const existing = STORE.loadAttachments(num);
+  let added = 0;
+  const MAX_SIZE = 1.5 * 1024 * 1024; // 1.5 MB per file (base64 ~2MB in storage)
+
+  const readNext = (i) => {
+    if(i >= files.length){
+      if(added > 0){
+        STORE.saveAttachments(num, existing);
+        renderAttachList();
+        renderTableOnly();
+        showToast(`✓ ${added} archivo(s) adjuntado(s)`, false);
+      }
+      evt.target.value = '';
+      return;
+    }
+    const file = files[i];
+    if(file.size > MAX_SIZE){
+      showToast(`⚠ "${file.name}" supera 1.5 MB — omitido`, true);
+      readNext(i+1); return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      existing.push({ name: file.name, type: file.type, size: file.size, data: e.target.result.split(',')[1] });
+      added++;
+      readNext(i+1);
+    };
+    reader.readAsDataURL(file);
+  };
+  readNext(0);
+}
+
+function removeAttachment(idx){
+  STORE.clearAttachment(CURRENT_TREAT_NUM, idx);
+  renderAttachList();
+  renderTableOnly();
+  showToast('✓ Archivo eliminado', false);
+}
+
+
+
+
+
+
+
 function showToast(msg,isErr){
   const t=document.getElementById('toast'),dot=document.getElementById('td2');
   document.getElementById('tmsg').textContent=msg;
@@ -1246,6 +2402,252 @@ function closeDescOverlay(e){
     document.getElementById('descOverlay').style.display = 'none';
 }
 </script>
+
+<!-- EMAIL CONFIG MODAL -->
+<div id="emailConfigOverlay" style="position:fixed;inset:0;background:rgba(0,20,45,.65);z-index:4000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeEmailConfig()">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:540px;box-shadow:0 20px 60px #00000040;overflow:hidden">
+    <div style="background:linear-gradient(90deg,#1565c0,#0d47a1);padding:16px 22px;display:flex;align-items:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff;flex:1">Configuración de Alertas por Email</span>
+      <button onclick="closeEmailConfig()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px">×</button>
+    </div>
+    <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:#e3f0ff;border:1px solid #90caf9;border-radius:8px;padding:12px 14px;font-size:11px;color:#1565c0;line-height:1.7">
+        <strong>Configuración rápida (5 min):</strong><br>
+        1. Creá cuenta gratuita en <a href="https://www.emailjs.com" target="_blank" style="color:#0d47a1;font-weight:600">emailjs.com</a> (200 emails/mes gratis)<br>
+        2. <strong>Email Services</strong> → Add New Service → conectá tu Gmail o Outlook<br>
+        3. <strong>Email Templates</strong> → Create New Template → copiá el contenido con el botón de abajo<br>
+        4. Copiá los 3 IDs y pegálos acá
+      </div>
+      <button onclick="copyEmailTemplate()" style="background:#f4f7fb;border:1px solid #c5d5e8;color:#445566;padding:8px 14px;border-radius:7px;cursor:pointer;font-size:11px;font-weight:600;display:flex;align-items:center;gap:8px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copiar plantilla de email para pegar en EmailJS
+      </button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
+          <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Service ID</label>
+          <input id="ejsServiceId" type="text" placeholder="service_xxxxxxx" style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Template ID</label>
+          <input id="ejsTemplateId" type="text" placeholder="template_xxxxxxx" style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Public Key</label>
+          <input id="ejsPublicKey" type="text" placeholder="xxxxxxxxxxxxxxxxxxxx" style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;grid-column:1/-1">
+          <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Email de destino</label>
+          <input id="ejsToEmail" type="email" placeholder="responsable@maniagro.com" style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
+        </div>
+      </div>
+      <div style="background:#f4f7fb;border:1px solid #dce6f0;border-radius:8px;padding:12px 14px">
+        <div style="font-size:10px;font-weight:700;color:#445566;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Enviar alerta cuando:</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#1a2533;cursor:pointer;margin-bottom:6px">
+          <input type="checkbox" id="ejsOnSave" checked style="width:14px;height:14px">
+          Se guardan datos del tratamiento (pendiente de revisión)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#1a2533;cursor:pointer">
+          <input type="checkbox" id="ejsOnDownload" checked style="width:14px;height:14px">
+          Se descarga el documento Word (tratamiento completo con verificación)
+        </label>
+      </div>
+      <div id="ejsStatus" style="display:none;padding:8px 12px;border-radius:7px;font-size:11px;font-weight:600"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="testEmail()" style="background:none;border:1.5px solid #c5d5e8;color:#607080;padding:9px 16px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600">Enviar email de prueba</button>
+        <button onclick="closeEmailConfig()" style="background:none;border:1.5px solid #c5d5e8;color:#607080;padding:9px 16px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600">Cancelar</button>
+        <button onclick="saveEmailConfig()" style="background:linear-gradient(135deg,#1565c0,#0d47a1);border:none;color:#fff;padding:9px 22px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700">Guardar configuración</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TREATMENT SHEET MODAL -->
+<div class="treat-overlay" id="treatOverlay" onclick="closeTreatIfBg(event)">
+  <div class="treat-modal">
+    <div class="treat-header">
+      <span class="treat-badge" id="tBadgeNum">N° —</span>
+      <span class="treat-htitle">📋 Hoja de Tratamiento de Hallazgo</span>
+      <button class="treat-close" onclick="closeTreat()">×</button>
+    </div>
+    <div class="treat-body">
+      <!-- Info del hallazgo (readonly) -->
+      <div class="treat-section">
+        <div class="treat-section-title">🔍 Información del Hallazgo</div>
+        <div class="treat-grid">
+          <div class="treat-field"><span class="treat-label">Tipo de Hallazgo</span><input class="treat-input treat-readonly" id="tTipoHallazgo" readonly></div>
+          <div class="treat-field"><span class="treat-label">Clasificación</span><input class="treat-input treat-readonly" id="tClasif" readonly></div>
+          <div class="treat-field"><span class="treat-label">Área Responsable</span><input class="treat-input treat-readonly" id="tArea" readonly></div>
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input treat-readonly" id="tResp" readonly></div>
+          <div class="treat-field"><span class="treat-label">Plazo Original</span><input class="treat-input treat-readonly" id="tPlazo" readonly></div>
+          <div class="treat-field"><span class="treat-label">Requisito</span><input class="treat-input treat-readonly" id="tReq" readonly></div>
+        </div>
+        <div class="treat-field" style="margin-top:10px"><span class="treat-label">Descripción del Hallazgo</span><div class="treat-desc" id="tDescText"></div></div>
+      </div>
+
+      <!-- Plan de tratamiento -->
+      <div class="treat-section">
+        <div class="treat-section-title">🛠 Plan de Acción y Tratamiento</div>
+        <div class="treat-grid">
+          <div class="treat-field full"><span class="treat-label">Análisis de Causa Raíz *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la causa raíz identificada mediante análisis (5 por qués, Ishikawa, etc.)..."></textarea></div>
+          <div class="treat-field full"><span class="treat-label">Acción Correctiva / Preventiva *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir la acción propuesta para eliminar la causa raíz y evitar recurrencia..."></textarea></div>
+          <div class="treat-field"><span class="treat-label">Responsable de Implementación</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
+          <div class="treat-field"><span class="treat-label">Fecha Comprometida de Implementación</span><input class="treat-input" id="tFechaImpl" type="date"></div>
+          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable de la verificación"></div>
+          <div class="treat-field"><span class="treat-label">Eficacia Verificada por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del verificador" oninput="checkVerificador()"></div>
+          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date"></div>
+          <div class="treat-field full"><span class="treat-label">Observaciones Adicionales</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Notas adicionales, actualizaciones de avance, dificultades encontradas..."></textarea></div>
+        </div>
+      </div>
+
+
+      <!-- Archivos Adjuntos -->
+      <div class="attach-section">
+        <div class="attach-section-title">
+          📎 Archivos Adjuntos
+          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se listan en el Word</span>
+        </div>
+        <div class="attach-list" id="tAttachList"><div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div></div>
+        <label class="attach-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          Adjuntar archivos
+          <input type="file" multiple style="display:none" id="tAttachInput" onchange="handleAttachFiles(event)">
+        </label>
+      </div>
+    </div>
+    <div class="treat-footer">
+      <button class="treat-cancel" onclick="closeTreat()">Cancelar</button>
+      <button class="treat-save" onclick="saveTreatData()" id="btnGuardarDatos" style="background:linear-gradient(135deg,#455a64,#263238)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar Datos
+      </button>
+      <button class="treat-save" onclick="downloadTreatmentNow()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar Word
+      </button>
+
+      <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
+        <span class="treat-pending-dot"></span> Pendiente revisión
+      </div>
+    </div>
+      <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
+        <span class="treat-pending-dot"></span> Pendiente revisión
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TREATMENT SHEET MODAL -->
+<div class="treat-overlay" id="treatOverlay" onclick="closeTreatIfBg(event)">
+  <div class="treat-modal">
+    <div class="treat-header">
+      <span class="treat-badge" id="tBadgeNum">N° —</span>
+      <span class="treat-htitle">📋 Hoja de Tratamiento de Hallazgo</span>
+      <button class="treat-close" onclick="closeTreat()">×</button>
+    </div>
+    <div class="treat-body">
+      <!-- Info del hallazgo (readonly) -->
+      <div class="treat-section">
+        <div class="treat-section-title">🔍 Información del Hallazgo</div>
+        <div class="treat-grid">
+          <div class="treat-field"><span class="treat-label">Tipo de Hallazgo</span><input class="treat-input treat-readonly" id="tTipoHallazgo" readonly></div>
+          <div class="treat-field"><span class="treat-label">Clasificación</span><input class="treat-input treat-readonly" id="tClasif" readonly></div>
+          <div class="treat-field"><span class="treat-label">Área Responsable</span><input class="treat-input treat-readonly" id="tArea" readonly></div>
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input treat-readonly" id="tResp" readonly></div>
+          <div class="treat-field"><span class="treat-label">Plazo Original</span><input class="treat-input treat-readonly" id="tPlazo" readonly></div>
+          <div class="treat-field"><span class="treat-label">Requisito</span><input class="treat-input treat-readonly" id="tReq" readonly></div>
+        </div>
+        <div class="treat-field" style="margin-top:10px"><span class="treat-label">Descripción del Hallazgo</span><div class="treat-desc" id="tDescText"></div></div>
+      </div>
+
+      <!-- Plan de tratamiento -->
+      <div class="treat-section">
+        <div class="treat-section-title">🛠 Plan de Acción y Tratamiento</div>
+        <div class="treat-grid">
+          <div class="treat-field full"><span class="treat-label">Análisis de Causa Raíz *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la causa raíz identificada mediante análisis (5 por qués, Ishikawa, etc.)..."></textarea></div>
+          <div class="treat-field full"><span class="treat-label">Acción Correctiva / Preventiva *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir la acción propuesta para eliminar la causa raíz y evitar recurrencia..."></textarea></div>
+          <div class="treat-field"><span class="treat-label">Responsable de Implementación</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
+          <div class="treat-field"><span class="treat-label">Fecha Comprometida de Implementación</span><input class="treat-input" id="tFechaImpl" type="date"></div>
+          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable de la verificación"></div>
+          <div class="treat-field"><span class="treat-label">Eficacia Verificada por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del verificador" oninput="checkVerificador()"></div>
+          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date"></div>
+          <div class="treat-field full"><span class="treat-label">Observaciones Adicionales</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Notas adicionales, actualizaciones de avance, dificultades encontradas..."></textarea></div>
+        </div>
+      </div>
+
+
+      <!-- Archivos Adjuntos -->
+      <div class="attach-section">
+        <div class="attach-section-title">
+          📎 Archivos Adjuntos
+          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se listan en el Word</span>
+        </div>
+        <div class="attach-list" id="tAttachList"><div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div></div>
+        <label class="attach-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          Adjuntar archivos
+          <input type="file" multiple style="display:none" id="tAttachInput" onchange="handleAttachFiles(event)">
+        </label>
+      </div>
+    </div>
+    <div class="treat-footer">
+      <button class="treat-cancel" onclick="closeTreat()">Cancelar</button>
+      <button class="treat-save" onclick="saveTreatData()" id="btnGuardarDatos" style="background:linear-gradient(135deg,#455a64,#263238)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Guardar Datos
+      </button>
+      <button class="treat-save" onclick="downloadTreatmentNow()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar Word
+      </button>
+
+      <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
+        <span class="treat-pending-dot"></span> Pendiente revisión
+      </div>
+    </div>
+      <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
+        <span class="treat-pending-dot"></span> Pendiente revisión
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRIVE CONFIG MODAL -->
+<div id="driveConfigOverlay" style="position:fixed;inset:0;background:rgba(0,20,45,.65);z-index:4000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeDriveConfig()">
+  <div style="background:#fff;border-radius:14px;width:94%;max-width:520px;box-shadow:0 20px 60px #00000040;overflow:hidden">
+    <div style="background:linear-gradient(90deg,#1565c0,#0d47a1);padding:16px 22px;display:flex;align-items:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/></svg>
+      <span style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff">Configuración de Google Drive</span>
+      <button onclick="closeDriveConfig()" style="margin-left:auto;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px">×</button>
+    </div>
+    <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px">
+      <div style="background:#e3f0ff;border:1px solid #90caf9;border-radius:8px;padding:12px;font-size:11px;color:#1565c0;line-height:1.6">
+        <strong>Configuración única:</strong> Obtené tus credenciales en <a href="https://console.cloud.google.com" target="_blank" style="color:#0d47a1">console.cloud.google.com</a> → APIs → Drive API → Credenciales OAuth 2.0.
+        Agregá <code style="background:#d0e4ff;padding:1px 4px;border-radius:3px">localhost</code> o tu URL en "Orígenes autorizados".
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Client ID (OAuth 2.0)</label>
+        <input id="driveClientId" type="text" placeholder="xxxxxxxx.apps.googleusercontent.com"
+          style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">API Key</label>
+        <input id="driveApiKey" type="text" placeholder="AIzaSy..."
+          style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Carpeta de destino (Folder ID — opcional)</label>
+        <input id="driveFolderId" type="text" placeholder="ID de carpeta de Drive (de la URL de la carpeta)"
+          style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
+        <span style="font-size:10px;color:#607080">Dejá en blanco para guardar en "Mi unidad". El ID está en la URL de la carpeta de Drive.</span>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="closeDriveConfig()" style="background:none;border:1.5px solid #c5d5e8;color:#607080;padding:9px 18px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600">Cancelar</button>
+        <button onclick="saveDriveConfig()" style="background:linear-gradient(135deg,#1565c0,#0d47a1);border:none;color:#fff;padding:9px 22px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700">Guardar configuración</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- DESCRIPTION MODAL -->
 <div id="descOverlay" style="position:fixed;inset:0;background:rgba(0,20,45,.6);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)" onclick="closeDescOverlay(event)">
