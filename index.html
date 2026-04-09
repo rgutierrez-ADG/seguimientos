@@ -616,6 +616,7 @@ td{padding:9px 12px;vertical-align:middle}
             <th>Clasificación</th>
             <th>Tipo Hallazgo</th>
             <th>Auditor</th>
+            <th>Área</th>
             <th>Responsable</th>
             <th>Plazo</th>
             <th>Días sin resolver</th>
@@ -1279,7 +1280,7 @@ async function sendEmailAlert(num, eventType){
 
     const _findEmailInMap = (name) => {
       if(!name || !EMAIL_CFG.auditorMap) return null;
-      const lines = EMAIL_CFG.auditorMap.split('\n');
+      const lines = EMAIL_CFG.auditorMap.split(/[|\n]/);
       for(const line of lines){
         const colonIdx = line.indexOf(':');
         if(colonIdx === -1) continue;
@@ -1363,10 +1364,18 @@ function _ejsStatus(msg, ok){
   el.textContent  = msg;
 }
 
-// Cargar config al inicio
+// Cargar config al inicio — separado de STORE para evitar dependencia de orden
 (function(){
-  EMAIL_CFG = JSON.parse(localStorage.getItem('sgcia_email_cfg') ||
-    '{"serviceId":"service_2bplw7r","templateId":"template_ss9n07r","publicKey":"_DYALGXX2UWf8GgUm","toEmail":"rgutierrez@maniagro.com","onSave":true,"onDownload":true,"auditorMap":""}');
+  const DEFAULT_MAP = 'Natacha Fernandez: nfernandez@maniagro.com|Emilse Eroles: eeroles@maniagro.com|Mayra Dip: mdip@maniagro.com|Gastón Dolso: gdolso@maniagro.com|Rodrigo Gutierrez: rgutierrez@maniagro.com';
+  const saved = localStorage.getItem('sgcia_email_cfg');
+  if(saved){
+    try{
+      EMAIL_CFG = JSON.parse(saved);
+      if(!EMAIL_CFG.auditorMap) EMAIL_CFG.auditorMap = DEFAULT_MAP;
+    }catch(e){ EMAIL_CFG.auditorMap = DEFAULT_MAP; }
+  } else {
+    EMAIL_CFG.auditorMap = DEFAULT_MAP;
+  }
   window.addEventListener('DOMContentLoaded', _updateEmailBtn);
 })();
 
