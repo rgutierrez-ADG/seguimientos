@@ -615,7 +615,7 @@ td{padding:9px 12px;vertical-align:middle}
             <th>Fecha</th>
             <th>Clasificación</th>
             <th>Tipo Hallazgo</th>
-            <th>Área</th>
+            <th>Auditor</th>
             <th>Responsable</th>
             <th>Plazo</th>
             <th>Días sin resolver</th>
@@ -1110,6 +1110,7 @@ function renderTable(){
         <span class="hallazgo-chip ${hCls} hchip-link" onclick="openTreatmentSheet('${r.num}')" title="Abrir hoja de tratamiento">${hLabel}</span>
         ${alertPill}${attachPill}
       </td>
+      <td style="font-size:11px;color:var(--dim)">${r.auditor||'—'}</td>
       <td style="font-size:11px;font-weight:600">${r.area}</td>
       <td style="font-size:11px">${r.resp}</td>
       <td style="font-size:11px;color:var(--dim)">${r.plazo}</td>
@@ -1120,7 +1121,7 @@ function renderTable(){
 }
 
 // ═══ EMAILJS — ALERTAS POR EMAIL ════════════════════════════════════════════
-let EMAIL_CFG = JSON.parse(localStorage.getItem('sgcia_email_cfg') || '{"serviceId":"service_2bplw7r","templateId":"template_ss9n07r","publicKey":"_DYALGXX2UWf8GgUm","toEmail":"rgutierrez@maniagro.com","onSave":true,"onDownload":true}');
+let EMAIL_CFG = JSON.parse(localStorage.getItem('sgcia_email_cfg') || '{"serviceId":"service_2bplw7r","templateId":"template_ss9n07r","publicKey":"_DYALGXX2UWf8GgUm","toEmail":"rgutierrez@maniagro.com","onSave":true,"onDownload":true,"auditorMap":""}');
 
 // Plantilla de email que el usuario pega en EmailJS
 const EMAIL_TEMPLATE_CONTENT = `Asunto: 📋 {{event_type}} — Hallazgo N° {{num}} | {{clasif}}
@@ -1270,33 +1271,49 @@ async function sendEmailAlert(num, eventType){
     await emailjs.send(EMAIL_CFG.serviceId, EMAIL_CFG.templateId, params);
 
     // 2. Mail al auditor del hallazgo
-    const auditorRaw = (r.auditor || '').trim();
+    // r.auditor ahora siempre disponible (columna visible en la tabla)
+    const auditorRaw = (r.auditor || r.resp || '').trim();
     let auditorEmailFinal = null;
 
-    if(auditorRaw.includes('@')){
-      // El campo Auditor ya tiene un email directo
-      auditorEmailFinal = auditorRaw;
-    } else     if(auditorRaw && EMAIL_CFG.auditorMap){
-      // Comparacion por palabras — maneja apellido/nombre en distinto orden
+    console.log('[SGCIA Email] Auditor:', auditorRaw);
+
+    const _findEmailInMap = (name) => {
+      if(!name || !EMAIL_CFG.auditorMap) return null;
       const lines = EMAIL_CFG.auditorMap.split('\n');
       for(const line of lines){
         const colonIdx = line.indexOf(':');
         if(colonIdx === -1) continue;
         const mapName  = line.substring(0, colonIdx).trim().toLowerCase();
         const mapEmail = line.substring(colonIdx + 1).trim();
-        if(!mapName || !mapEmail) continue;
-        const csvWords = auditorRaw.toLowerCase().split(/\s+/);
-        const mapWords = new Set(mapName.split(/\s+/));
-        const overlap  = csvWords.filter(w => w.length > 1 && mapWords.has(w));
-        if(overlap.length > 0){ auditorEmailFinal = mapEmail; break; }
+        if(!mapName || !mapEmail || !mapEmail.includes('@')) continue;
+        const nameWords = name.toLowerCase().split(/\s+/);
+        const mapWords  = new Set(mapName.split(/\s+/));
+        const overlap   = nameWords.filter(w => w.length > 1 && mapWords.has(w));
+        if(overlap.length > 0){
+          console.log('[SGCIA Email] Matched:', name, '->', mapEmail);
+          return mapEmail;
+        }
       }
+      return null;
+    };
+
+    if(auditorRaw.includes('@')){
+      auditorEmailFinal = auditorRaw;
+    } else {
+      auditorEmailFinal = _findEmailInMap(auditorRaw);
     }
+
+    console.log('[SGCIA Email] Final auditor email:', auditorEmailFinal || 'no encontrado');
+
     if(auditorEmailFinal && auditorEmailFinal !== EMAIL_CFG.toEmail){
       const paramsAuditor = { ...params, to_email: auditorEmailFinal };
       await emailjs.send(EMAIL_CFG.serviceId, EMAIL_CFG.templateId, paramsAuditor);
       showToast(`📧 Alerta enviada a ${EMAIL_CFG.toEmail} y ${auditorEmailFinal}`, false);
+    } else if(auditorEmailFinal && auditorEmailFinal === EMAIL_CFG.toEmail){
+      showToast('📧 Alerta enviada a ' + EMAIL_CFG.toEmail + ' (auditor = mismo destinatario)', false);
     } else {
-      showToast('📧 Alerta enviada a ' + EMAIL_CFG.toEmail, false);
+      showToast('📧 Alerta enviada a ' + EMAIL_CFG.toEmail + ' · No se encontró email del auditor', false);
+      console.warn('[SGCIA Email] Auditor no encontrado en el mapa para:', auditorRaw);
     }
   }catch(err){
     console.warn('EmailJS error:', err);
@@ -1349,7 +1366,7 @@ function _ejsStatus(msg, ok){
 // Cargar config al inicio
 (function(){
   EMAIL_CFG = JSON.parse(localStorage.getItem('sgcia_email_cfg') ||
-    '{"serviceId":"service_2bplw7r","templateId":"template_ss9n07r","publicKey":"_DYALGXX2UWf8GgUm","toEmail":"rgutierrez@maniagro.com","onSave":true,"onDownload":true}');
+    '{"serviceId":"service_2bplw7r","templateId":"template_ss9n07r","publicKey":"_DYALGXX2UWf8GgUm","toEmail":"rgutierrez@maniagro.com","onSave":true,"onDownload":true,"auditorMap":""}');
   window.addEventListener('DOMContentLoaded', _updateEmailBtn);
 })();
 
