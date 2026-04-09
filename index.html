@@ -774,6 +774,7 @@ function autoLoadCSV(){
               estado: clean('Estado de Plan de acción'), fechaCierre: clean('Fecha Cierre'),
               dias: clean('Dias sin resolver'),
               desc: clean('Descripción'),
+              auditor: clean('Auditor'),
             };
           }).filter(r=>r.num);
           DATA = parsed;
@@ -1164,6 +1165,8 @@ function openEmailConfig(){
   document.getElementById('ejsToEmail').value    = cfg.toEmail    || '';
   document.getElementById('ejsOnSave').checked     = cfg.onSave !== false;
   document.getElementById('ejsOnDownload').checked = cfg.onDownload !== false;
+  const am = document.getElementById('ejsAuditorMap');
+  if(am) am.value = cfg.auditorMap || '';
   document.getElementById('ejsStatus').style.display = 'none';
   document.getElementById('emailConfigOverlay').style.display = 'flex';
 }
@@ -1180,6 +1183,7 @@ function saveEmailConfig(){
     toEmail:     document.getElementById('ejsToEmail').value.trim(),
     onSave:      document.getElementById('ejsOnSave').checked,
     onDownload:  document.getElementById('ejsOnDownload').checked,
+    auditorMap:  document.getElementById('ejsAuditorMap').value.trim(),
   };
   localStorage.setItem('sgcia_email_cfg', JSON.stringify(EMAIL_CFG));
   _updateEmailBtn();
@@ -1249,6 +1253,7 @@ function _buildEmailParams(num, eventType){
     verificador:  t.verificador|| '—',
     fecha_verif:  fVerif,
     fecha_hora:   ahora,
+    auditor:      r.auditor    || '—',
   };
 }
 
@@ -1257,9 +1262,42 @@ async function sendEmailAlert(num, eventType){
   if(!EMAIL_CFG.serviceId || !EMAIL_CFG.templateId || !EMAIL_CFG.publicKey || !EMAIL_CFG.toEmail) return;
   if(!_initEmailJS()) return;
   try{
+    const r = DATA.find(d=>d.num===String(num)) || {};
+    const auditorEmail = null; // replaced below
+
+    // 1. Mail al responsable configurado
     const params = _buildEmailParams(num, eventType);
     await emailjs.send(EMAIL_CFG.serviceId, EMAIL_CFG.templateId, params);
-    showToast('📧 Alerta enviada a ' + EMAIL_CFG.toEmail, false);
+
+    // 2. Mail al auditor del hallazgo
+    const auditorRaw = (r.auditor || '').trim();
+    let auditorEmailFinal = null;
+
+    if(auditorRaw.includes('@')){
+      // El campo Auditor ya tiene un email directo
+      auditorEmailFinal = auditorRaw;
+    } else     if(auditorRaw && EMAIL_CFG.auditorMap){
+      // Comparacion por palabras — maneja apellido/nombre en distinto orden
+      const lines = EMAIL_CFG.auditorMap.split('\n');
+      for(const line of lines){
+        const colonIdx = line.indexOf(':');
+        if(colonIdx === -1) continue;
+        const mapName  = line.substring(0, colonIdx).trim().toLowerCase();
+        const mapEmail = line.substring(colonIdx + 1).trim();
+        if(!mapName || !mapEmail) continue;
+        const csvWords = auditorRaw.toLowerCase().split(/\s+/);
+        const mapWords = new Set(mapName.split(/\s+/));
+        const overlap  = csvWords.filter(w => w.length > 1 && mapWords.has(w));
+        if(overlap.length > 0){ auditorEmailFinal = mapEmail; break; }
+      }
+    }
+    if(auditorEmailFinal && auditorEmailFinal !== EMAIL_CFG.toEmail){
+      const paramsAuditor = { ...params, to_email: auditorEmailFinal };
+      await emailjs.send(EMAIL_CFG.serviceId, EMAIL_CFG.templateId, paramsAuditor);
+      showToast(`📧 Alerta enviada a ${EMAIL_CFG.toEmail} y ${auditorEmailFinal}`, false);
+    } else {
+      showToast('📧 Alerta enviada a ' + EMAIL_CFG.toEmail, false);
+    }
   }catch(err){
     console.warn('EmailJS error:', err);
     showToast('⚠ No se pudo enviar la alerta por email: ' + (err.text||err.message||'error'), true);
@@ -1417,6 +1455,8 @@ function openTreatmentSheet(num){
   document.getElementById('tResp').value   = r.resp   || '';
   document.getElementById('tPlazo').value  = r.plazo  || '';
   document.getElementById('tReq').value    = r.req    || '';
+  document.getElementById('tAuditor').value = r.auditor || '— (cargá el CSV actualizado para ver el auditor)';
+  document.getElementById('tFechaHallazgo').value = r.fecha || '';
   document.getElementById('tDescText').textContent = r.desc || '(Sin descripción disponible.)';
 
   // Load saved treatment if exists
@@ -1428,12 +1468,43 @@ function openTreatmentSheet(num){
   document.getElementById('tVerificador').value  = tr.verificador  || '';
   document.getElementById('tFechaVerif').value   = tr.fechaVerif   || '';
   document.getElementById('tObservaciones').value= tr.observaciones|| '';
+  const _av = document.getElementById('tAreaVerif');
+  if(_av) _av.value = tr.areaVerif || '';
+  const _dvi = document.getElementById('tDescVerifImpl');
+  if(_dvi) _dvi.value = tr.descVerifImpl || '';
+  const _dve = document.getElementById('tDescVerifEfec');
+  if(_dve) _dve.value = tr.descVerifEfec || '';
 
   // Fecha impl: pre-fill with plazo
   const fi = document.getElementById('tFechaImpl');
   if(tr.fechaImpl){ fi.value = tr.fechaImpl; }
   else if(r.plazo){ try{ const p=r.plazo.split('/'); fi.value=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; }catch{fi.value='';} }
   else { fi.value=''; }
+
+  // Sync readonly mirror fields
+  const v  = document.getElementById('tVerificador');
+  const fv = document.getElementById('tFechaVerif');
+  const syncVerif = () => {
+    const ve = document.getElementById('tVerificadorEfec');
+    const fe = document.getElementById('tFechaVerifEfec');
+    if(ve) ve.value = v ? v.value : '';
+    if(fe) fe.value = fv ? fv.value : '';
+  };
+  if(v)  v.addEventListener('input',  syncVerif);
+  if(fv) fv.addEventListener('change', syncVerif);
+  syncVerif();
+  // Mirror responsable/fecha to readonly desc fields
+  const ri = document.getElementById('tRespImpl');
+  const fiImpl = document.getElementById('tFechaImpl');
+  const syncResp = () => {
+    const rd = document.getElementById('tRespImplDesc');
+    const fd = document.getElementById('tFechaObjetivo');
+    if(rd) rd.value = ri ? ri.value : '';
+    if(fd) fd.value = fiImpl ? fiImpl.value : '';
+  };
+  if(ri) ri.addEventListener('input',  syncResp);
+  if(fiImpl) fiImpl.addEventListener('change', syncResp);
+  syncResp();
 
   updateTreatAlertTag(r.num);
   checkVerificador();
@@ -1489,6 +1560,7 @@ function loadCSV(evt){
               estado: clean('Estado de Plan de acción'), fechaCierre: clean('Fecha Cierre'),
               dias: clean('Dias sin resolver'),
               desc: clean('Descripción'),
+              auditor: clean('Auditor'),
             };
           }).filter(r=>r.num);
 
@@ -1869,28 +1941,51 @@ async function buildTreatmentDocx(num){
   const gap=`<w:p><w:pPr><w:spacing w:before="80" w:after="0"/></w:pPr></w:p>`;
 
   // ── Tables ──────────────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════
+  // TABLA 1: DESCRIPCION DEL HALLAZGO (nuevo template)
+  // ════════════════════════════════════════════════════════════════════════
+  const auditorName = rec.auditor || '—';
+
   const t1=tbl([BC1,BC2,BC3,BC4],[
     tr(320,hdrC('DESCRIPCI\u00d3N DEL HALLAZGO',4)),
-    tr(380,tc(
-      p(run(`${chk(false)}  Proveedor`,{sz:16}),{sp0:30,sp1:20})+
-      p(run(`${chk(isInt)}  Auditor\u00eda interna   Proceso/Planta: ${rec.clasif||''}`,{sz:16,b:isInt}),{sp0:20,sp1:20})+
-      p(run(`${chk(!isInt&&rec.tipoAud==='Externa')}  Auditor\u00eda externa   Cliente/Ente certificador`,{sz:16}),{sp0:20,sp1:30}),
-      {w:BW,span:4})),
-    tr(700,tc(
-      p(run(`N\u00b0 de Hallazgo: ${rec.num}`,{b:true,sz:18}),{sp0:80,sp1:40})+
-      p(run(`Requisito: ${rec.req||'-'}   |   Tipo: ${rec.hallazgo||''}`,{sz:16,col:'445566'}),{sp0:20,sp1:40})+
-      p(run(' '),{sp0:20,sp1:20})+
-      p(run(rec.desc||'',{sz:16}),{sp0:40,sp1:80}),
-      {w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
-    tr(280,lblC('Detectado por'),valC(''),lblC('\u00c1rea'),valC('SGCIA')),
-    tr(280,valC('Equipo Auditor'),valC(''),valC(''),valC(rec.fecha||'')),
+
+    // Origen: Proveedor / Auditoría interna / Auditoría externa
+    tr(360,tc([
+      p(run(chk(false)+'  Proveedor',{sz:16}),undefined,{before:30,after:10}),
+      p([run(chk(isInt)+'  Auditor\u00eda interna   ',{sz:16,b:isInt}), run('Proceso/Planta: '+(rec.clasif||''),{sz:16,b:true,it:true})],undefined,{before:10,after:10}),
+      p(run(chk(!isInt&&rec.tipoAud==='Externa')+'  Auditor\u00eda externa   Cliente/Ente certificador/Ente de inspecci\u00f3n',{sz:16}),undefined,{before:10,after:30}),
+    ],{w:BW,span:4})),
+
+    // N° y descripción
+    tr(600,tc([
+      p(run('N\u00b0 de Hallazgo: '+(rec.num||''),{b:true,sz:18}),undefined,{before:60,after:20}),
+      p(run('Descripci\u00f3n del Hallazgo:',{b:true,sz:17}),{sp0:20,sp1:20}),
+      p(run(rec.desc||'',{sz:16}),{sp0:20,sp1:60}),
+    ],{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+
+    // Detectado por
+    tr(300,
+      lblX(BC1,'Detectado por'),
+      tcX(BC2,''),
+      lblX(BC3,'\u00c1rea'),
+      tcX(BC4,rec.fecha||'')
+    ),
+    tr(280,
+      tcX(BC1, auditorName),
+      tcX(BC2,''),
+      tcX(BC3, rec.area||''),
+      tcX(BC4,'')
+    ),
   ]);
 
+  // ════════════════════════════════════════════════════════════════════════
+  // TABLA 2: CORRECCION (Acción inmediata)
+  // ════════════════════════════════════════════════════════════════════════
   const t2=tbl([BC1,BC2,BC3,BC4],[
     tr(320,hdrC('TRATAMIENTO DE HALLAZGO',4)),
     tr(320,hdrC('CORRECCI\u00d3N  (Acci\u00f3n inmediata)',4,'37474F')),
     tr(280,lblC('Resoluci\u00f3n (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.correccion||'',{sz:16}),{sp0:80,sp1:200}),{w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
+    tr(500,tc(p(run(t.causa||'',{sz:16}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Tomada Por'),
       tcX(BC2,t.respImpl||rec.resp||''),
@@ -1899,10 +1994,13 @@ async function buildTreatmentDocx(num){
     ),
   ]);
 
+  // ════════════════════════════════════════════════════════════════════════
+  // TABLA 3: ACCION CORRECTIVA + CAUSAS
+  // ════════════════════════════════════════════════════════════════════════
   const t3=tbl([BC1,BC2,BC3,BC4],[
-    tr(320,tc(p(run(`ACCI\u00d3N  ${chk(isC)} CORRECTIVA    ${chk(isP)} PREVENTIVA    ${chk(!isC&&!isP)} NO APLICABLE`,{b:true,sz:18}),{sp0:80,sp1:80}),{w:BW,span:4,bg:'E8EEF6'})),
+    tr(320,tc(p(run('ACCI\u00d3N  '+chk(isC)+' CORRECTIVA    '+chk(isP)+' PREVENTIVA    '+chk(!isC&&!isP)+' NO APLICABLE',{b:true,sz:18}),undefined,{before:80,after:80}),{w:BW,span:4,bg:'E8EEF6'})),
     tr(280,lblC('Causas que originaron el Hallazgo (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.causa||'',{sz:16}),{sp0:80,sp1:200}),{w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
+    tr(500,tc(p(run(t.accion||'',{sz:16}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Responsable'),
       tcX(BC2,t.respImpl||rec.resp||''),
@@ -1911,29 +2009,40 @@ async function buildTreatmentDocx(num){
     ),
   ]);
 
+  // ════════════════════════════════════════════════════════════════════════
+  // TABLA 4: DESCRIPCION DE LA ACCION
+  // ════════════════════════════════════════════════════════════════════════
   const t4=tbl([BC1,BC2,BC3,BC4],[
     tr(280,lblC('Descripci\u00f3n de la Acci\u00f3n (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.accion||'',{sz:16}),{sp0:80,sp1:200}),{w:BW,span:4,pad:{t:100,b:100,l:150,r:150}})),
-    tr(280,lblC('Plan de Acci\u00f3n:',4)),
-    tr(400,tc(p(run(t.observaciones||'',{sz:16}),{sp0:80,sp1:160}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
-    tr(280,
+    tr(500,tc(p(run(t.observaciones||'',{sz:16}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    tr(300,
       lblX(BC1,'Responsable'),
-      tc(p(run(t.respImpl||rec.resp||'',{sz:17}),{sp0:60,sp1:60}),{w:BC2+BC3,span:2}),
-      tc(p(run('Fecha Objetivo',{b:true,sz:17}),{sp0:40,sp1:10})+p(run(fImplStr,{sz:16}),{sp0:10,sp1:40}),{w:BC4,bg:'F0F4F8'})
+      tcX(BC2, t.respImpl||rec.resp||''),
+      tcX(BC3, rec.area||''),
+      tcX(BC4, fImplStr)
+    ),
+    tr(300,
+      lblX(BC1,''),
+      tcX(BC2,''),
+      lblX(BC3,'Fecha Objetivo'),
+      tcX(BC4, fImplStr)
     ),
   ]);
 
+  // ════════════════════════════════════════════════════════════════════════
+  // TABLA 5: VERIFICACION (sin espacio extra, página 2)
+  // ════════════════════════════════════════════════════════════════════════
   const t5=tbl([BC1,BC2,BC3,BC4],[
-    tr(320,hdrC('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n (a completar por equipo auditor):',4,'37474F')),
-    tr(400,tc(p(run('')),{w:BW,span:4,pad:{t:60,b:80,l:150,r:150}})),
+    tr(280,tc(p(run('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n  (a completar por equipo auditor):',{b:false,sz:17}),{sp0:80,sp1:80}),{w:BW,span:4})),
+    tr((t.descVerifImpl?400:160), tc(p(run(t.descVerifImpl||'',{sz:16}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Aprobaci\u00f3n de Cierre'),
       tcX(BC2,t.verificador||''),
-      tcX(BC3,t.evidencia||''),
+      tcX(BC3,t.areaVerif||''),
       tcX(BC4,fVerifStr)
     ),
-    tr(320,hdrC('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',4,'37474F')),
-    tr(400,tc(p(run('')),{w:BW,span:4,pad:{t:60,b:80,l:150,r:150}})),
+    tr(280,tc(p(run('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',{b:false,it:true,sz:17}),{sp0:80,sp1:80}),{w:BW,span:4})),
+    tr((t.descVerifEfec?400:160), tc(p(run(t.descVerifEfec||'',{sz:16}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Aprobaci\u00f3n de Cierre'),
       tcX(BC2,t.verificador||''),
@@ -2138,6 +2247,9 @@ function _collectFormData(){
     respImpl:      document.getElementById('tRespImpl').value.trim(),
     fechaImpl:     document.getElementById('tFechaImpl').value,
     evidencia:     document.getElementById('tEvidencia').value.trim(),
+    areaVerif:     (document.getElementById('tAreaVerif')||{}).value||'',
+    descVerifImpl: (document.getElementById('tDescVerifImpl')||{}).value||'',
+    descVerifEfec: (document.getElementById('tDescVerifEfec')||{}).value||'',
     verificador:   document.getElementById('tVerificador').value.trim(),
     fechaVerif:    document.getElementById('tFechaVerif').value,
     observaciones: document.getElementById('tObservaciones').value.trim(),
@@ -2452,6 +2564,17 @@ function closeDescOverlay(e){
           Se descarga el documento Word (tratamiento completo con verificación)
         </label>
       </div>
+
+      <!-- Mapa de auditor → email -->
+      <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 14px">
+        <div style="font-size:10px;font-weight:700;color:#e65100;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">📬 Emails de Auditores</div>
+        <div style="font-size:11px;color:#607080;margin-bottom:8px;line-height:1.5">
+          Si la columna <strong>Auditor</strong> del CSV contiene un email (<code style="background:#fff3e0;padding:1px 4px;border-radius:3px">nombre@dominio.com</code>), se envía automáticamente al auditor.<br>
+          Si solo contiene el nombre, completá la correspondencia acá (un par <code>Nombre: email</code> por línea):
+        </div>
+        <textarea id="ejsAuditorMap" rows="4" placeholder="Natacha Fernandez: nfernandez@maniagro.com&#10;Dip Mayra: mdip@maniagro.com&#10;Rodrigo Gutierrez: rgutierrez@maniagro.com"
+          style="width:100%;border:1.5px solid #ffe082;border-radius:7px;padding:8px 10px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;outline:none;resize:vertical"></textarea>
+      </div>
       <div id="ejsStatus" style="display:none;padding:8px 12px;border-radius:7px;font-size:11px;font-weight:600"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button onclick="testEmail()" style="background:none;border:1.5px solid #c5d5e8;color:#607080;padding:9px 16px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600">Enviar email de prueba</button>
@@ -2481,36 +2604,66 @@ function closeDescOverlay(e){
           <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input treat-readonly" id="tResp" readonly></div>
           <div class="treat-field"><span class="treat-label">Plazo Original</span><input class="treat-input treat-readonly" id="tPlazo" readonly></div>
           <div class="treat-field"><span class="treat-label">Requisito</span><input class="treat-input treat-readonly" id="tReq" readonly></div>
+          <div class="treat-field"><span class="treat-label">Detectado por (Auditor)</span><input class="treat-input treat-readonly" id="tAuditor" readonly></div>
+          <div class="treat-field"><span class="treat-label">Fecha del hallazgo</span><input class="treat-input treat-readonly" id="tFechaHallazgo" readonly></div>
         </div>
         <div class="treat-field" style="margin-top:10px"><span class="treat-label">Descripción del Hallazgo</span><div class="treat-desc" id="tDescText"></div></div>
       </div>
 
       <!-- Plan de tratamiento -->
       <div class="treat-section">
-        <div class="treat-section-title">🛠 Plan de Acción y Tratamiento</div>
+        <div class="treat-section-title">🛠 Tratamiento del Hallazgo</div>
         <div class="treat-grid">
-          <div class="treat-field full"><span class="treat-label">Análisis de Causa Raíz *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la causa raíz identificada mediante análisis (5 por qués, Ishikawa, etc.)..."></textarea></div>
-          <div class="treat-field full"><span class="treat-label">Acción Correctiva / Preventiva *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir la acción propuesta para eliminar la causa raíz y evitar recurrencia..."></textarea></div>
-          <div class="treat-field"><span class="treat-label">Responsable de Implementación</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
-          <div class="treat-field"><span class="treat-label">Fecha Comprometida de Implementación</span><input class="treat-input" id="tFechaImpl" type="date"></div>
-          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable de la verificación"></div>
-          <div class="treat-field"><span class="treat-label">Eficacia Verificada por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del verificador" oninput="checkVerificador()"></div>
-          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date"></div>
-          <div class="treat-field full"><span class="treat-label">Observaciones Adicionales</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Notas adicionales, actualizaciones de avance, dificultades encontradas..."></textarea></div>
+          <!-- Corrección -->
+          <div class="treat-field full"><span class="treat-label">Corrección - Resolución (Acción inmediata) *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la acción inmediata tomada para contener el hallazgo..."></textarea></div>
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
+          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaImpl" type="date"></div>
+          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable del tratamiento"></div>
+
+          <!-- Causas -->
+          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Causas que originaron el Hallazgo *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir las causas raíz que originaron el hallazgo..."></textarea></div>
+
+          <!-- Descripción de la Acción -->
+          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Descripción de la Acción</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Describir la acción correctiva/preventiva y el plan de acción..."></textarea></div>
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImplDesc" placeholder="Nombre del responsable" readonly style="background:#f0f4f8;color:#607080"></div>
+          <div class="treat-field"><span class="treat-label">Fecha Objetivo</span><input class="treat-input" id="tFechaObjetivo" type="date" readonly style="background:#f0f4f8;color:#607080"></div>
         </div>
       </div>
 
 
+      <!-- Verificación de implementación -->
+      <div class="treat-section" style="background:#f0f7ff;border-color:#90caf9">
+        <div class="treat-section-title" style="color:#1565c0">✅ Verificación de Implementación del Plan de Acción</div>
+        <p style="font-size:10px;color:#607080;margin:-4px 0 10px;font-style:italic">A completar por el equipo auditor</p>
+        <div class="treat-grid">
+          <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del auditor verificador" oninput="checkVerificador()"></div>
+          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date"></div>
+          <div class="treat-field full"><span class="treat-label">Área</span><input class="treat-input" id="tAreaVerif" placeholder="Área del auditor verificador"></div>
+          <div class="treat-field full"><span class="treat-label">Descripción / Observaciones</span><textarea class="treat-textarea" id="tDescVerifImpl" placeholder="Describir el resultado de la verificación de implementación..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- Verificación de efectividad -->
+      <div class="treat-section" style="background:#f1fff3;border-color:#a5d6a7">
+        <div class="treat-section-title" style="color:#2e7d32">🎯 Verificación de Efectividad del Plan de Acción</div>
+        <p style="font-size:10px;color:#607080;margin:-4px 0 10px;font-style:italic">A completar por el equipo auditor — misma persona que implementación</p>
+        <div class="treat-grid">
+          <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por</span><input class="treat-input treat-readonly" id="tVerificadorEfec" placeholder="(mismo que implementación)" readonly style="background:#f0f4f8;color:#607080"></div>
+          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input treat-readonly" id="tFechaVerifEfec" type="date" readonly style="background:#f0f4f8;color:#607080"></div>
+          <div class="treat-field full"><span class="treat-label">Descripción / Observaciones</span><textarea class="treat-textarea" id="tDescVerifEfec" placeholder="Describir el resultado de la verificación de efectividad..."></textarea></div>
+        </div>
+      </div>
+
       <!-- Archivos Adjuntos -->
       <div class="attach-section">
         <div class="attach-section-title">
-          📎 Archivos Adjuntos
-          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se listan en el Word</span>
+          📎 Evidencias
+          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se incluyen en el Word</span>
         </div>
         <div class="attach-list" id="tAttachList"><div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div></div>
         <label class="attach-btn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-          Adjuntar archivos
+          Adjuntar Evidencia
           <input type="file" multiple style="display:none" id="tAttachInput" onchange="handleAttachFiles(event)">
         </label>
       </div>
@@ -2556,22 +2709,29 @@ function closeDescOverlay(e){
           <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input treat-readonly" id="tResp" readonly></div>
           <div class="treat-field"><span class="treat-label">Plazo Original</span><input class="treat-input treat-readonly" id="tPlazo" readonly></div>
           <div class="treat-field"><span class="treat-label">Requisito</span><input class="treat-input treat-readonly" id="tReq" readonly></div>
+          <div class="treat-field"><span class="treat-label">Detectado por (Auditor)</span><input class="treat-input treat-readonly" id="tAuditor" readonly></div>
+          <div class="treat-field"><span class="treat-label">Fecha del hallazgo</span><input class="treat-input treat-readonly" id="tFechaHallazgo" readonly></div>
         </div>
         <div class="treat-field" style="margin-top:10px"><span class="treat-label">Descripción del Hallazgo</span><div class="treat-desc" id="tDescText"></div></div>
       </div>
 
       <!-- Plan de tratamiento -->
       <div class="treat-section">
-        <div class="treat-section-title">🛠 Plan de Acción y Tratamiento</div>
+        <div class="treat-section-title">🛠 Tratamiento del Hallazgo</div>
         <div class="treat-grid">
-          <div class="treat-field full"><span class="treat-label">Análisis de Causa Raíz *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la causa raíz identificada mediante análisis (5 por qués, Ishikawa, etc.)..."></textarea></div>
-          <div class="treat-field full"><span class="treat-label">Acción Correctiva / Preventiva *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir la acción propuesta para eliminar la causa raíz y evitar recurrencia..."></textarea></div>
-          <div class="treat-field"><span class="treat-label">Responsable de Implementación</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
-          <div class="treat-field"><span class="treat-label">Fecha Comprometida de Implementación</span><input class="treat-input" id="tFechaImpl" type="date"></div>
-          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable de la verificación"></div>
-          <div class="treat-field"><span class="treat-label">Eficacia Verificada por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del verificador" oninput="checkVerificador()"></div>
-          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date"></div>
-          <div class="treat-field full"><span class="treat-label">Observaciones Adicionales</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Notas adicionales, actualizaciones de avance, dificultades encontradas..."></textarea></div>
+          <!-- Corrección -->
+          <div class="treat-field full"><span class="treat-label">Corrección - Resolución (Acción inmediata) *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la acción inmediata tomada para contener el hallazgo..."></textarea></div>
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
+          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaImpl" type="date"></div>
+          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable del tratamiento"></div>
+
+          <!-- Causas -->
+          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Causas que originaron el Hallazgo *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir las causas raíz que originaron el hallazgo..."></textarea></div>
+
+          <!-- Descripción de la Acción -->
+          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Descripción de la Acción</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Describir la acción correctiva/preventiva y el plan de acción..."></textarea></div>
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImplDesc" placeholder="Nombre del responsable" readonly style="background:#f0f4f8;color:#607080"></div>
+          <div class="treat-field"><span class="treat-label">Fecha Objetivo</span><input class="treat-input" id="tFechaObjetivo" type="date" readonly style="background:#f0f4f8;color:#607080"></div>
         </div>
       </div>
 
@@ -2579,13 +2739,13 @@ function closeDescOverlay(e){
       <!-- Archivos Adjuntos -->
       <div class="attach-section">
         <div class="attach-section-title">
-          📎 Archivos Adjuntos
-          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se listan en el Word</span>
+          📎 Evidencias
+          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se incluyen en el Word</span>
         </div>
         <div class="attach-list" id="tAttachList"><div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div></div>
         <label class="attach-btn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-          Adjuntar archivos
+          Adjuntar Evidencia
           <input type="file" multiple style="display:none" id="tAttachInput" onchange="handleAttachFiles(event)">
         </label>
       </div>
