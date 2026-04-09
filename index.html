@@ -310,6 +310,7 @@ td{padding:9px 12px;vertical-align:middle}
 /* alert pill on table rows */
 .alert-pill{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 7px;border-radius:8px;background:#fff3e0;color:#e65100;border:1px solid #ffcc8055;font-weight:700;cursor:pointer}
 .alert-pill-rev{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a755}
+.alert-pill-done{background:#e3f0ff;color:#1565c0;border-color:#90caf955;font-weight:700}
 /* clickable chip */
 .hchip-link{cursor:pointer;transition:opacity .15s}
 .hchip-link:hover{opacity:.75;text-decoration:underline dotted}
@@ -1095,7 +1096,9 @@ function renderTable(){
       : '';
     let alertPill = '';
     if(tr){
-      if(tr.pendingReview){
+      if(tr.downloaded){
+        alertPill = `<span class="alert-pill alert-pill-done" onclick="openTreatmentSheet('${r.num}')" title="Tratamiento completo — Word descargado">✅ Completo</span>`;
+      } else if(tr.pendingReview){
         alertPill = `<span class="alert-pill" onclick="openTreatmentSheet('${r.num}')" title="Pendiente revisión del responsable">⚠ Revisar</span>`;
       } else {
         alertPill = `<span class="alert-pill alert-pill-rev" onclick="openTreatmentSheet('${r.num}')" title="Tratamiento guardado">✓ Tratamiento</span>`;
@@ -2297,11 +2300,14 @@ function _collectFormData(){
   };
 }
 
-function _persistTreatment(pendingReview){
+function _persistTreatment(pendingReview, downloaded=false){
   const num = CURRENT_TREAT_NUM;
   if(!num) return;
   const data = _collectFormData();
   data.pendingReview = pendingReview;
+  if(downloaded) data.downloaded = true;
+  // Preserve downloaded flag if already set
+  else if(TREATMENTS[num] && TREATMENTS[num].downloaded) data.downloaded = true;
   TREATMENTS[num] = data;
 }
 
@@ -2327,8 +2333,8 @@ async function downloadTreatmentNow(){
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generando...';
   btn.disabled = true;
 
-  // Persist
-  _persistTreatment(true);
+  // Persist — marca pendingReview:false, downloaded:true
+  _persistTreatment(false, true);
   STORE.save();
   renderTableOnly();
   updateTabBadges();
