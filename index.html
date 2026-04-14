@@ -1529,30 +1529,9 @@ function openTreatmentSheet(num){
   else if(r.plazo){ try{ const p=r.plazo.split('/'); fi.value=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; }catch{fi.value='';} }
   else { fi.value=''; }
 
-  // Sync readonly mirror fields
-  const v  = document.getElementById('tVerificador');
-  const fv = document.getElementById('tFechaVerif');
-  const syncVerif = () => {
-    const ve = document.getElementById('tVerificadorEfec');
-    const fe = document.getElementById('tFechaVerifEfec');
-    if(ve) ve.value = v ? v.value : '';
-    if(fe) fe.value = fv ? fv.value : '';
-  };
-  if(v)  v.addEventListener('input',  syncVerif);
-  if(fv) fv.addEventListener('change', syncVerif);
-  syncVerif();
-  // Mirror responsable/fecha to readonly desc fields
-  const ri = document.getElementById('tRespImpl');
-  const fiImpl = document.getElementById('tFechaImpl');
-  const syncResp = () => {
-    const rd = document.getElementById('tRespImplDesc');
-    const fd = document.getElementById('tFechaObjetivo');
-    if(rd) rd.value = ri ? ri.value : '';
-    if(fd) fd.value = fiImpl ? fiImpl.value : '';
-  };
-  if(ri) ri.addEventListener('input',  syncResp);
-  if(fiImpl) fiImpl.addEventListener('change', syncResp);
-  syncResp();
+  // Sync readonly mirror fields — using global functions to avoid listener stacking
+  _syncVerif();
+  _syncResp();
 
   updateTreatAlertTag(r.num);
   checkVerificador();
@@ -2282,14 +2261,25 @@ function saveTreatData(){
 
 // Tipo de acción selector
 function syncTipoAccion(){
-  // Visual feedback — highlight selected option
-  const val = document.querySelector('input[name="tipoAccion"]:checked')?.value || '';
-  ['lbl-correctiva','lbl-preventiva','lbl-na'].forEach(id => {
-    const el = document.getElementById(id);
-    if(!el) return;
-    el.style.opacity = '1';
-    el.style.fontWeight = '600';
-  });
+  // Visual feedback handled by CSS :checked selector
+}
+
+// Sync readonly mirrors — global so they don't stack on each modal open
+function _syncVerif(){
+  const v  = document.getElementById('tVerificador');
+  const fv = document.getElementById('tFechaVerif');
+  const ve = document.getElementById('tVerificadorEfec');
+  const fe = document.getElementById('tFechaVerifEfec');
+  if(ve && v)  ve.value = v.value;
+  if(fe && fv) fe.value = fv.value;
+}
+function _syncResp(){
+  const ri = document.getElementById('tRespImpl');
+  const fi = document.getElementById('tFechaImpl');
+  const rd = document.getElementById('tRespImplDesc');
+  const fd = document.getElementById('tFechaObjetivo');
+  if(rd && ri) rd.value = ri.value;
+  if(fd && fi) fd.value = fi.value;
 }
 
 function renderTableOnly(){
@@ -2701,8 +2691,8 @@ function closeDescOverlay(e){
           <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Descripción de la Acción</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Describir la acción correctiva/preventiva y el plan de acción..."></textarea></div>
 
           <!-- Responsable / Fecha / Área debajo de Descripción -->
-          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
-          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaImpl" type="date"></div>
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable" oninput="_syncResp()"></div>
+          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaImpl" type="date" onchange="_syncResp()"></div>
           <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable del tratamiento"></div>
           <!-- Hidden mirrors for sync -->
           <div style="display:none"><input id="tRespImplDesc" readonly></div>
@@ -2716,8 +2706,8 @@ function closeDescOverlay(e){
         <div class="treat-section-title" style="color:#1565c0">✅ Verificación de Implementación del Plan de Acción</div>
         <p style="font-size:10px;color:#607080;margin:-4px 0 10px;font-style:italic">A completar por el equipo auditor</p>
         <div class="treat-grid">
-          <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del auditor verificador" oninput="checkVerificador()"></div>
-          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date"></div>
+          <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del auditor verificador" oninput="checkVerificador();_syncVerif()"></div>
+          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date" onchange="_syncVerif()"></div>
           <div class="treat-field full"><span class="treat-label">Área</span><input class="treat-input" id="tAreaVerif" placeholder="Área del auditor verificador"></div>
           <div class="treat-field full"><span class="treat-label">Descripción / Observaciones</span><textarea class="treat-textarea" id="tDescVerifImpl" placeholder="Describir el resultado de la verificación de implementación..."></textarea></div>
         </div>
