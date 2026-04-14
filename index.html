@@ -311,6 +311,7 @@ td{padding:9px 12px;vertical-align:middle}
 .alert-pill{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 7px;border-radius:8px;background:#fff3e0;color:#e65100;border:1px solid #ffcc8055;font-weight:700;cursor:pointer}
 .alert-pill-rev{background:#e8f5e9;color:#2e7d32;border-color:#a5d6a755}
 .alert-pill-done{background:#e3f0ff;color:#1565c0;border-color:#90caf955;font-weight:700}
+.alert-pill-cierre{background:#e8f5e9;color:#1b5e20;border-color:#66bb6a88;font-weight:700;font-size:10px}
 /* clickable chip */
 .hchip-link{cursor:pointer;transition:opacity .15s}
 .hchip-link:hover{opacity:.75;text-decoration:underline dotted}
@@ -492,7 +493,7 @@ td{padding:9px 12px;vertical-align:middle}
 
   </div>
 
-  <!-- ─── ROW 1: Tasa Cierre | Distribución Estado | Lead Time + On-Time ─── -->
+  <!-- ─── ROW 1: Tasa Cierre | Distribución Estado | Tiempos de Gestión ─── -->
   <div class="sec-title"><span>Indicadores de Gestión</span><span class="sec-line"></span></div>
   <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:16px;margin-bottom:16px">
 
@@ -536,19 +537,19 @@ td{padding:9px 12px;vertical-align:middle}
       </div>
     </div>
 
-    <!-- CARD 3: Lead Time + On-Time -->
+    <!-- CARD 3: Tiempos de Gestión -->
     <div class="card" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
       <div style="font-family:var(--display);font-size:12px;font-weight:700;color:var(--dim2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;display:flex;align-items:center;gap:6px">
         <span class="card-dot" style="background:#00695c"></span>Eficiencia
         <span class="tag tag-t" style="margin-left:0">TIEMPOS</span>
       </div>
       <div style="background:linear-gradient(135deg,#e3f2fd,#f0f8ff);border:1px solid #90caf9;border-radius:10px;padding:16px;text-align:center">
-        <div style="font-size:10px;color:#1565c0;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">⏱ Lead Time Promedio</div>
+        <div style="font-size:10px;color:#1565c0;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">⏱ Tiempo Promedio de Resolución</div>
         <div style="font-family:var(--display);font-size:36px;font-weight:700;color:#1565c0;line-height:1" id="leadTime">—</div>
         <div style="font-size:10px;color:var(--dim);margin-top:3px">días promedio (cerrados)</div>
       </div>
       <div style="background:linear-gradient(135deg,#e8f5e9,#f1fff3);border:1px solid #a5d6a7;border-radius:10px;padding:16px;text-align:center">
-        <div style="font-size:10px;color:#2e7d32;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">🎯 On-Time Delivery</div>
+        <div style="font-size:10px;color:#2e7d32;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">🎯 Cumplimiento en Plazo</div>
         <div style="font-family:var(--display);font-size:36px;font-weight:700;color:#2e7d32;line-height:1" id="onTime">—</div>
         <div style="font-size:10px;color:var(--dim);margin-top:3px" id="onTimeSub">cerradas a tiempo</div>
       </div>
@@ -1111,8 +1112,10 @@ function renderTable(){
       : '';
     let alertPill = '';
     if(tr){
-      if(tr.downloaded){
-        alertPill = `<span class="alert-pill alert-pill-done" onclick="openTreatmentSheet('${r.num}')" title="Tratamiento completo — Word descargado">✅ Completo</span>`;
+      if(tr.cierre){
+        alertPill = `<span class="alert-pill alert-pill-cierre" onclick="openTreatmentSheet('${r.num}')" title="Pasado a Cierre">✔ Cierre</span>`;
+      } else if(tr.downloaded){
+        alertPill = `<span class="alert-pill alert-pill-done" onclick="openTreatmentSheet('${r.num}')" title="Tratamiento completo — PDF descargado">✅ Completo</span>`;
       } else if(tr.pendingReview){
         alertPill = `<span class="alert-pill" onclick="openTreatmentSheet('${r.num}')" title="Pendiente revisión del responsable">⚠ Revisar</span>`;
       } else {
@@ -1532,8 +1535,6 @@ function openTreatmentSheet(num){
   document.getElementById('tVerificador').value  = tr.verificador  || '';
   document.getElementById('tFechaVerif').value   = tr.fechaVerif   || '';
   document.getElementById('tObservaciones').value= tr.observaciones|| '';
-  const _av = document.getElementById('tAreaVerif');
-  if(_av) _av.value = tr.areaVerif || '';
   const _dvi = document.getElementById('tDescVerifImpl');
   if(_dvi) _dvi.value = tr.descVerifImpl || '';
   const _dve = document.getElementById('tDescVerifEfec');
@@ -2302,6 +2303,22 @@ function renderTableOnly(){
   renderTable();
 }
 
+// Pasar a Cierre — marca el hallazgo con ✔ Cierre en la tabla
+function marcarCierre(){
+  const num = CURRENT_TREAT_NUM;
+  if(!num) return;
+  if(!confirm('¿Confirmar que el hallazgo N° ' + num + ' pasa a CIERRE?')) return;
+  if(!TREATMENTS[num]) TREATMENTS[num] = {};
+  TREATMENTS[num].cierre       = true;
+  TREATMENTS[num].pendingReview = false;
+  TREATMENTS[num].cierreAt     = new Date().toISOString();
+  STORE.save();
+  renderTableOnly();
+  updateTabBadges();
+  showToast('✔ Hallazgo N° ' + num + ' pasado a Cierre', false);
+  closeTreat();
+}
+
 function _collectFormData(){
   return {
     causa:         document.getElementById('tCausa').value.trim(),
@@ -2311,7 +2328,7 @@ function _collectFormData(){
     respImpl:      document.getElementById('tRespImpl').value.trim(),
     fechaImpl:     document.getElementById('tFechaImpl').value,
     evidencia:     document.getElementById('tEvidencia').value.trim(),
-    areaVerif:     (document.getElementById('tAreaVerif')||{}).value||'',
+    areaVerif:     '',
     descVerifImpl: (document.getElementById('tDescVerifImpl')||{}).value||'',
     descVerifEfec: (document.getElementById('tDescVerifEfec')||{}).value||'',
     verificador:   document.getElementById('tVerificador').value.trim(),
@@ -2327,8 +2344,9 @@ function _persistTreatment(pendingReview, downloaded=false){
   const data = _collectFormData();
   data.pendingReview = pendingReview;
   if(downloaded) data.downloaded = true;
-  // Preserve downloaded flag if already set
+  // Preserve downloaded and cierre flags if already set
   else if(TREATMENTS[num] && TREATMENTS[num].downloaded) data.downloaded = true;
+  if(TREATMENTS[num] && TREATMENTS[num].cierre) data.cierre = true;
   TREATMENTS[num] = data;
 }
 
@@ -2351,7 +2369,7 @@ async function downloadTreatmentNow(){
 
   const btn  = document.getElementById('btnDescargaWord');
   const orig = btn.innerHTML;
-  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generando...';
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generando PDF...';
   btn.disabled = true;
 
   // Persist — marca pendingReview:false, downloaded:true
@@ -2724,7 +2742,6 @@ function closeDescOverlay(e){
         <div class="treat-grid">
           <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del auditor verificador" oninput="checkVerificador();_syncVerif()"></div>
           <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date" onchange="_syncVerif()"></div>
-          <div class="treat-field full"><span class="treat-label">Área</span><input class="treat-input" id="tAreaVerif" placeholder="Área del auditor verificador"></div>
           <div class="treat-field full"><span class="treat-label">Descripción / Observaciones</span><textarea class="treat-textarea" id="tDescVerifImpl" placeholder="Describir el resultado de la verificación de implementación..."></textarea></div>
         </div>
       </div>
@@ -2760,9 +2777,13 @@ function closeDescOverlay(e){
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Guardar Datos
       </button>
+      <button class="treat-save" onclick="marcarCierre()" id="btnPasarCierre" style="background:linear-gradient(135deg,#2e7d32,#1b5e20)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Pasar a Cierre
+      </button>
       <button class="treat-save" onclick="downloadTreatmentNow()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Descargar Word
+        Descargar PDF
       </button>
 
       <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
