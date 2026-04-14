@@ -395,7 +395,7 @@ td{padding:9px 12px;vertical-align:middle}
       <button class="pdf-cancel" onclick="closePdf()">Cancelar</button>
       <button class="pdf-go" id="pdfGoBtn" onclick="runPdf()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Descargar PDF
+        Descargar Word
       </button>
     </div>
   </div>
@@ -1115,7 +1115,7 @@ function renderTable(){
       if(tr.cierre){
         alertPill = `<span class="alert-pill alert-pill-cierre" onclick="openTreatmentSheet('${r.num}')" title="Pasado a Cierre">✔ Cierre</span>`;
       } else if(tr.downloaded){
-        alertPill = `<span class="alert-pill alert-pill-done" onclick="openTreatmentSheet('${r.num}')" title="Tratamiento completo — PDF descargado">✅ Completo</span>`;
+        alertPill = `<span class="alert-pill alert-pill-done" onclick="openTreatmentSheet('${r.num}')" title="Tratamiento completo — Word descargado">✅ Completo</span>`;
       } else if(tr.pendingReview){
         alertPill = `<span class="alert-pill" onclick="openTreatmentSheet('${r.num}')" title="Pendiente revisión del responsable">⚠ Revisar</span>`;
       } else {
@@ -1700,7 +1700,7 @@ function openPdf(){
   document.getElementById('pdfOverlay').classList.add('show');
   document.getElementById('pdfProgress').classList.remove('show');
   const btn=document.getElementById('pdfGoBtn');
-  btn.disabled=false; btn.textContent='Descargar PDF';
+  btn.disabled=false; btn.textContent='Descargar Word';
 }
 function closePdf(){ document.getElementById('pdfOverlay').classList.remove('show'); }
 
@@ -2308,14 +2308,15 @@ function marcarCierre(){
   const num = CURRENT_TREAT_NUM;
   if(!num) return;
   if(!confirm('¿Confirmar que el hallazgo N° ' + num + ' pasa a CIERRE?')) return;
-  if(!TREATMENTS[num]) TREATMENTS[num] = {};
+  // Guardar todos los datos del formulario antes de marcar cierre
+  _persistTreatment(false, TREATMENTS[num]?.downloaded || false);
   TREATMENTS[num].cierre       = true;
   TREATMENTS[num].pendingReview = false;
   TREATMENTS[num].cierreAt     = new Date().toISOString();
   STORE.save();
   renderTableOnly();
   updateTabBadges();
-  showToast('✔ Hallazgo N° ' + num + ' pasado a Cierre', false);
+  showToast('✔ Hallazgo N° ' + num + ' pasado a Cierre — datos guardados', false);
   closeTreat();
 }
 
@@ -2369,7 +2370,7 @@ async function downloadTreatmentNow(){
 
   const btn  = document.getElementById('btnDescargaWord');
   const orig = btn.innerHTML;
-  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generando PDF...';
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generando...';
   btn.disabled = true;
 
   // Persist — marca pendingReview:false, downloaded:true
@@ -2783,7 +2784,7 @@ function closeDescOverlay(e){
       </button>
       <button class="treat-save" onclick="downloadTreatmentNow()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Descargar PDF
+        Descargar Word
       </button>
 
       <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
