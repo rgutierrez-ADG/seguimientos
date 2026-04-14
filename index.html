@@ -1500,6 +1500,11 @@ function openTreatmentSheet(num){
   document.getElementById('tReq').value    = r.req    || '';
   document.getElementById('tAuditor').value = r.auditor || '— (cargá el CSV actualizado para ver el auditor)';
   document.getElementById('tFechaHallazgo').value = r.fecha || '';
+  // Cargar tipo de acción guardado
+  const savedTipoAccion = tr.tipoAccion || 'CORRECTIVA';
+  document.querySelectorAll('input[name="tipoAccion"]').forEach(radio => {
+    radio.checked = radio.value === savedTipoAccion;
+  });
   document.getElementById('tDescText').textContent = r.desc || '(Sin descripción disponible.)';
 
   // Load saved treatment if exists
@@ -1976,8 +1981,8 @@ async function buildTreatmentDocx(num){
   // ── Data prep ──────────────────────────────────────────────────────────────
   const isInt=(rec.tipoAud||'').toLowerCase().includes('interna');
   const Y='\u2612',N='\u2610', chk=v=>v?Y:N;
-  const acTipo=rec.accion||'Correctiva';
-  const isC=acTipo.toLowerCase().includes('correct'), isP=acTipo.toLowerCase().includes('prevent');
+  const acTipo=t.tipoAccion||rec.accion||'Correctiva';
+  const isC=acTipo.toUpperCase().includes('CORRECTIVA'), isP=acTipo.toUpperCase().includes('PREVENTIVA');
   const hoy=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
   const fVerifStr=t.fechaVerif?t.fechaVerif.split('-').reverse().join('/'):'';
   const fImplStr=t.fechaImpl?t.fechaImpl.split('-').reverse().join('/'):(rec.plazo||'');
@@ -2275,18 +2280,28 @@ function saveTreatData(){
   document.getElementById('tPendingAlert').style.display = 'flex';
 }
 
-// Actualiza solo la tabla sin tocar los gráficos
-function renderTableOnly(){
-  const currentRenderTable = renderTable;
-  renderTable();
+// Tipo de acción selector
+function syncTipoAccion(){
+  // Visual feedback — highlight selected option
+  const val = document.querySelector('input[name="tipoAccion"]:checked')?.value || '';
+  ['lbl-correctiva','lbl-preventiva','lbl-na'].forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.opacity = '1';
+    el.style.fontWeight = '600';
+  });
 }
 
+function renderTableOnly(){
+  renderTable();
+}
 
 function _collectFormData(){
   return {
     causa:         document.getElementById('tCausa').value.trim(),
     accion:        document.getElementById('tAccion').value.trim(),
     correccion:    document.getElementById('tCausa').value.trim(),
+    tipoAccion:    document.querySelector('input[name="tipoAccion"]:checked')?.value || 'CORRECTIVA',
     respImpl:      document.getElementById('tRespImpl').value.trim(),
     fechaImpl:     document.getElementById('tFechaImpl').value,
     evidencia:     document.getElementById('tEvidencia').value.trim(),
@@ -2662,17 +2677,36 @@ function closeDescOverlay(e){
         <div class="treat-grid">
           <!-- Corrección -->
           <div class="treat-field full"><span class="treat-label">Corrección - Resolución (Acción inmediata) *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la acción inmediata tomada para contener el hallazgo..."></textarea></div>
-          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
-          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaImpl" type="date"></div>
-          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable del tratamiento"></div>
 
           <!-- Causas -->
           <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Causas que originaron el Hallazgo *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir las causas raíz que originaron el hallazgo..."></textarea></div>
 
+          <!-- Tipo de acción -->
+          <div class="treat-field full" style="margin-top:4px">
+            <span class="treat-label">Tipo de Acción</span>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;font-weight:600;color:#1a2533;background:#e3f0ff;border:1.5px solid #90caf9;border-radius:8px;padding:7px 14px" id="lbl-correctiva">
+                <input type="radio" name="tipoAccion" id="tTipoAccionCorr" value="CORRECTIVA" style="width:15px;height:15px;accent-color:#1565c0" onchange="syncTipoAccion()"> Acción Correctiva
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;font-weight:600;color:#1a2533;background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:8px;padding:7px 14px" id="lbl-preventiva">
+                <input type="radio" name="tipoAccion" value="PREVENTIVA" style="width:15px;height:15px;accent-color:#2e7d32" onchange="syncTipoAccion()"> Acción Preventiva
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;font-weight:600;color:#1a2533;background:#f4f7fb;border:1.5px solid #c5d5e8;border-radius:8px;padding:7px 14px" id="lbl-na">
+                <input type="radio" name="tipoAccion" value="NA" style="width:15px;height:15px;accent-color:#607080" onchange="syncTipoAccion()"> N/A
+              </label>
+            </div>
+          </div>
+
           <!-- Descripción de la Acción -->
           <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Descripción de la Acción</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Describir la acción correctiva/preventiva y el plan de acción..."></textarea></div>
-          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImplDesc" placeholder="Nombre del responsable" readonly style="background:#f0f4f8;color:#607080"></div>
-          <div class="treat-field"><span class="treat-label">Fecha Objetivo</span><input class="treat-input" id="tFechaObjetivo" type="date" readonly style="background:#f0f4f8;color:#607080"></div>
+
+          <!-- Responsable / Fecha / Área debajo de Descripción -->
+          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
+          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaImpl" type="date"></div>
+          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable del tratamiento"></div>
+          <!-- Hidden mirrors for sync -->
+          <div style="display:none"><input id="tRespImplDesc" readonly></div>
+          <div style="display:none"><input id="tFechaObjetivo" type="date" readonly></div>
         </div>
       </div>
 
@@ -2729,131 +2763,10 @@ function closeDescOverlay(e){
         <span class="treat-pending-dot"></span> Pendiente revisión
       </div>
     </div>
-      <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
-        <span class="treat-pending-dot"></span> Pendiente revisión
-      </div>
     </div>
   </div>
 </div>
 
-<!-- TREATMENT SHEET MODAL -->
-<div class="treat-overlay" id="treatOverlay" onclick="closeTreatIfBg(event)">
-  <div class="treat-modal">
-    <div class="treat-header">
-      <span class="treat-badge" id="tBadgeNum">N° —</span>
-      <span class="treat-htitle">📋 Hoja de Tratamiento de Hallazgo</span>
-      <button class="treat-close" onclick="closeTreat()">×</button>
-    </div>
-    <div class="treat-body">
-      <!-- Info del hallazgo (readonly) -->
-      <div class="treat-section">
-        <div class="treat-section-title">🔍 Información del Hallazgo</div>
-        <div class="treat-grid">
-          <div class="treat-field"><span class="treat-label">Tipo de Hallazgo</span><input class="treat-input treat-readonly" id="tTipoHallazgo" readonly></div>
-          <div class="treat-field"><span class="treat-label">Clasificación</span><input class="treat-input treat-readonly" id="tClasif" readonly></div>
-          <div class="treat-field"><span class="treat-label">Área Responsable</span><input class="treat-input treat-readonly" id="tArea" readonly></div>
-          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input treat-readonly" id="tResp" readonly></div>
-          <div class="treat-field"><span class="treat-label">Plazo Original</span><input class="treat-input treat-readonly" id="tPlazo" readonly></div>
-          <div class="treat-field"><span class="treat-label">Requisito</span><input class="treat-input treat-readonly" id="tReq" readonly></div>
-          <div class="treat-field"><span class="treat-label">Detectado por (Auditor)</span><input class="treat-input treat-readonly" id="tAuditor" readonly></div>
-          <div class="treat-field"><span class="treat-label">Fecha del hallazgo</span><input class="treat-input treat-readonly" id="tFechaHallazgo" readonly></div>
-        </div>
-        <div class="treat-field" style="margin-top:10px"><span class="treat-label">Descripción del Hallazgo</span><div class="treat-desc" id="tDescText"></div></div>
-      </div>
-
-      <!-- Plan de tratamiento -->
-      <div class="treat-section">
-        <div class="treat-section-title">🛠 Tratamiento del Hallazgo</div>
-        <div class="treat-grid">
-          <!-- Corrección -->
-          <div class="treat-field full"><span class="treat-label">Corrección - Resolución (Acción inmediata) *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la acción inmediata tomada para contener el hallazgo..."></textarea></div>
-          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImpl" placeholder="Nombre del responsable"></div>
-          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaImpl" type="date"></div>
-          <div class="treat-field"><span class="treat-label">Área</span><input class="treat-input" id="tEvidencia" placeholder="Área responsable del tratamiento"></div>
-
-          <!-- Causas -->
-          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Causas que originaron el Hallazgo *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir las causas raíz que originaron el hallazgo..."></textarea></div>
-
-          <!-- Descripción de la Acción -->
-          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Descripción de la Acción</span><textarea class="treat-textarea" id="tObservaciones" placeholder="Describir la acción correctiva/preventiva y el plan de acción..."></textarea></div>
-          <div class="treat-field"><span class="treat-label">Responsable</span><input class="treat-input" id="tRespImplDesc" placeholder="Nombre del responsable" readonly style="background:#f0f4f8;color:#607080"></div>
-          <div class="treat-field"><span class="treat-label">Fecha Objetivo</span><input class="treat-input" id="tFechaObjetivo" type="date" readonly style="background:#f0f4f8;color:#607080"></div>
-        </div>
-      </div>
-
-
-      <!-- Archivos Adjuntos -->
-      <div class="attach-section">
-        <div class="attach-section-title">
-          📎 Evidencias
-          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se incluyen en el Word</span>
-        </div>
-        <div class="attach-list" id="tAttachList"><div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div></div>
-        <label class="attach-btn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-          Adjuntar Evidencia
-          <input type="file" multiple style="display:none" id="tAttachInput" onchange="handleAttachFiles(event)">
-        </label>
-      </div>
-    </div>
-    <div class="treat-footer">
-      <button class="treat-cancel" onclick="closeTreat()">Cancelar</button>
-      <button class="treat-save" onclick="saveTreatData()" id="btnGuardarDatos" style="background:linear-gradient(135deg,#455a64,#263238)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Guardar Datos
-      </button>
-      <button class="treat-save" onclick="downloadTreatmentNow()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Descargar Word
-      </button>
-
-      <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
-        <span class="treat-pending-dot"></span> Pendiente revisión
-      </div>
-    </div>
-      <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
-        <span class="treat-pending-dot"></span> Pendiente revisión
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- DRIVE CONFIG MODAL -->
-<div id="driveConfigOverlay" style="position:fixed;inset:0;background:rgba(0,20,45,.65);z-index:4000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeDriveConfig()">
-  <div style="background:#fff;border-radius:14px;width:94%;max-width:520px;box-shadow:0 20px 60px #00000040;overflow:hidden">
-    <div style="background:linear-gradient(90deg,#1565c0,#0d47a1);padding:16px 22px;display:flex;align-items:center;gap:10px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/></svg>
-      <span style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#fff">Configuración de Google Drive</span>
-      <button onclick="closeDriveConfig()" style="margin-left:auto;background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px">×</button>
-    </div>
-    <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px">
-      <div style="background:#e3f0ff;border:1px solid #90caf9;border-radius:8px;padding:12px;font-size:11px;color:#1565c0;line-height:1.6">
-        <strong>Configuración única:</strong> Obtené tus credenciales en <a href="https://console.cloud.google.com" target="_blank" style="color:#0d47a1">console.cloud.google.com</a> → APIs → Drive API → Credenciales OAuth 2.0.
-        Agregá <code style="background:#d0e4ff;padding:1px 4px;border-radius:3px">localhost</code> o tu URL en "Orígenes autorizados".
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Client ID (OAuth 2.0)</label>
-        <input id="driveClientId" type="text" placeholder="xxxxxxxx.apps.googleusercontent.com"
-          style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">API Key</label>
-        <input id="driveApiKey" type="text" placeholder="AIzaSy..."
-          style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        <label style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.8px">Carpeta de destino (Folder ID — opcional)</label>
-        <input id="driveFolderId" type="text" placeholder="ID de carpeta de Drive (de la URL de la carpeta)"
-          style="border:1.5px solid #c5d5e8;border-radius:7px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;outline:none">
-        <span style="font-size:10px;color:#607080">Dejá en blanco para guardar en "Mi unidad". El ID está en la URL de la carpeta de Drive.</span>
-      </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button onclick="closeDriveConfig()" style="background:none;border:1.5px solid #c5d5e8;color:#607080;padding:9px 18px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:600">Cancelar</button>
-        <button onclick="saveDriveConfig()" style="background:linear-gradient(135deg,#1565c0,#0d47a1);border:none;color:#fff;padding:9px 22px;border-radius:7px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700">Guardar configuración</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- DESCRIPTION MODAL -->
 <div id="descOverlay" style="position:fixed;inset:0;background:rgba(0,20,45,.6);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)" onclick="closeDescOverlay(event)">
