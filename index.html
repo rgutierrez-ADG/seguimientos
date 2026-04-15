@@ -1925,8 +1925,15 @@ async function buildTreatmentDocx(num){
     `<w:bottom w:val="single" w:sz="${sz}" w:space="0" w:color="${col}"/>` +
     `<w:right w:val="single" w:sz="${sz}" w:space="0" w:color="${col}"/>`;
 
-  function rpr({b=false,sz=18,col='1A2533',it=false}={}){
-    return `<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/><w:color w:val="${col}"/>${b?'<w:b/><w:bCs/>':''}${it?'<w:i/>':''}</w:rPr>`;
+  // Arial Narrow 12pt = sz 24 (half-points). All body text uses this.
+  const FONT = 'Arial Narrow';
+  const SZ_BODY = 24;   // 12pt
+  const SZ_HDR  = 24;   // 12pt bold for headers
+  const SZ_LBL  = 22;   // 11pt for labels
+  const SZ_SM   = 20;   // 10pt for small text
+
+  function rpr({b=false,sz=SZ_BODY,col='1A2533',it=false}={}){
+    return `<w:rPr><w:rFonts w:ascii="${FONT}" w:hAnsi="${FONT}" w:cs="${FONT}"/><w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/><w:color w:val="${col}"/>${b?'<w:b/><w:bCs/>':''}${it?'<w:i/>':''}</w:rPr>`;
   }
   function run(text, opts={}){
     const t2 = esc(String(text||''));
@@ -1939,7 +1946,7 @@ async function buildTreatmentDocx(num){
   function p(runs, {al='left',sp0=40,sp1=40}={}){
     const jc = al!=='left'?`<w:jc w:val="${al}"/>`:'';
     const sp = `<w:spacing w:before="${sp0}" w:after="${sp1}"/>`;
-    const dr = `<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr>`;
+    const dr = `<w:rPr><w:rFonts w:ascii="Arial Narrow" w:hAnsi="Arial Narrow"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>`;
     const rs = Array.isArray(runs)?runs.join(''):runs;
     return `<w:p><w:pPr>${jc}${sp}${dr}</w:pPr>${rs}</w:p>`;
   }
@@ -1964,15 +1971,15 @@ async function buildTreatmentDocx(num){
   const BW=11000;
   const [BC1,BC2,BC3] = [Math.round(BW*.22),Math.round(BW*.16),Math.round(BW*.34)];
   const BC4 = BW-BC1-BC2-BC3;
-  function hdrC(text,span=1,bg='1565C0'){ const w=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:BC1; return tc(p(run(text,{b:true,sz:19,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w,span,bg,col:'888888',bsz:6}); }
-  function lblC(text,span=1){ const w=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:BC1; return tc(p(run(text,{b:true,sz:17}),{sp0:60,sp1:60}),{w,span,bg:'F0F4F8'}); }
-  function valC(text,span=1,pad=null){ const ww=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:span===1?BC1:BC4; return tc(p(run(text||'',{sz:17}),{sp0:60,sp1:60}),{w:ww,span,pad}); }
+  function hdrC(text,span=1,bg='1565C0'){ const w=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:BC1; return tc(p(run(text,{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w,span,bg,col:'888888',bsz:6}); }
+  function lblC(text,span=1){ const w=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:BC1; return tc(p(run(text,{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w,span,bg:'F0F4F8'}); }
+  function valC(text,span=1,pad=null){ const ww=span===4?BW:span===3?BC1+BC2+BC3:span===2?BC1+BC2:span===1?BC1:BC4; return tc(p(run(text||'',{sz:SZ_BODY}),{sp0:60,sp1:60}),{w:ww,span,pad}); }
   // tcX: cell con ancho EXPLÍCITO (evita el bug de ancho BC1 en columnas 2/3/4)
   function tcX(w, text, opts={}){
     const {b=false,col='1A2533',bg=null} = opts;
-    return tc(p(run(text||'',{b,sz:17,col}),{sp0:60,sp1:60}),{w,bg:bg||null});
+    return tc(p(run(text||'',{b,sz:SZ_BODY,col}),{sp0:60,sp1:60}),{w,bg:bg||null});
   }
-  function lblX(w, text){ return tc(p(run(text||'',{b:true,sz:17}),{sp0:60,sp1:60}),{w,bg:'F0F4F8'}); }
+  function lblX(w, text){ return tc(p(run(text||'',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w,bg:'F0F4F8'}); }
 
   // ── Data prep ──────────────────────────────────────────────────────────────
   const isInt=(rec.tipoAud||'').toLowerCase().includes('interna');
@@ -1995,16 +2002,16 @@ async function buildTreatmentDocx(num){
 
     // Origen: Proveedor / Auditoría interna / Auditoría externa
     tr(360,tc([
-      p(run(chk(false)+'  Proveedor',{sz:16}),undefined,{before:30,after:10}),
-      p([run(chk(isInt)+'  Auditor\u00eda interna   ',{sz:16,b:isInt}), run('Proceso/Planta: '+(rec.clasif||''),{sz:16,b:true,it:true})],undefined,{before:10,after:10}),
-      p(run(chk(!isInt&&rec.tipoAud==='Externa')+'  Auditor\u00eda externa   Cliente/Ente certificador/Ente de inspecci\u00f3n',{sz:16}),undefined,{before:10,after:30}),
+      p(run(chk(false)+'  Proveedor',{sz:SZ_BODY}),undefined,{before:30,after:10}),
+      p([run(chk(isInt)+'  Auditor\u00eda interna   ',{sz:SZ_BODY,b:isInt}), run('Proceso/Planta: '+(rec.clasif||''),{sz:SZ_BODY,b:true,it:true})],undefined,{before:10,after:10}),
+      p(run(chk(!isInt&&rec.tipoAud==='Externa')+'  Auditor\u00eda externa   Cliente/Ente certificador/Ente de inspecci\u00f3n',{sz:SZ_BODY}),undefined,{before:10,after:30}),
     ],{w:BW,span:4})),
 
     // N° y descripción
     tr(600,tc([
-      p(run('N\u00b0 de Hallazgo: '+(rec.num||''),{b:true,sz:18}),undefined,{before:60,after:20}),
-      p(run('Descripci\u00f3n del Hallazgo:',{b:true,sz:17}),{sp0:20,sp1:20}),
-      p(run(rec.desc||'',{sz:16}),{sp0:20,sp1:60}),
+      p(run('N\u00b0 de Hallazgo: '+(rec.num||''),{b:true,sz:SZ_BODY}),undefined,{before:60,after:20}),
+      p(run('Descripci\u00f3n del Hallazgo:',{b:true,sz:SZ_BODY}),{sp0:20,sp1:20}),
+      p(run(rec.desc||'',{sz:SZ_BODY}),{sp0:20,sp1:60}),
     ],{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
 
     // Detectado por
@@ -2029,7 +2036,7 @@ async function buildTreatmentDocx(num){
     tr(320,hdrC('TRATAMIENTO DE HALLAZGO',4)),
     tr(320,hdrC('CORRECCI\u00d3N  (Acci\u00f3n inmediata)',4,'37474F')),
     tr(280,lblC('Resoluci\u00f3n (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.causa||'',{sz:16}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    tr(500,tc(p(run(t.causa||'',{sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Tomada Por'),
       tcX(BC2,t.respImpl||rec.resp||''),
@@ -2042,9 +2049,9 @@ async function buildTreatmentDocx(num){
   // TABLA 3: ACCION CORRECTIVA + CAUSAS
   // ════════════════════════════════════════════════════════════════════════
   const t3=tbl([BC1,BC2,BC3,BC4],[
-    tr(320,tc(p(run('ACCI\u00d3N  '+chk(isC)+' CORRECTIVA    '+chk(isP)+' PREVENTIVA    '+chk(!isC&&!isP)+' NO APLICABLE',{b:true,sz:18}),undefined,{before:80,after:80}),{w:BW,span:4,bg:'E8EEF6'})),
+    tr(320,tc(p(run('ACCI\u00d3N  '+chk(isC)+' CORRECTIVA    '+chk(isP)+' PREVENTIVA    '+chk(!isC&&!isP)+' NO APLICABLE',{b:true,sz:SZ_BODY}),undefined,{before:80,after:80}),{w:BW,span:4,bg:'E8EEF6'})),
     tr(280,lblC('Causas que originaron el Hallazgo (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.accion||'',{sz:16}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    tr(500,tc(p(run(t.accion||'',{sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Responsable'),
       tcX(BC2,t.respImpl||rec.resp||''),
@@ -2058,7 +2065,7 @@ async function buildTreatmentDocx(num){
   // ════════════════════════════════════════════════════════════════════════
   const t4=tbl([BC1,BC2,BC3,BC4],[
     tr(280,lblC('Descripci\u00f3n de la Acci\u00f3n (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.observaciones||'',{sz:16}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    tr(500,tc(p(run(t.observaciones||'',{sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Responsable'),
       tcX(BC2, t.respImpl||rec.resp||''),
@@ -2077,16 +2084,16 @@ async function buildTreatmentDocx(num){
   // TABLA 5: VERIFICACION (sin espacio extra, página 2)
   // ════════════════════════════════════════════════════════════════════════
   const t5=tbl([BC1,BC2,BC3,BC4],[
-    tr(280,tc(p(run('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n  (a completar por equipo auditor):',{b:false,sz:17}),{sp0:80,sp1:80}),{w:BW,span:4})),
-    tr((t.descVerifImpl?400:160), tc(p(run(t.descVerifImpl||'',{sz:16}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
+    tr(280,tc(p(run('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n  (a completar por equipo auditor):',{b:false,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4})),
+    tr((t.descVerifImpl?400:160), tc(p(run(t.descVerifImpl||'',{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Aprobaci\u00f3n de Cierre'),
       tcX(BC2,t.verificador||''),
       tcX(BC3,t.areaVerif||''),
       tcX(BC4,fVerifStr)
     ),
-    tr(280,tc(p(run('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',{b:false,it:true,sz:17}),{sp0:80,sp1:80}),{w:BW,span:4})),
-    tr((t.descVerifEfec?400:160), tc(p(run(t.descVerifEfec||'',{sz:16}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
+    tr(280,tc(p(run('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',{b:false,it:true,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4})),
+    tr((t.descVerifEfec?400:160), tc(p(run(t.descVerifEfec||'',{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Aprobaci\u00f3n de Cierre'),
       tcX(BC2,t.verificador||''),
@@ -2103,29 +2110,29 @@ async function buildTreatmentDocx(num){
   const hdrTbl=tbl([HL,HT,HR,HC],[
     tr(340,
       tc(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr/>${logoImg}</w:r></w:p>`,{w:HL,col:'888888',bsz:6,va:'center'}),
-      tc(p(run('Sistema Integrado de Gesti\u00f3n',{b:true,sz:19,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('Revisi\u00f3n 7',{sz:16,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('R-SIG-AU 04',{b:true,sz:16,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Sistema Integrado de Gesti\u00f3n',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Revisi\u00f3n 7',{sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('R-SIG-AU 04',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
     ),
     tr(320,
       tc(p(run(''),{sp0:20,sp1:20}),{w:HL,col:'888888',bsz:6}),
-      tc(p(run('TRATAMIENTO DE HALLAZGOS',{b:true,sz:20,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('Fecha:',{sz:15,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run(hoy,{sz:15,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('P\u00e1g. 1 de 1',{sz:15,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('TRATAMIENTO DE HALLAZGOS',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Fecha:',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run(hoy,{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('P\u00e1g. 1 de 1',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
     ),
   ]);
 
   const FW=11000, FC=Math.round(FW/3);
   const ftrTbl=tbl([FC,FC,FW-FC-FC],[
     tr(280,
-      tc(p(run('Elabor\u00f3',{b:true,sz:17,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FC,bg:'7030A0',col:'7030A0'}),
-      tc(p(run('Revis\u00f3',{b:true,sz:17,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FC,bg:'7030A0',col:'7030A0'}),
-      tc(p(run('Aprob\u00f3',{b:true,sz:17,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FW-FC-FC,bg:'7030A0',col:'7030A0'}),
+      tc(p(run('Elabor\u00f3',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FC,bg:'7030A0',col:'7030A0'}),
+      tc(p(run('Revis\u00f3',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FC,bg:'7030A0',col:'7030A0'}),
+      tc(p(run('Aprob\u00f3',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FW-FC-FC,bg:'7030A0',col:'7030A0'}),
     ),
     tr(400,
-      tc(p(run('Supervisor del SGCIA: Augusto Fambrini',{sz:16}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:16}),{sp0:20,sp1:40}),{w:FC}),
-      tc(p(run('Responsable del SGCIA: M. Elisa Andrada',{sz:16}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:16}),{sp0:20,sp1:40}),{w:FC}),
-      tc(p(run('Gerente de Planta industrial: Gaspar Menichetti',{sz:16}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:16}),{sp0:20,sp1:40}),{w:FW-FC-FC}),
+      tc(p(run('Supervisor del SGCIA: Augusto Fambrini',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Responsable del SGCIA: M. Elisa Andrada',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Gerente de Planta industrial: Gaspar Menichetti',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FW-FC-FC}),
     ),
   ]);
 
@@ -2144,7 +2151,7 @@ async function buildTreatmentDocx(num){
   const attTW = BW;
   const attC1 = Math.round(attTW/2);
   const attC2 = attTW - attC1;
-  function hdrAtt(text){ return tc(p(run(text,{b:true,sz:19,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w:attTW,span:2,bg:'455A64',col:'888888',bsz:6}); }
+  function hdrAtt(text){ return tc(p(run(text,{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w:attTW,span:2,bg:'455A64',col:'888888',bsz:6}); }
   const annexRows = [tr(320, hdrAtt('ARCHIVOS ADJUNTOS / ANEXOS'))];
 
     // 2-column image grid: collect pairs then build rows
@@ -2165,7 +2172,7 @@ async function buildTreatmentDocx(num){
         const imgXml = `<w:drawing><wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${imgW}" cy="${imgH}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${10+i}" name="Attach${i}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${10+i}" name="Attach${i}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rId}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${imgW}" cy="${imgH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>`;
         const cellContent =
           `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="40" w:after="20"/></w:pPr><w:r><w:rPr/>${imgXml}</w:r></w:p>` +
-          p(run(f.name, {b:true,sz:16}), 'center', {before:20,after:40});
+          p(run(f.name, {b:true,sz:SZ_BODY}), 'center', {before:20,after:40});
         imgItems.push({cellW, cellContent});
       } else {
         nonImgItems.push(f);
@@ -2176,7 +2183,7 @@ async function buildTreatmentDocx(num){
     if(nonImgItems.length){
       nonImgItems.forEach((f,i)=>{
         annexRows.push(tr(280,
-          tc(p(run((i+1)+'. '+f.name, {b:true,sz:17}),{sp0:60,sp1:60}),{w:attTW,span:2,bg:'F5F5F5'})
+          tc(p(run((i+1)+'. '+f.name, {b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w:attTW,span:2,bg:'F5F5F5'})
         ));
       });
     }
@@ -2217,7 +2224,7 @@ async function buildTreatmentDocx(num){
   zip.file('word/_rels/document.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>${attachImgRels}</Relationships>`);
   zip.file('word/_rels/header1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.jpg"/></Relationships>`);
   zip.file('word/_rels/footer1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`);
-  zip.file('word/styles.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>`);
+  zip.file('word/styles.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial Narrow" w:hAnsi="Arial Narrow" w:cs="Arial Narrow"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>`);
   zip.file('word/settings.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:defaultTabStop w:val="720"/></w:settings>`);
   zip.file('word/document.xml', docXml);
   zip.file('word/header1.xml',  hdrXml);
