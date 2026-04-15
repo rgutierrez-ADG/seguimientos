@@ -2117,7 +2117,7 @@ async function buildTreatmentDocx(num){
     tr(320,
       tc(p(run(''),{sp0:20,sp1:20}),{w:HL,col:'888888',bsz:6}),
       tc(p(run('TRATAMIENTO DE HALLAZGOS',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('Fecha:',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run(hoy,{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Fecha:',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run('15/04/2026',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
       tc(p(run('P\u00e1g. 1 de 1',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
     ),
   ]);
@@ -2130,9 +2130,9 @@ async function buildTreatmentDocx(num){
       tc(p(run('Aprob\u00f3',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FW-FC-FC,bg:'7030A0',col:'7030A0'}),
     ),
     tr(400,
-      tc(p(run('Supervisor del SGCIA: Augusto Fambrini',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
-      tc(p(run('Responsable del SGCIA: M. Elisa Andrada',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
-      tc(p(run('Gerente de Planta industrial: Gaspar Menichetti',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 18/07/23',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FW-FC-FC}),
+      tc(p(run('Supervisor de SGCIA: Rodrigo Gutierrez',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 15/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Administrativo del SGCIA: Carolina Serassio',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 15/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Responsable de SGCIA: Mayra Dip',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 15/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FW-FC-FC}),
     ),
   ]);
 
