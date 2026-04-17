@@ -1557,12 +1557,25 @@ const STORE = {
     }
   },
   loadAttachments(num){
-    if(ATTACHMENTS[num] !== undefined) return ATTACHMENTS[num];
+    return this.loadAttachmentsKey('sgcia_att_'+num);
+  },
+  loadAttachmentsKey(key){
+    if(ATTACHMENTS[key] !== undefined) return ATTACHMENTS[key];
     try{
-      const d = localStorage.getItem('sgcia_att_'+num);
-      ATTACHMENTS[num] = d ? JSON.parse(d) : [];
-    }catch(e){ ATTACHMENTS[num] = []; }
-    return ATTACHMENTS[num];
+      const d = localStorage.getItem(key);
+      ATTACHMENTS[key] = d ? JSON.parse(d) : [];
+    }catch(e){ ATTACHMENTS[key] = []; }
+    return ATTACHMENTS[key];
+  },
+  saveAttachmentsKey(key, files){
+    try{
+      localStorage.setItem(key, JSON.stringify(files));
+      ATTACHMENTS[key] = files;
+      return true;
+    }catch(e){
+      showToast('⚠ Sin espacio para guardar adjunto: '+e.message, true);
+      return false;
+    }
   },
   clearAttachment(num, idx){
     const files = this.loadAttachments(num);
@@ -2424,6 +2437,13 @@ function renderTableOnly(){
 function marcarCierre(){
   const num = CURRENT_TREAT_NUM;
   if(!num) return;
+  // Verificar que Verificación de Efectividad esté completada
+  const efec = (document.getElementById('tDescVerifEfec')||{}).value || '';
+  const verif = (document.getElementById('tVerificador')||{}).value || '';
+  if(!verif.trim() || !efec.trim()){
+    showToast('⚠ Completá la Verificación de Efectividad del Plan de Acción antes de pasar a Cierre', true);
+    return;
+  }
   if(!confirm('¿Confirmar que el hallazgo N° ' + num + ' pasa a CIERRE?')) return;
   // Guardar todos los datos del formulario antes de marcar cierre
   _persistTreatment(false, TREATMENTS[num]?.downloaded || false);
@@ -2631,11 +2651,10 @@ function getFileIcon(type){
 }
 function formatBytes(b){ return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B'; }
 
-function renderAttachList(){
-  const num = CURRENT_TREAT_NUM;
-  const list = document.getElementById('tAttachList');
-  if(!num || !list) return;
-  const files = STORE.loadAttachments(num);
+function renderAttachListFor(listId, storageKey){
+  const list = document.getElementById(listId);
+  if(!list) return;
+  const files = STORE.loadAttachmentsKey(storageKey);
   if(!files.length){
     list.innerHTML = '<div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div>';
     return;
@@ -2645,8 +2664,58 @@ function renderAttachList(){
       <span class="attach-item-icon">${getFileIcon(f.type)}</span>
       <span class="attach-item-name" title="${f.name}">${f.name}</span>
       <span class="attach-item-size">${formatBytes(f.size)}</span>
-      <button class="attach-del" onclick="removeAttachment(${i})" title="Quitar">×</button>
+      <button class="attach-del" onclick="removeAttachmentKey('${storageKey}',${i},'${listId}')" title="Quitar">×</button>
     </div>`).join('');
+}
+
+function renderAttachList(){
+  const num = CURRENT_TREAT_NUM;
+  if(!num) return;
+  renderAttachListFor('tAttachList',    'sgcia_att_'+num);
+  renderAttachListFor('tAttachTratList','sgcia_att_trat_'+num);
+}
+
+function removeAttachmentKey(key, idx, listId){
+  const files = STORE.loadAttachmentsKey(key);
+  files.splice(idx, 1);
+  STORE.saveAttachmentsKey(key, files);
+  renderAttachListFor(listId, key);
+  renderTableOnly();
+  showToast('✓ Archivo eliminado', false);
+}
+
+// handleAttachFiles2: handles the tratamiento or verificacion attachment sections
+function handleAttachFiles2(evt, section){
+  const num = CURRENT_TREAT_NUM;
+  if(!num) return;
+  const key = section === 'trat' ? 'sgcia_att_trat_' : 'sgcia_att_';
+  const listId = section === 'trat' ? 'tAttachTratList' : 'tAttachList';
+  const files = Array.from(evt.target.files);
+  const existing = STORE.loadAttachmentsKey(key + num);
+  let added = 0;
+  const MAX_SIZE = 1.5 * 1024 * 1024;
+  const readNext = (i) => {
+    if(i >= files.length){
+      if(added > 0){
+        STORE.saveAttachmentsKey(key + num, existing);
+        renderAttachListFor(listId, key + num);
+        renderTableOnly();
+        showToast('✓ ' + added + ' archivo(s) adjuntado(s)', false);
+      }
+      evt.target.value = '';
+      return;
+    }
+    const file = files[i];
+    if(file.size > MAX_SIZE){ showToast('⚠ "' + file.name + '" supera 1.5 MB — omitido', true); readNext(i+1); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      existing.push({ name: file.name, type: file.type, size: file.size, data: e.target.result.split(',')[1] });
+      added++;
+      readNext(i+1);
+    };
+    reader.readAsDataURL(file);
+  };
+  readNext(0);
 }
 
 function handleAttachFiles(evt){
@@ -2685,10 +2754,7 @@ function handleAttachFiles(evt){
 }
 
 function removeAttachment(idx){
-  STORE.clearAttachment(CURRENT_TREAT_NUM, idx);
-  renderAttachList();
-  renderTableOnly();
-  showToast('✓ Archivo eliminado', false);
+  removeAttachmentKey('sgcia_att_'+CURRENT_TREAT_NUM, idx, 'tAttachList');
 }
 
 
@@ -2853,6 +2919,20 @@ function closeDescOverlay(e){
       </div>
 
 
+      <!-- Adjuntar Tratamiento -->
+      <div class="attach-section" style="background:#fff8e1;border-color:#ffe082">
+        <div class="attach-section-title" style="color:#e65100">
+          📋 Adjuntar Tratamiento
+          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Documentos del tratamiento (corrección, causas, plan de acción)</span>
+        </div>
+        <div class="attach-list" id="tAttachTratList"><div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div></div>
+        <label class="attach-btn" style="border-color:#ffe082;color:#e65100;background:#fff8e1">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          Adjuntar Evidencia Tratamiento
+          <input type="file" multiple style="display:none" id="tAttachTratInput" onchange="handleAttachFiles2(event,'trat')">
+        </label>
+      </div>
+
       <!-- Verificación de implementación -->
       <div class="treat-section" style="background:#f0f7ff;border-color:#90caf9">
         <div class="treat-section-title" style="color:#1565c0">✅ Verificación de Implementación del Plan de Acción</div>
@@ -2878,13 +2958,13 @@ function closeDescOverlay(e){
       <!-- Archivos Adjuntos -->
       <div class="attach-section">
         <div class="attach-section-title">
-          📎 Evidencias
-          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Se guardan con el tratamiento y se incluyen en el Word</span>
+          📎 Adjuntar Evidencia Verificación
+          <span style="font-size:10px;color:#607080;font-weight:400;text-transform:none;letter-spacing:0">Evidencias de la verificación de implementación</span>
         </div>
         <div class="attach-list" id="tAttachList"><div style="font-size:11px;color:#607080;padding:4px 0">Sin archivos adjuntos.</div></div>
         <label class="attach-btn">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
-          Adjuntar Evidencia
+          Adjuntar Evidencia Verificación
           <input type="file" multiple style="display:none" id="tAttachInput" onchange="handleAttachFiles(event)">
         </label>
       </div>
