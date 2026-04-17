@@ -711,37 +711,11 @@ function toggleDropdown(ddId){
   menu.style.display = menu.style.display === '' ? 'block' : '';
 }
 
-function filterBy(type, year){
-  // Close dropdown
-  ['ddInternas','ddExternas'].forEach(id => {
-    const m = document.getElementById(id)?.querySelector('[id^="menu-"]');
-    if(m) m.style.display = 'none';
-  });
-
-  FILTER_TYPE = type;
-  FILTER_YEAR = year;
-  ACTIVE_TAB  = 'resumen';
-
-  // Update active styles on tab buttons
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-resumen')?.classList.remove('active');
-  document.getElementById('tab-' + type === 'all' ? 'resumen' : type)?.classList.add('active');
-  if(type !== 'all'){
-    document.getElementById('tab-' + type)?.classList.add('active');
-  } else {
-    document.getElementById('tab-resumen')?.classList.add('active');
-  }
-
-  // Show normal content
-  const mainContent = document.getElementById('mainContent');
-  Array.from(mainContent.children).forEach(el=>{
-    el.style.display = el.id==='panelDescargas' ? 'none' : '';
-  });
-
-  // Recreate charts after repaint
+// ── Chart refresh helper — always 2 frames so browser paints before Chart.js reads dimensions
+function _refreshCharts(){
+  Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
+  CHARTS = {};
   requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-    Object.values(CHARTS).forEach(c=>{try{c.destroy();}catch(e){}});
-    CHARTS = {};
     populateFilters();
     renderAll();
   }); });
@@ -751,10 +725,7 @@ function switchTab(tab){
   ACTIVE_TAB = tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+tab)?.classList.add('active');
-
   const mainContent = document.getElementById('mainContent');
-  const comingFromDescargas = document.getElementById('panelDescargas').style.display !== 'none';
-
   if(tab === 'descargas'){
     Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
     CHARTS = {};
@@ -764,30 +735,29 @@ function switchTab(tab){
     renderDescargasTab();
     return;
   }
-
-  if(tab === 'resumen'){
-    FILTER_TYPE = 'all';
-    FILTER_YEAR = 'all';
-  }
-
+  if(tab === 'resumen'){ FILTER_TYPE = 'all'; FILTER_YEAR = 'all'; }
   Array.from(mainContent.children).forEach(el=>{
     el.style.display = el.id==='panelDescargas' ? 'none' : '';
   });
-  populateFilters();
-
-  if(comingFromDescargas){
-    requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-      Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
-      CHARTS = {};
-      renderAll();
-    }); });
-  } else {
-    Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
-    CHARTS = {};
-    renderAll();
-  }
+  _refreshCharts();
 }
 
+function filterBy(type, year){
+  ['ddInternas','ddExternas'].forEach(id => {
+    const m = document.getElementById(id)?.querySelector('[id^="menu-"]');
+    if(m) m.style.display = 'none';
+  });
+  FILTER_TYPE = type;
+  FILTER_YEAR = year;
+  ACTIVE_TAB  = 'resumen';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(type === 'all' ? 'tab-resumen' : 'tab-' + type)?.classList.add('active');
+  const mainContent = document.getElementById('mainContent');
+  Array.from(mainContent.children).forEach(el=>{
+    el.style.display = el.id==='panelDescargas' ? 'none' : '';
+  });
+  _refreshCharts();
+}
 
 
 function updateTabBadges(){
