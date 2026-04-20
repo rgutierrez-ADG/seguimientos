@@ -2405,12 +2405,18 @@ function _syncResp(){
 // ═══ ISHIKAWA + 5 POR QUÉ ════════════════════════════════════════════════
 
 const ISHI_CATS = [
-  {id:'maquina',  label:'Máquina',      color:'#185FA5', lite:'#B5D4F4', bx:155, side:'top'},
-  {id:'metodo',   label:'Método',       color:'#185FA5', lite:'#B5D4F4', bx:300, side:'top'},
-  {id:'medicion', label:'Medición',     color:'#185FA5', lite:'#B5D4F4', bx:445, side:'top'},
-  {id:'material', label:'Material',     color:'#0F6E56', lite:'#5DCAA5', bx:155, side:'bottom'},
-  {id:'mano',     label:'Mano de obra', color:'#0F6E56', lite:'#5DCAA5', bx:300, side:'bottom'},
-  {id:'medio',    label:'Medio amb.',   color:'#0F6E56', lite:'#5DCAA5', bx:445, side:'bottom'},
+  {id:'maquina',  label:'Máquina',      color:'#185FA5', lite:'#B5D4F4', bx:155, side:'top',
+   desc:'<b>Maquinaria / Máquina</b><br>Abarca herramientas, tecnología, equipos y software. Analiza fallas técnicas, falta de mantenimiento o herramientas inadecuadas.'},
+  {id:'metodo',   label:'Método',       color:'#185FA5', lite:'#B5D4F4', bx:300, side:'top',
+   desc:'<b>Método</b><br>Se refiere a cómo se realiza el trabajo: procedimientos, flujos, instrucciones técnicas o políticas. Analiza si el método es ineficiente o no se sigue.'},
+  {id:'medicion', label:'Medición',     color:'#185FA5', lite:'#B5D4F4', bx:445, side:'top',
+   desc:'<b>Medición / Medida</b><br>Evalúa datos, métricas y controles de calidad. Incluye equipos descalibrados, inspecciones incorrectas o métricas equivocadas.'},
+  {id:'material', label:'Material',     color:'#0F6E56', lite:'#5DCAA5', bx:155, side:'bottom',
+   desc:'<b>Materiales</b><br>Comprende materias primas, componentes, proveedores e información. Examina si la calidad, cantidad o disponibilidad del material es incorrecta.'},
+  {id:'mano',     label:'Mano de obra', color:'#0F6E56', lite:'#5DCAA5', bx:300, side:'bottom',
+   desc:'<b>Mano de obra</b><br>Personas involucradas en el proceso. Incluye falta de capacitación, errores humanos, fatiga, desmotivación o falta de personal.'},
+  {id:'medio',    label:'Medio amb.',   color:'#0F6E56', lite:'#5DCAA5', bx:445, side:'bottom',
+   desc:'<b>Medio ambiente</b><br>Entorno de trabajo físico (temperatura, humedad, iluminación, ruido) y clima laboral. Factores externos que afectan la producción.'},
 ];
 const ISHI_N=5, ISHI_CY=120, ISHI_SX1=50, ISHI_SX2=572;
 
@@ -2446,6 +2452,42 @@ function buildIshikawaSVG(){
   });
 }
 
+function showMDesc(catId){
+  const cat=ISHI_CATS.find(c=>c.id===catId);if(!cat)return;
+  let pop=document.getElementById('ishi-popup');
+  if(!pop){
+    pop=document.createElement('div');pop.id='ishi-popup';
+    pop.style.cssText='position:fixed;z-index:9999;background:#fff;border:1px solid #90caf9;border-radius:10px;padding:14px 16px;max-width:280px;font-size:12px;line-height:1.55;color:#1a2533;box-shadow:0 4px 18px rgba(0,32,80,.13)';
+    const close=document.createElement('button');
+    close.textContent='✕';
+    close.style.cssText='position:absolute;top:7px;right:10px;background:none;border:none;cursor:pointer;font-size:13px;color:#607080;padding:0';
+    close.onclick=()=>pop.remove();
+    pop.appendChild(close);
+    document.body.appendChild(pop);
+  }
+  pop.innerHTML='';
+  const close=document.createElement('button');
+  close.textContent='✕';
+  close.style.cssText='position:absolute;top:7px;right:10px;background:none;border:none;cursor:pointer;font-size:13px;color:#607080;padding:0';
+  close.onclick=()=>pop.remove();
+  const content=document.createElement('div');content.innerHTML=cat.desc;
+  pop.appendChild(close);pop.appendChild(content);
+  // Position near center of treat-modal
+  const modal=document.querySelector('.treat-modal');
+  if(modal){
+    const r=modal.getBoundingClientRect();
+    pop.style.top=(r.top+r.height/2-60)+'px';
+    pop.style.left=(r.left+r.width/2-140)+'px';
+  } else {
+    pop.style.top='40%';pop.style.left='50%';pop.style.transform='translateX(-50%)';
+  }
+  // Auto-close on outside click
+  setTimeout(()=>{
+    const fn=(e)=>{if(!pop.contains(e.target)){pop.remove();document.removeEventListener('click',fn);}};
+    document.addEventListener('click',fn);
+  },50);
+}
+
 function buildIshikawaInputs(){
   const g=document.getElementById('ishi-grid');if(!g)return;g.innerHTML='';
   ISHI_CATS.forEach(cat=>{
@@ -2456,8 +2498,15 @@ function buildIshikawaInputs(){
     const d=document.createElement('div');
     d.style.cssText=`width:7px;height:7px;border-radius:50%;background:${cat.lite};outline:1px solid ${cat.color};flex-shrink:0`;
     const nm=document.createElement('span');
-    nm.style.cssText=`font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:${cat.color}`;
-    nm.textContent=cat.label;h.appendChild(d);h.appendChild(nm);b.appendChild(h);
+    nm.style.cssText=`font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:${cat.color};flex:1;cursor:default`;
+    nm.textContent=cat.label;
+    // Info button
+    const info=document.createElement('button');
+    info.textContent='?';
+    info.title='Ver descripción de '+cat.label;
+    info.style.cssText=`width:16px;height:16px;border-radius:50%;border:1px solid ${cat.color};background:transparent;color:${cat.color};font-size:9px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0;line-height:1`;
+    info.onclick=(e)=>{e.stopPropagation();showMDesc(cat.id);};
+    h.appendChild(d);h.appendChild(nm);h.appendChild(info);b.appendChild(h);
     for(let i=0;i<ISHI_N;i++){
       const r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:3px';
       const n=document.createElement('span');n.style.cssText='font-size:10px;color:#aaa;width:10px;flex-shrink:0;text-align:right';n.textContent=i+1;
@@ -2526,11 +2575,16 @@ function refresh5PQ(){
 
 function checkGuardar(){
   const btn=document.getElementById('btnGuardarDatos');if(!btn)return;
+  // Ishikawa: al menos 1 causa en cualquier categoría
   const ishiOk=ISHI_CATS.some(cat=>[...document.querySelectorAll(`input[data-cat="${cat.id}"]`)].some(i=>i.value.trim()));
-  let pqOk=true;for(let i=1;i<=5;i++){const ta=document.getElementById('pq'+i);if(!ta||!ta.value.trim()){pqOk=false;break;}}
+  // 5 por qué: al menos 1 campo completado
+  let pqOk=false;for(let i=1;i<=5;i++){const ta=document.getElementById('pq'+i);if(ta&&ta.value.trim()){pqOk=true;break;}}
   const ok=ishiOk&&pqOk;
   btn.disabled=!ok;btn.style.opacity=ok?'1':'.45';btn.style.cursor=ok?'pointer':'not-allowed';
-  btn.title=ok?'Guardar datos del tratamiento':'Completá el Ishikawa (al menos 1 causa) y los 5 por qué para habilitar';
+  const missing=[];
+  if(!ishiOk)missing.push('al menos 1 causa en Ishikawa');
+  if(!pqOk)missing.push('al menos 1 por qué');
+  btn.title=ok?'Guardar datos del tratamiento':'Falta: '+missing.join(' y ');
 }
 
 function initAnalysis(){buildIshikawaSVG();buildIshikawaInputs();build5PQ();checkGuardar();}
