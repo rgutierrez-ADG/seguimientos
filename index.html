@@ -1628,6 +1628,8 @@ function openTreatmentSheet(num){
   document.getElementById('tVerificador').value  = tr.verificador  || '';
   document.getElementById('tFechaVerif').value   = tr.fechaVerif   || '';
   document.getElementById('tObservaciones').value= tr.observaciones|| '';
+  initAnalysis();
+  loadAnalysisData(tr);
   const _dvi = document.getElementById('tDescVerifImpl');
   if(_dvi) _dvi.value = tr.descVerifImpl || '';
   const _dve = document.getElementById('tDescVerifEfec');
@@ -2399,6 +2401,166 @@ function _syncResp(){
   if(fd && fi) fd.value = fi.value;
 }
 
+
+// ═══ ISHIKAWA + 5 POR QUÉ ════════════════════════════════════════════════
+
+const ISHI_CATS = [
+  {id:'maquina',  label:'Máquina',      color:'#185FA5', lite:'#B5D4F4', bx:155, side:'top'},
+  {id:'metodo',   label:'Método',       color:'#185FA5', lite:'#B5D4F4', bx:300, side:'top'},
+  {id:'medicion', label:'Medición',     color:'#185FA5', lite:'#B5D4F4', bx:445, side:'top'},
+  {id:'material', label:'Material',     color:'#0F6E56', lite:'#5DCAA5', bx:155, side:'bottom'},
+  {id:'mano',     label:'Mano de obra', color:'#0F6E56', lite:'#5DCAA5', bx:300, side:'bottom'},
+  {id:'medio',    label:'Medio amb.',   color:'#0F6E56', lite:'#5DCAA5', bx:445, side:'bottom'},
+];
+const ISHI_N=5, ISHI_CY=120, ISHI_SX1=50, ISHI_SX2=572;
+
+function _svgEl(tag,attrs){
+  const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);
+  return e;
+}
+
+function buildIshikawaSVG(){
+  const s=document.getElementById('ishi-svg');if(!s)return;
+  s.innerHTML=`<defs><marker id="ishi-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>`;
+  s.appendChild(_svgEl('line',{x1:ISHI_SX1,y1:ISHI_CY,x2:ISHI_SX2,y2:ISHI_CY,stroke:'#378ADD','stroke-width':'2.5','marker-end':'url(#ishi-ah)'}));
+  s.appendChild(_svgEl('rect',{x:574,y:ISHI_CY-21,width:80,height:42,rx:5,fill:'#E6F1FB',stroke:'#85B7EB','stroke-width':'1'}));
+  const et1=_svgEl('text',{x:614,y:ISHI_CY-5,'text-anchor':'middle','font-size':'10.5','font-weight':'500',fill:'#0C447C','dominant-baseline':'central'});et1.textContent='Hallazgo';s.appendChild(et1);
+  const et2=_svgEl('text',{x:614,y:ISHI_CY+9,'text-anchor':'middle','font-size':'10',fill:'#185FA5','dominant-baseline':'central'});et2.textContent='(efecto)';s.appendChild(et2);
+  const ang=Math.PI/4;
+  ISHI_CATS.forEach(cat=>{
+    const isTop=cat.side==='top', L=85;
+    const ox=cat.bx, oy=ISHI_CY+(isTop?-L:L);
+    const tx=cat.bx+L*Math.cos(ang), ty=ISHI_CY;
+    s.appendChild(_svgEl('line',{x1:ox,y1:oy,x2:tx,y2:ty,stroke:cat.color,'stroke-width':'1.8',opacity:'0.65',id:'ibone-'+cat.id}));
+    s.appendChild(_svgEl('circle',{cx:ox,cy:oy,r:'5',fill:cat.lite,opacity:'0.4',id:'idot-'+cat.id}));
+    const lbl=_svgEl('text',{x:ox-2,y:isTop?oy-13:oy+15,'text-anchor':'middle','font-size':'10','font-weight':'500',fill:cat.color});
+    lbl.textContent=cat.label;s.appendChild(lbl);
+    for(let i=0;i<ISHI_N;i++){
+      const t=(i+1)/(ISHI_N+1);
+      const mx=ox+(tx-ox)*t,my=oy+(ty-oy)*t,sl=20;
+      const px=isTop?-sl*Math.sin(ang):sl*Math.sin(ang);
+      const py=isTop?-sl*Math.cos(ang):sl*Math.cos(ang);
+      s.appendChild(_svgEl('line',{x1:mx+px,y1:my+py,x2:mx,y2:my,stroke:cat.color,'stroke-width':'0.7',opacity:'0.15',id:`isub-${cat.id}-${i}`}));
+    }
+  });
+}
+
+function buildIshikawaInputs(){
+  const g=document.getElementById('ishi-grid');if(!g)return;g.innerHTML='';
+  ISHI_CATS.forEach(cat=>{
+    const b=document.createElement('div');
+    b.style.cssText='background:#f0f4f8;border:0.5px solid #dce6f0;border-radius:8px;padding:8px 10px';
+    const h=document.createElement('div');
+    h.style.cssText='display:flex;align-items:center;gap:5px;margin-bottom:5px';
+    const d=document.createElement('div');
+    d.style.cssText=`width:7px;height:7px;border-radius:50%;background:${cat.lite};outline:1px solid ${cat.color};flex-shrink:0`;
+    const nm=document.createElement('span');
+    nm.style.cssText=`font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:${cat.color}`;
+    nm.textContent=cat.label;h.appendChild(d);h.appendChild(nm);b.appendChild(h);
+    for(let i=0;i<ISHI_N;i++){
+      const r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:3px';
+      const n=document.createElement('span');n.style.cssText='font-size:10px;color:#aaa;width:10px;flex-shrink:0;text-align:right';n.textContent=i+1;
+      const inp=document.createElement('input');inp.type='text';inp.placeholder=i===0?'Causa...':'';
+      inp.style.cssText='flex:1;font-size:11px;padding:3px 7px;border-radius:5px;border:0.5px solid #dce6f0;background:#fff;color:#1a2533;font-family:inherit';
+      inp.dataset.cat=cat.id;inp.dataset.idx=i;
+      inp.addEventListener('input',()=>{refreshIshiDiagram();checkGuardar();});
+      r.appendChild(n);r.appendChild(inp);b.appendChild(r);
+    }
+    g.appendChild(b);
+  });
+}
+
+function refreshIshiDiagram(){
+  ISHI_CATS.forEach(cat=>{
+    const inputs=[...document.querySelectorAll(`input[data-cat="${cat.id}"]`)];
+    const filled=inputs.filter(i=>i.value.trim()).length;
+    const dot=document.getElementById('idot-'+cat.id);
+    if(dot){dot.setAttribute('r',filled?'7':'5');dot.setAttribute('opacity',filled?'1':'0.35');}
+    for(let i=0;i<ISHI_N;i++){
+      const sub=document.getElementById(`isub-${cat.id}-${i}`);if(!sub)continue;
+      const has=inputs[i]&&inputs[i].value.trim();
+      sub.setAttribute('opacity',has?'0.85':'0.12');sub.setAttribute('stroke-width',has?'1.8':'0.7');
+    }
+  });
+}
+
+function build5PQ(){
+  const c=document.getElementById('pq-chain');if(!c)return;c.innerHTML='';
+  const labels=['¿Por qué ocurrió el hallazgo?','¿Por qué ocurrió lo anterior?','¿Por qué ocurrió lo anterior?','¿Por qué ocurrió lo anterior?','¿Por qué ocurrió lo anterior? — causa raíz'];
+  for(let i=0;i<5;i++){
+    const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start';
+    const num=document.createElement('div');num.id='pqn'+(i+1);
+    num.style.cssText='width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:5px;flex-shrink:0;transition:background .2s,color .2s;background:'+(i===0?'#EAF3DE':'#f0f4f8')+';color:'+(i===0?'#27500A':'#aaa');
+    num.textContent=i+1;
+    const blk=document.createElement('div');
+    const lbl=document.createElement('div');lbl.style.cssText='font-size:10px;color:#607080;margin-bottom:3px';lbl.textContent=labels[i];
+    const ta=document.createElement('textarea');ta.id='pq'+(i+1);ta.className='treat-textarea';
+    ta.style.cssText='min-height:40px;font-size:12px;transition:background .15s';
+    ta.placeholder=i===0?'Completá el diagnóstico...':'Habilitado al completar el anterior...';
+    if(i>0){ta.disabled=true;ta.style.background='#f4f7fb';ta.style.color='#aaa';}
+    ta.addEventListener('input',()=>{refresh5PQ();checkGuardar();});
+    blk.appendChild(lbl);blk.appendChild(ta);row.appendChild(num);row.appendChild(blk);c.appendChild(row);
+    if(i<4){const arr=document.createElement('div');arr.style.cssText='padding:2px 0 2px 34px;color:#aaa;font-size:13px';arr.textContent='↓';c.appendChild(arr);}
+  }
+}
+
+function refresh5PQ(){
+  for(let i=2;i<=5;i++){
+    const prev=document.getElementById('pq'+(i-1));
+    const ta=document.getElementById('pq'+i);
+    const num=document.getElementById('pqn'+i);
+    const ok=prev&&prev.value.trim().length>0;
+    ta.disabled=!ok;ta.placeholder=ok?'':'Habilitado al completar el anterior...';
+    ta.style.background=ok?'':'#f4f7fb';ta.style.color=ok?'':'#aaa';
+    num.style.background=ok?'#EAF3DE':'#f0f4f8';num.style.color=ok?'#27500A':'#aaa';
+  }
+  const pq5=document.getElementById('pq5');
+  const raiz=document.getElementById('raiz-box');
+  const rt=document.getElementById('tCausaRaiz');
+  if(pq5&&pq5.value.trim()){
+    if(raiz)raiz.style.display='block';
+    if(rt&&!rt.value.trim())rt.value=pq5.value.trim();
+  } else {if(raiz)raiz.style.display='none';}
+}
+
+function checkGuardar(){
+  const btn=document.getElementById('btnGuardarDatos');if(!btn)return;
+  const ishiOk=ISHI_CATS.some(cat=>[...document.querySelectorAll(`input[data-cat="${cat.id}"]`)].some(i=>i.value.trim()));
+  let pqOk=true;for(let i=1;i<=5;i++){const ta=document.getElementById('pq'+i);if(!ta||!ta.value.trim()){pqOk=false;break;}}
+  const ok=ishiOk&&pqOk;
+  btn.disabled=!ok;btn.style.opacity=ok?'1':'.45';btn.style.cursor=ok?'pointer':'not-allowed';
+  btn.title=ok?'Guardar datos del tratamiento':'Completá el Ishikawa (al menos 1 causa) y los 5 por qué para habilitar';
+}
+
+function initAnalysis(){buildIshikawaSVG();buildIshikawaInputs();build5PQ();checkGuardar();}
+
+function loadAnalysisData(tr){
+  if(!tr)return;
+  if(tr.ishi){
+    ISHI_CATS.forEach(cat=>{
+      const saved=tr.ishi[cat.id]||[];
+      saved.forEach((val,i)=>{const inp=document.querySelector(`input[data-cat="${cat.id}"][data-idx="${i}"]`);if(inp)inp.value=val;});
+    });
+    refreshIshiDiagram();
+  }
+  if(tr.pq){for(let i=1;i<=5;i++){const ta=document.getElementById('pq'+i);if(ta&&tr.pq[i-1]!==undefined)ta.value=tr.pq[i-1];}refresh5PQ();}
+  if(tr.causaRaiz){const rt=document.getElementById('tCausaRaiz');if(rt)rt.value=tr.causaRaiz;const rb=document.getElementById('raiz-box');if(rb)rb.style.display='block';}
+  checkGuardar();
+}
+
+function collectAnalysisData(){
+  const ishi={};
+  ISHI_CATS.forEach(cat=>{ishi[cat.id]=[...document.querySelectorAll(`input[data-cat="${cat.id}"]`)].map(i=>i.value.trim());});
+  const pq=[];for(let i=1;i<=5;i++){const ta=document.getElementById('pq'+i);pq.push(ta?ta.value.trim():'');}
+  const causaRaiz=(document.getElementById('tCausaRaiz')||{}).value||'';
+  const pqText=pq.map((v,i)=>v?`Por qué ${i+1}: ${v}`:'').filter(Boolean).join('\n');
+  const ishiLines=ISHI_CATS.map(cat=>{const vals=ishi[cat.id].filter(Boolean);return vals.length?`${cat.label}: ${vals.join('; ')}`:null;}).filter(Boolean);
+  const ishiText=ishiLines.length?`Ishikawa:\n${ishiLines.join('\n')}`:'';
+  const accionSummary=[ishiText,pqText,causaRaiz?`Causa raíz: ${causaRaiz}`:null].filter(Boolean).join('\n\n');
+  return {ishi,pq,causaRaiz,accionSummary};
+}
+
 function renderTableOnly(){
   renderTable();
 }
@@ -2430,7 +2592,10 @@ function marcarCierre(){
 function _collectFormData(){
   return {
     causa:         document.getElementById('tCausa').value.trim(),
-    accion:        document.getElementById('tAccion').value.trim(),
+    accion:        (()=>{ const a=collectAnalysisData(); return a.accionSummary||document.getElementById('tAccion').value.trim(); })(),
+    ishi:          (collectAnalysisData()).ishi,
+    pq:            (collectAnalysisData()).pq,
+    causaRaiz:     (collectAnalysisData()).causaRaiz,
     correccion:    document.getElementById('tCausa').value.trim(),
     tipoAccion:    document.querySelector('input[name="tipoAccion"]:checked')?.value || 'CORRECTIVA',
     respImpl:      document.getElementById('tRespImpl').value.trim(),
@@ -2856,8 +3021,36 @@ function closeDescOverlay(e){
           <!-- Corrección -->
           <div class="treat-field full"><span class="treat-label">Corrección - Resolución (Acción inmediata) *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la acción inmediata tomada para contener el hallazgo..."></textarea></div>
 
-          <!-- Causas -->
-          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Causas que originaron el Hallazgo - utilizar 5 porqué o espina de pescado *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir las causas raíz que originaron el hallazgo (5 porqué o espina de pescado)..."></textarea></div>
+          <!-- ISHIKAWA + 5 POR QUÉ -->
+          <div class="treat-field full" style="margin-top:8px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <div style="width:20px;height:20px;border-radius:50%;background:#E6F1FB;color:#0C447C;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+              <span class="treat-label" style="margin:0">Diagrama de Ishikawa — 6M *</span>
+            </div>
+            <p style="font-size:10px;color:#607080;margin:-4px 0 10px 30px;font-style:italic">Completar al menos una causa por categoría para habilitar el Guardar.</p>
+            <!-- SVG Diagram -->
+            <div style="background:#f8faff;border:0.5px solid #dce6f0;border-radius:8px;padding:8px;margin-bottom:8px;overflow-x:auto">
+              <svg id="ishi-svg" viewBox="0 0 680 240" style="width:100%;max-width:680px;display:block"></svg>
+            </div>
+            <!-- 6M input grid -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" id="ishi-grid"></div>
+          </div>
+
+          <div class="treat-field full" style="margin-top:12px;border-top:1px dashed #dce6f0;padding-top:12px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <div style="width:20px;height:20px;border-radius:50%;background:#EAF3DE;color:#27500A;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+              <span class="treat-label" style="margin:0">Análisis 5 por qué *</span>
+            </div>
+            <p style="font-size:10px;color:#607080;margin:-4px 0 10px 30px;font-style:italic">Los campos se habilitan en cadena. Completar hasta el por qué 5 para habilitar el Guardar.</p>
+            <div id="pq-chain" style="display:flex;flex-direction:column;gap:0"></div>
+            <div id="raiz-box" style="display:none;margin-top:8px;background:#EAF3DE;border:0.5px solid #97C459;border-radius:8px;padding:10px 12px">
+              <div style="font-size:10px;font-weight:600;color:#27500A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Causa raíz identificada</div>
+              <textarea class="treat-textarea" id="tCausaRaiz" placeholder="Resumí la causa raíz a partir del análisis..." style="min-height:44px;background:#fff;border-color:#97C459" oninput="checkGuardar()"></textarea>
+            </div>
+          </div>
+
+          <!-- old tAccion hidden for backward compat -->
+          <div style="display:none"><textarea id="tAccion"></textarea></div>
 
           <!-- Tipo de acción -->
           <div class="treat-field full" style="margin-top:4px">
@@ -2941,7 +3134,7 @@ function closeDescOverlay(e){
     </div>
     <div class="treat-footer">
       <button class="treat-cancel" onclick="closeTreat()">Cancelar</button>
-      <button class="treat-save" onclick="saveTreatData()" id="btnGuardarDatos" style="background:linear-gradient(135deg,#455a64,#263238)">
+      <button class="treat-save" onclick="saveTreatData()" id="btnGuardarDatos" disabled title="Completá el Ishikawa y los 5 por qué para habilitar" style="background:linear-gradient(135deg,#455a64,#263238);opacity:.45;cursor:not-allowed">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Guardar Datos
       </button>
