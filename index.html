@@ -2204,13 +2204,13 @@ async function buildTreatmentDocx(num){
     tr(340,
       tc(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="20" w:after="20"/></w:pPr><w:r><w:rPr/>${logoImg}</w:r></w:p>`,{w:HL,col:'888888',bsz:6,va:'center'}),
       tc(p(run('Sistema Integrado de Gesti\u00f3n',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('Revisi\u00f3n 7',{sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Revisi\u00f3n 8',{sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
       tc(p(run('R-SIG-AU 04',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:20}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
     ),
     tr(320,
       tc(p(run(''),{sp0:20,sp1:20}),{w:HL,col:'888888',bsz:6}),
       tc(p(run('TRATAMIENTO DE HALLAZGOS',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('Fecha:',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run('15/04/2026',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(p(run('Fecha:',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run('20/04/2026',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
       tc(p(run('P\u00e1g. 1 de 1',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
     ),
   ]);
@@ -2223,9 +2223,9 @@ async function buildTreatmentDocx(num){
       tc(p(run('Aprob\u00f3',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:FW-FC-FC,bg:'7030A0',col:'7030A0'}),
     ),
     tr(400,
-      tc(p(run('Supervisor de SGCIA: Rodrigo Gutierrez',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 15/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
-      tc(p(run('Administrativo del SGCIA: Carolina Serassio',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 15/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
-      tc(p(run('Responsable de SGCIA: Mayra Dip',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 15/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FW-FC-FC}),
+      tc(p(run('Supervisor  de SGCIA: Rodrigo Gutierrez',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 20/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Administrativo de SGCIA: Carolina Serassio',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 20/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FC}),
+      tc(p(run('Coordinador de SGCIA: Mayra Dipi',{sz:SZ_BODY}),{sp0:40,sp1:20})+p(run('Fecha: 20/04/2026',{sz:SZ_BODY}),{sp0:20,sp1:40}),{w:FW-FC-FC}),
     ),
   ]);
 
@@ -2857,7 +2857,7 @@ function closeDescOverlay(e){
           <div class="treat-field full"><span class="treat-label">Corrección - Resolución (Acción inmediata) *</span><textarea class="treat-textarea" id="tCausa" placeholder="Describir la acción inmediata tomada para contener el hallazgo..."></textarea></div>
 
           <!-- Causas -->
-          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Causas que originaron el Hallazgo *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir las causas raíz que originaron el hallazgo..."></textarea></div>
+          <div class="treat-field full" style="margin-top:4px"><span class="treat-label">Causas que originaron el Hallazgo - utilizar 5 porqué o espina de pescado *</span><textarea class="treat-textarea" id="tAccion" placeholder="Describir las causas raíz que originaron el hallazgo (5 porqué o espina de pescado)..."></textarea></div>
 
           <!-- Tipo de acción -->
           <div class="treat-field full" style="margin-top:4px">
