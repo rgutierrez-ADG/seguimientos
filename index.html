@@ -805,6 +805,11 @@ function updateTabBadges(){
 
 window.addEventListener('DOMContentLoaded', () => {
   STORE.load();
+  // Limpiar etiqueta "Revisar" del hallazgo 391 (usada en pruebas)
+  if(TREATMENTS['391'] && TREATMENTS['391'].pendingReview){
+    TREATMENTS['391'].pendingReview = false;
+    STORE.save();
+  }
   updateClock();
   populateFilters();
   renderAll();
@@ -3081,7 +3086,7 @@ function closeDescOverlay(e){
               <div style="width:20px;height:20px;border-radius:50%;background:#E6F1FB;color:#0C447C;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
               <span class="treat-label" style="margin:0">Diagrama de Ishikawa — 6M *</span>
             </div>
-            <p style="font-size:10px;color:#607080;margin:-4px 0 10px 30px;font-style:italic">Completar al menos una causa por categoría para habilitar el Guardar.</p>
+            <p style="font-size:10px;color:#607080;margin:-4px 0 10px 30px;font-style:italic">Con completar al menos 1 causa en cualquier M ya se puede guardar. No es necesario completar todas las M.</p>
             <!-- SVG Diagram -->
             <div style="background:#f8faff;border:0.5px solid #dce6f0;border-radius:8px;padding:8px;margin-bottom:8px;overflow-x:auto">
               <svg id="ishi-svg" viewBox="0 0 680 240" style="width:100%;max-width:680px;display:block"></svg>
@@ -3095,7 +3100,7 @@ function closeDescOverlay(e){
               <div style="width:20px;height:20px;border-radius:50%;background:#EAF3DE;color:#27500A;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
               <span class="treat-label" style="margin:0">Análisis 5 por qué *</span>
             </div>
-            <p style="font-size:10px;color:#607080;margin:-4px 0 10px 30px;font-style:italic">Los campos se habilitan en cadena. Completar hasta el por qué 5 para habilitar el Guardar.</p>
+            <p style="font-size:10px;color:#607080;margin:-4px 0 10px 30px;font-style:italic">Con completar al menos 1 por qué ya se puede guardar. Los campos se habilitan en orden.</p>
             <div id="pq-chain" style="display:flex;flex-direction:column;gap:0"></div>
             <div id="raiz-box" style="display:none;margin-top:8px;background:#EAF3DE;border:0.5px solid #97C459;border-radius:8px;padding:10px 12px">
               <div style="font-size:10px;font-weight:600;color:#27500A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Causa raíz identificada</div>
