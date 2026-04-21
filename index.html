@@ -713,8 +713,23 @@ function toggleDropdown(ddId){
 
 // ── Chart refresh helper — always 2 frames so browser paints before Chart.js reads dimensions
 function _refreshCharts(){
+  // 1. Destroy existing charts
   Object.values(CHARTS).forEach(c => { try{ c.destroy(); }catch(e){} });
   CHARTS = {};
+  // 2. Reset canvas intrinsic dimensions for charts with maintainAspectRatio:false
+  //    (bar charts) — prevents Chart.js from reusing stale sizes that cause
+  //    distortion when switching tabs/filters without a full page reload.
+  //    pieEstado keeps its fixed inline dimensions (160x160).
+  ['barAreas','barTipos'].forEach(id => {
+    const cv = document.getElementById(id);
+    if(cv){
+      cv.removeAttribute('width');
+      cv.removeAttribute('height');
+      cv.style.width = '';
+      cv.style.height = '';
+    }
+  });
+  // 3. Wait 2 animation frames for layout to settle, then rebuild
   requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
     populateFilters();
     renderAll();
@@ -805,9 +820,11 @@ function updateTabBadges(){
 
 window.addEventListener('DOMContentLoaded', () => {
   STORE.load();
-  // Limpiar etiqueta "Revisar" del hallazgo 391 (usada en pruebas)
-  if(TREATMENTS['391'] && TREATMENTS['391'].pendingReview){
-    TREATMENTS['391'].pendingReview = false;
+  // Limpiar completamente el hallazgo 391 (prueba de funcionamiento)
+  if(TREATMENTS['391']){
+    delete TREATMENTS['391'];
+    localStorage.removeItem('sgcia_att_391');
+    localStorage.removeItem('sgcia_att_trat_391');
     STORE.save();
   }
   updateClock();
