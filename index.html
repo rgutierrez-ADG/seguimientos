@@ -2383,17 +2383,32 @@ function checkVerificador(){
 // Guardar datos (sin descargar) — muestra la alerta de revisión pendiente
 function saveTreatData(){
   if(!CURRENT_TREAT_NUM) return;
-  const causa  = document.getElementById('tCausa').value.trim();
-  const accion = document.getElementById('tAccion').value.trim();
-  if(!causa || !accion){
-    showToast('⚠ Completá al menos la Causa Raíz y la Acción Correctiva', true);
+  // Corrección/acción inmediata (campo "tCausa" en el form)
+  const correccion = document.getElementById('tCausa').value.trim();
+  // Validar mediante Ishikawa + 5 por qué (al menos 1 entrada en cada uno)
+  const ishiOk = ISHI_CATS.some(cat =>
+    [...document.querySelectorAll(`input[data-cat="${cat.id}"]`)].some(i=>i.value.trim())
+  );
+  let pqOk = false;
+  for(let i=1;i<=5;i++){
+    const ta = document.getElementById('pq'+i);
+    if(ta && ta.value.trim()){ pqOk = true; break; }
+  }
+  if(!correccion){
+    showToast('⚠ Completá la Corrección - Resolución (Acción Inmediata)', true);
+    return;
+  }
+  if(!ishiOk){
+    showToast('⚠ Cargá al menos 1 causa en el diagrama de Ishikawa', true);
+    return;
+  }
+  if(!pqOk){
+    showToast('⚠ Cargá al menos 1 por qué en el análisis 5 por qué', true);
     return;
   }
   _persistTreatment(true);
   STORE.save();
-  // Alerta por email — solo si está configurado y la opción está activa
   if(EMAIL_CFG.onSave) sendEmailAlert(CURRENT_TREAT_NUM, '📋 Tratamiento guardado — Pendiente de revisión');
-  // Update table without destroying charts
   renderTableOnly();
   updateTabBadges();
   showToast('✓ Datos guardados · Alerta de revisión pendiente generada', false);
@@ -2586,13 +2601,20 @@ function refresh5PQ(){
     ta.style.background=ok?'':'#f4f7fb';ta.style.color=ok?'':'#aaa';
     num.style.background=ok?'#EAF3DE':'#f0f4f8';num.style.color=ok?'#27500A':'#aaa';
   }
-  const pq5=document.getElementById('pq5');
+  // Causa raíz: mostrar si cualquier por qué tiene contenido (último completado)
+  let lastFilled = '';
+  for(let i=1;i<=5;i++){
+    const ta=document.getElementById('pq'+i);
+    if(ta && ta.value.trim()) lastFilled = ta.value.trim();
+  }
   const raiz=document.getElementById('raiz-box');
   const rt=document.getElementById('tCausaRaiz');
-  if(pq5&&pq5.value.trim()){
-    if(raiz)raiz.style.display='block';
-    if(rt&&!rt.value.trim())rt.value=pq5.value.trim();
-  } else {if(raiz)raiz.style.display='none';}
+  if(lastFilled){
+    if(raiz) raiz.style.display='block';
+    if(rt && !rt.value.trim()) rt.value = lastFilled;
+  } else {
+    if(raiz) raiz.style.display='none';
+  }
 }
 
 function checkGuardar(){
@@ -2641,7 +2663,40 @@ function renderTableOnly(){
   renderTable();
 }
 
-// Pasar a Cierre — marca el hallazgo con ✔ Cierre en la tabla
+// Borrar tratamiento — requiere contraseña 0630
+function solicitarBorradoTratamiento(){
+  const num = CURRENT_TREAT_NUM;
+  if(!num) return;
+  const tr = TREATMENTS[num];
+  if(!tr || Object.keys(tr).length === 0){
+    showToast('ℹ Este hallazgo no tiene tratamiento cargado', false);
+    return;
+  }
+  const pwd = prompt('🔒 Ingresá la contraseña para borrar el tratamiento del hallazgo N° ' + num + ':');
+  if(pwd === null) return;
+  if(pwd !== '0630'){
+    showToast('⚠ Contraseña incorrecta. No se borró el tratamiento.', true);
+    return;
+  }
+  if(!confirm('¿Confirmás que querés BORRAR todo el tratamiento del hallazgo N° ' + num + '?\n\nEsto eliminará:\n• Todos los datos cargados\n• El Ishikawa y los 5 por qué\n• Adjuntos del tratamiento\n• Adjuntos de verificación\n• Etiquetas (Tratamiento, Revisar, Cierre)\n\nEsta acción no se puede deshacer.')) return;
+
+  // Borrar todo
+  delete TREATMENTS[num];
+  localStorage.removeItem('sgcia_att_' + num);
+  localStorage.removeItem('sgcia_att_trat_' + num);
+  if(typeof ATTACHMENTS !== 'undefined'){
+    delete ATTACHMENTS['sgcia_att_' + num];
+    delete ATTACHMENTS['sgcia_att_trat_' + num];
+  }
+  STORE.save();
+
+  showToast('✓ Tratamiento del hallazgo N° ' + num + ' borrado correctamente', false);
+  closeTreat();
+  renderTableOnly();
+  updateTabBadges();
+}
+
+
 function marcarCierre(){
   const num = CURRENT_TREAT_NUM;
   if(!num) return;
@@ -3209,6 +3264,10 @@ function closeDescOverlay(e){
       </div>
     </div>
     <div class="treat-footer">
+      <button class="treat-cancel" onclick="solicitarBorradoTratamiento()" style="background:linear-gradient(135deg,#c62828,#8e0000);color:#fff;border:none" id="btnBorrarTrat" title="Borrar el tratamiento de este hallazgo (requiere contraseña)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Borrar Tratamiento
+      </button>
       <button class="treat-cancel" onclick="closeTreat()">Cancelar</button>
       <button class="treat-save" onclick="saveTreatData()" id="btnGuardarDatos" disabled title="Completá el Ishikawa y los 5 por qué para habilitar" style="background:linear-gradient(135deg,#455a64,#263238);opacity:.45;cursor:not-allowed">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
