@@ -359,7 +359,7 @@ td{padding:9px 12px;vertical-align:middle}
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       Alertas Email
     </button>
-    <button class="tb-btn" onclick="openPdf()">
+    <button class="tb-btn" onclick="solicitarPdf()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Exportar PDF
     </button>
@@ -2663,6 +2663,33 @@ function renderTableOnly(){
   renderTable();
 }
 
+// Helper genérico de validación con contraseña (descargas y borrado)
+function pedirPasswordParaAccion(mensaje){
+  const pwd = prompt('🔒 ' + mensaje + '\n\nIngresá la contraseña:');
+  if(pwd === null) return false;
+  if(pwd !== '0630'){
+    showToast('⚠ Contraseña incorrecta. Acción cancelada.', true);
+    return false;
+  }
+  return true;
+}
+
+// Wrappers protegidos por contraseña — descargas
+function solicitarPdf(){
+  if(!pedirPasswordParaAccion('Exportar PDF requiere autorización')) return;
+  openPdf();
+}
+
+function solicitarDescargaWord(){
+  if(!pedirPasswordParaAccion('Descargar Word del tratamiento requiere autorización')) return;
+  downloadTreatmentNow();
+}
+
+function solicitarReDownload(idx){
+  if(!pedirPasswordParaAccion('Re-descargar tratamiento requiere autorización')) return;
+  reDownload(idx);
+}
+
 // Borrar tratamiento — requiere contraseña 0630
 function solicitarBorradoTratamiento(){
   const num = CURRENT_TREAT_NUM;
@@ -2850,7 +2877,7 @@ function renderDescargasTab(){
       <td style="padding:9px 14px;font-size:11px;color:var(--text)">${d.verificador}</td>
       <td style="padding:9px 14px;font-size:11px;color:var(--dim)">${d.fecha}</td>
       <td style="padding:9px 14px">
-        <button onclick="reDownload(${DESCARGAS_LOG.length-1-i})" style="background:linear-gradient(135deg,#2e7d32,#1b5e20);border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px">
+        <button onclick="solicitarReDownload(${DESCARGAS_LOG.length-1-i})" style="background:linear-gradient(135deg,#2e7d32,#1b5e20);border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M5 20h14"/></svg>
           Re-descargar
         </button>
@@ -3277,7 +3304,7 @@ function closeDescOverlay(e){
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         Pasar a Cierre
       </button>
-      <button class="treat-save" onclick="downloadTreatmentNow()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
+      <button class="treat-save" onclick="solicitarDescargaWord()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Descargar Word
       </button>
