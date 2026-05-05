@@ -342,6 +342,163 @@ td{padding:9px 12px;vertical-align:middle}
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════════════════════════════
+     🔒 BLOQUE DE PROTECCIÓN — LOGIN + DISUASIÓN
+     Contraseña: Maniagro.2026!
+     Para portar a otro dashboard: copiar esta sección completa
+     (desde aquí hasta el cierre del bloque) al inicio de <body>
+═══════════════════════════════════════════════════════════════════════ -->
+
+<style>
+  /* Login overlay */
+  #__authOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d2138,#1B5E99);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Tahoma,sans-serif}
+  #__authBox{background:#fff;border-radius:14px;padding:38px 42px;box-shadow:0 12px 60px rgba(0,0,0,.45);max-width:380px;width:90%;text-align:center}
+  #__authBox h2{color:#1a2533;font-size:20px;margin:0 0 8px;font-weight:700}
+  #__authBox p{color:#607080;font-size:12px;margin:0 0 24px;line-height:1.5}
+  #__authPwd{width:100%;padding:11px 14px;font-size:14px;border:1.5px solid #c5d5e8;border-radius:8px;outline:none;transition:border-color .15s;font-family:inherit;box-sizing:border-box}
+  #__authPwd:focus{border-color:#1B5E99}
+  #__authBtn{width:100%;margin-top:14px;padding:11px;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#1B5E99,#0d2138);border:none;border-radius:8px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase}
+  #__authBtn:hover{filter:brightness(1.1)}
+  #__authErr{color:#c62828;font-size:11px;margin-top:10px;min-height:14px;font-weight:600}
+
+  /* Marca de agua */
+  #__watermark{position:fixed;inset:0;pointer-events:none;z-index:9998;overflow:hidden;display:none}
+  #__watermark .__wm-tile{position:absolute;color:rgba(27,94,153,.07);font-size:18px;font-weight:700;font-family:'Segoe UI',Tahoma,sans-serif;letter-spacing:1px;transform:rotate(-30deg);white-space:nowrap;user-select:none}
+
+  /* Foco perdido */
+  #__blurShield{position:fixed;inset:0;background:#fff;z-index:99998;display:none;align-items:center;justify-content:center;flex-direction:column;font-family:'Segoe UI',Tahoma,sans-serif}
+  #__blurShield h3{color:#1B5E99;font-size:18px;margin:0 0 10px}
+  #__blurShield p{color:#607080;font-size:12px;margin:0}
+
+  /* Anti-selección global mientras protegido */
+  body.__protected{user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none}
+  body.__protected input,body.__protected textarea{user-select:text;-webkit-user-select:text}
+
+  /* DevTools detected */
+  #__devtoolsShield{position:fixed;inset:0;background:#fff;z-index:99999;display:none;align-items:center;justify-content:center;flex-direction:column;font-family:'Segoe UI',Tahoma,sans-serif;text-align:center;padding:40px}
+  #__devtoolsShield h3{color:#c62828;font-size:20px;margin:0 0 10px}
+  #__devtoolsShield p{color:#607080;font-size:13px;margin:0;max-width:400px}
+</style>
+
+<!-- Login -->
+<div id="__authOverlay">
+  <div id="__authBox">
+    <h2>🔒 Acceso Restringido</h2>
+    <p>SGCIA · R-SIG-AC 01<br>Sistema de uso interno — Maniagro Argentina</p>
+    <input type="password" id="__authPwd" placeholder="Contraseña" autocomplete="off" autofocus>
+    <button id="__authBtn">Ingresar</button>
+    <div id="__authErr"></div>
+  </div>
+</div>
+
+<!-- Marca de agua -->
+<div id="__watermark"></div>
+
+<!-- Pantalla al perder foco -->
+<div id="__blurShield">
+  <h3>🔒 Sesión bloqueada</h3>
+  <p>Hacé click en la ventana para volver al dashboard</p>
+</div>
+
+<!-- DevTools detectado -->
+<div id="__devtoolsShield">
+  <h3>⚠ Acceso bloqueado</h3>
+  <p>Se detectó el uso de herramientas de desarrollador.<br>Cerrá las DevTools y recargá la página para continuar.</p>
+</div>
+
+<script>
+(function(){
+  const PWD = 'Maniagro.2026!';
+  const overlay = document.getElementById('__authOverlay');
+  const pwdInput = document.getElementById('__authPwd');
+  const btn = document.getElementById('__authBtn');
+  const errEl = document.getElementById('__authErr');
+
+  function tryAuth(){
+    if(pwdInput.value === PWD){
+      overlay.style.display = 'none';
+      document.body.classList.add('__protected');
+      activarProtecciones();
+    } else {
+      errEl.textContent = '⚠ Contraseña incorrecta';
+      pwdInput.value = '';
+      pwdInput.focus();
+      setTimeout(()=>errEl.textContent='', 2500);
+    }
+  }
+  btn.addEventListener('click', tryAuth);
+  pwdInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryAuth(); });
+
+  function activarProtecciones(){
+    // 1. Marca de agua
+    const wm = document.getElementById('__watermark');
+    const fecha = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const texto = `MANIAGRO · CONFIDENCIAL · ${fecha}`;
+    wm.style.display = 'block';
+    const cols = 4, rows = 8;
+    let html = '';
+    for(let r=0; r<rows; r++){
+      for(let c=0; c<cols; c++){
+        const top = (r*100/rows) + (c%2 ? 6 : 0);
+        const left = (c*100/cols) - 5;
+        html += `<div class="__wm-tile" style="top:${top}%;left:${left}%">${texto}</div>`;
+      }
+    }
+    wm.innerHTML = html;
+
+    // 2. Bloquear click derecho
+    document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
+
+    // 3. Bloquear atajos
+    document.addEventListener('keydown', e => {
+      const k = e.key;
+      // F12
+      if(k === 'F12'){ e.preventDefault(); return false; }
+      // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+      if((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')){
+        e.preventDefault(); return false;
+      }
+      // Ctrl+U (ver código)
+      if((e.ctrlKey || e.metaKey) && (k === 'u' || k === 'U')){ e.preventDefault(); return false; }
+      // Ctrl+S (guardar)
+      if((e.ctrlKey || e.metaKey) && (k === 's' || k === 'S')){ e.preventDefault(); return false; }
+      // Ctrl+P (imprimir)
+      if((e.ctrlKey || e.metaKey) && (k === 'p' || k === 'P')){ e.preventDefault(); return false; }
+    });
+
+    // 4. Pantalla blanca al perder foco (anti grabación de pantalla simple)
+    const shield = document.getElementById('__blurShield');
+    window.addEventListener('blur', () => { shield.style.display = 'flex'; });
+    window.addEventListener('focus', () => { shield.style.display = 'none'; });
+    document.addEventListener('visibilitychange', () => {
+      if(document.hidden) shield.style.display = 'flex';
+      else shield.style.display = 'none';
+    });
+
+    // 5. Detección de DevTools (heurística por diferencia de tamaño)
+    const devShield = document.getElementById('__devtoolsShield');
+    const checkDev = () => {
+      const widthThreshold = window.outerWidth - window.innerWidth > 160;
+      const heightThreshold = window.outerHeight - window.innerHeight > 160;
+      if(widthThreshold || heightThreshold){
+        devShield.style.display = 'flex';
+      } else {
+        devShield.style.display = 'none';
+      }
+    };
+    setInterval(checkDev, 800);
+
+    // 6. Bloquear arrastrar imágenes
+    document.addEventListener('dragstart', e => { e.preventDefault(); return false; });
+  }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     FIN DEL BLOQUE DE PROTECCIÓN
+═══════════════════════════════════════════════════════════════════════ -->
+
+
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="brand">
