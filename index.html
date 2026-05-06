@@ -423,26 +423,11 @@ td{padding:9px 12px;vertical-align:middle}
   pwdInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryAuth(); });
 
   function activarProtecciones(){
-    // 1. Marca de agua
-    const wm = document.getElementById('__watermark');
-    const fecha = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-    const texto = `MANIAGRO · CONFIDENCIAL · ${fecha}`;
-    wm.style.display = 'block';
-    const cols = 4, rows = 8;
-    let html = '';
-    for(let r=0; r<rows; r++){
-      for(let c=0; c<cols; c++){
-        const top = (r*100/rows) + (c%2 ? 6 : 0);
-        const left = (c*100/cols) - 5;
-        html += `<div class="__wm-tile" style="top:${top}%;left:${left}%">${texto}</div>`;
-      }
-    }
-    wm.innerHTML = html;
-
-    // 2. Bloquear click derecho
+    
+    // 1. Bloquear click derecho
     document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
 
-    // 3. Bloquear atajos
+    // 2. Bloquear atajos
     document.addEventListener('keydown', e => {
       const k = e.key;
       // F12
@@ -459,7 +444,7 @@ td{padding:9px 12px;vertical-align:middle}
       if((e.ctrlKey || e.metaKey) && (k === 'p' || k === 'P')){ e.preventDefault(); return false; }
     });
 
-    // 4. Pantalla blanca al perder foco (anti grabación de pantalla simple)
+    // 3. Pantalla blanca al perder foco (anti grabación de pantalla simple)
     const shield = document.getElementById('__blurShield');
     window.addEventListener('blur', () => { shield.style.display = 'flex'; });
     window.addEventListener('focus', () => { shield.style.display = 'none'; });
@@ -468,7 +453,7 @@ td{padding:9px 12px;vertical-align:middle}
       else shield.style.display = 'none';
     });
 
-    // 5. Detección de DevTools (heurística por diferencia de tamaño)
+    // 4. Detección de DevTools (heurística por diferencia de tamaño)
     const devShield = document.getElementById('__devtoolsShield');
     const checkDev = () => {
       const widthThreshold = window.outerWidth - window.innerWidth > 160;
@@ -481,7 +466,7 @@ td{padding:9px 12px;vertical-align:middle}
     };
     setInterval(checkDev, 800);
 
-    // 6. Bloquear arrastrar imágenes
+    // 5. Bloquear arrastrar imágenes
     document.addEventListener('dragstart', e => { e.preventDefault(); return false; });
   }
 })();
