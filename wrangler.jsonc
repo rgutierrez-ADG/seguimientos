@@ -1,14 +1,13 @@
-{
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "seguimientos",
-  "compatibility_date": "2025-09-27",
-  "observability": {
-    "enabled": true
-  },
-  "assets": {
-    "directory": "."
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
-}
+# wrangler.toml — Configuración de despliegue del Worker SGCIA
+
+name = "sgcia-acciones-correctivas"
+main = "worker.js"
+compatibility_date = "2025-04-01"
+
+# Activos estáticos: el worker sirve public/index.html en /
+assets = { directory = "./public", binding = "ASSETS" }
+
+# Namespace KV donde se guardan los tratamientos compartidos.
+[[kv_namespaces]]
+binding = "SGCIA_KV"
+id = "e0c6f95fc5d445199c613bd0dec3eb44"
