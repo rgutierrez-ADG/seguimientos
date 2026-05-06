@@ -1696,7 +1696,7 @@ let ATTACHMENTS = {};  // keyed by 'sgcia_att_{num}' / 'sgcia_att_trat_{num}', s
 // Si está hosteado aparte (ej: GitHub Pages), poné la URL absoluta del Worker:
 //   window.SGCIA_API_BASE = 'https://sgcia-acciones-correctivas.<tu-cuenta>.workers.dev/api';
 // El token tiene que coincidir con el SGCIA_TOKEN que pusiste en `wrangler secret put`.
-window.SGCIA_API_BASE = window.SGCIA_API_BASE || '/api';
+window.SGCIA_API_BASE = 'https://seguimientos.rgutierrez-689.workers.dev/api';
 window.SGCIA_TOKEN    = window.SGCIA_TOKEN    || 'Maniagro.2026!';
 
 function setSyncStatus(state, msgOverride){
