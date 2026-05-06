@@ -58,6 +58,24 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13
 .upd-val{font-size:11px;color:#fff;font-weight:600;font-family:var(--display)}
 input[type=file]{display:none}
 
+/* ─── SYNC STATUS PILL ─── */
+.sync-pill{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 11px;border-radius:7px;
+  font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.6px;
+  white-space:nowrap;cursor:pointer;transition:all .2s;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;
+}
+.sync-pill:hover{background:rgba(255,255,255,.25)}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+.sync-pill[data-state="synced"] .sync-dot{background:#4caf50;box-shadow:0 0 6px #4caf5099}
+.sync-pill[data-state="syncing"] .sync-dot{background:#ffc107;animation:sync-pulse 1s infinite}
+.sync-pill[data-state="error"]   .sync-dot{background:#f44336;animation:sync-pulse 1s infinite}
+.sync-pill[data-state="offline"] .sync-dot{background:#9e9e9e}
+.sync-pill[data-state="error"],
+.sync-pill[data-state="offline"]{background:rgba(244,67,54,.25);border-color:rgba(255,200,200,.6)}
+@keyframes sync-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
 /* ─── MAIN ─── */
 .main{padding:18px 22px}
 
@@ -501,6 +519,10 @@ td{padding:9px 12px;vertical-align:middle}
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Exportar CSV
     </button>
+    <div class="sync-pill" id="syncPill" data-state="syncing" onclick="STORE.refresh(true)" title="Estado de sincronización con el servidor — clic para refrescar">
+      <span class="sync-dot"></span>
+      <span id="syncLabel">Sincronizando…</span>
+    </div>
     <div class="upd-box">
       <div class="upd-lbl">Actualización</div>
       <div class="upd-val" id="updVal">—</div>
@@ -953,22 +975,30 @@ function updateTabBadges(){
 }
 
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // 1) Paint inmediato con datos locales (si hay) para no mostrar pantalla vacía
   STORE.load();
-  // Limpiar completamente el hallazgo 391 (prueba de funcionamiento)
-  if(TREATMENTS['391']){
-    delete TREATMENTS['391'];
-    localStorage.removeItem('sgcia_att_391');
-    localStorage.removeItem('sgcia_att_trat_391');
-    STORE.save();
-  }
   updateClock();
   populateFilters();
   renderAll();
   autoLoadCSV();
-  // Update descargas badge from persisted data
   const bd = document.getElementById('badge-descargas');
   if(bd) bd.textContent = DESCARGAS_LOG.length || '0';
+
+  // 2) Sincronizar con el servidor compartido — esto trae lo que cargaron los
+  //    demás usuarios. Es la corrección crítica para la trazabilidad de auditoría.
+  await STORE.refresh();
+
+  // 3) Limpiar el hallazgo de prueba 391 si quedó migrado
+  if(TREATMENTS['391']){
+    delete TREATMENTS['391'];
+    STORE.deleteAttachmentsKey('sgcia_att_391');
+    STORE.deleteAttachmentsKey('sgcia_att_trat_391');
+    STORE.save();
+  }
+
+  // 4) Auto-refresh periódico para reflejar los cambios de los demás
+  STORE._startAutoRefresh();
 });
 
 function autoLoadCSV(){
@@ -1653,40 +1683,219 @@ function _ejsStatus(msg, ok){
 
 
 let TREATMENTS = {};   // keyed by r.num
-let ATTACHMENTS = {};  // keyed by r.num, lazy-loaded from localStorage
+let ATTACHMENTS = {};  // keyed by 'sgcia_att_{num}' / 'sgcia_att_trat_{num}', server-backed cache
 
-// ═══ PERSISTENCIA (localStorage) ════════════════════════════════════════════
+// ═══ PERSISTENCIA (Backend compartido vía Cloudflare Worker) ═════════════════
+// Los datos se guardan en un KV de Cloudflare a través del API expuesto por
+// worker.js, así todos los usuarios del equipo (Natacha, Emilse, Gastón, Mayra,
+// Antonella, Rodrigo) ven los mismos tratamientos y adjuntos en tiempo real.
+// localStorage queda como espejo offline, pero la fuente de verdad es el server.
+
+// Configuración del backend ─────────────────────────────────────────────────
+// Si el HTML se sirve desde el mismo Worker, dejá API_BASE='/api'.
+// Si está hosteado aparte (ej: GitHub Pages), poné la URL absoluta del Worker:
+//   window.SGCIA_API_BASE = 'https://sgcia-acciones-correctivas.<tu-cuenta>.workers.dev/api';
+// El token tiene que coincidir con el SGCIA_TOKEN que pusiste en `wrangler secret put`.
+window.SGCIA_API_BASE = window.SGCIA_API_BASE || '/api';
+window.SGCIA_TOKEN    = window.SGCIA_TOKEN    || 'Maniagro.2026!';
+
+function setSyncStatus(state, msgOverride){
+  const pill = document.getElementById('syncPill');
+  const lbl  = document.getElementById('syncLabel');
+  if(!pill || !lbl) return;
+  pill.dataset.state = state;
+  const labels = {
+    synced:   '✓ Sincronizado',
+    syncing:  'Sincronizando…',
+    error:    '⚠ Error de sync',
+    offline:  '⚠ Sin conexión',
+  };
+  lbl.textContent = msgOverride || labels[state] || state;
+}
+
+async function _api(path, opts={}){
+  const headers = Object.assign({
+    'X-SGCIA-Token': window.SGCIA_TOKEN,
+  }, opts.headers || {});
+  if(opts.body && typeof opts.body !== 'string'){
+    headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(opts.body);
+  }
+  const r = await fetch(window.SGCIA_API_BASE + path, { ...opts, headers, cache:'no-store' });
+  if(!r.ok){
+    const txt = await r.text().catch(()=>'');
+    throw new Error(`API ${path} → ${r.status} ${txt.slice(0,120)}`);
+  }
+  return r.json();
+}
+
+// Stub-array con .length correcto para que las píldoras 📎 N de la tabla muestren
+// el número de adjuntos sin tener que descargar la base64 de cada archivo.
+function _metaStub(count){
+  const arr = [];
+  arr._partial = true;
+  arr.length = count|0;
+  return arr;
+}
+
 const STORE = {
-  save(){
+  _attMeta: {},     // { 'sgcia_att_450': {count, totalSize}, ... }
+  _attLoaded: {},   // claves para las que ya se descargó el data completo
+  _pushTimer: null,
+  _refreshTimer: null,
+  _migrationDone: false,
+
+  // Migración inicial: si el servidor está vacío y hay datos en localStorage,
+  // empujarlos al servidor para no perder lo que ya cargaron los usuarios.
+  async _maybeMigrate(serverState){
+    if(this._migrationDone) return;
+    this._migrationDone = true;
     try{
-      localStorage.setItem('sgcia_treatments', JSON.stringify(TREATMENTS));
-      // Descarga log sin blobs (se regenera el docx si se necesita re-descargar)
-      const desc = DESCARGAS_LOG.map(({blob, ...d})=>d);
-      localStorage.setItem('sgcia_descargas', JSON.stringify(desc));
-    }catch(e){ console.warn('Error guardando estado:', e.message); }
+      const serverEmpty = (!serverState.treatments || Object.keys(serverState.treatments).length === 0)
+                       && (!serverState.descargas || serverState.descargas.length === 0);
+      if(!serverEmpty) return;
+      const localT = localStorage.getItem('sgcia_treatments');
+      const localD = localStorage.getItem('sgcia_descargas');
+      const lt = localT ? JSON.parse(localT) : {};
+      const ld = localD ? JSON.parse(localD) : [];
+      const hasLocal = Object.keys(lt).length > 0 || ld.length > 0;
+      if(!hasLocal) return;
+      console.log('[SGCIA] Migrando datos locales al servidor (primera vez)…');
+      await _api('/state', { method:'PUT', body:{ treatments: lt, descargas: ld } });
+      // Migrar adjuntos también
+      const attKeys = [];
+      for(let i=0; i<localStorage.length; i++){
+        const k = localStorage.key(i);
+        if(k && (k.startsWith('sgcia_att_') || k.startsWith('sgcia_att_trat_'))) attKeys.push(k);
+      }
+      for(const k of attKeys){
+        try{
+          const files = JSON.parse(localStorage.getItem(k) || '[]');
+          if(files.length){
+            await _api('/attachments?key=' + encodeURIComponent(k), { method:'PUT', body:{ files } });
+          }
+        }catch(e){ console.warn('Error migrando adjunto', k, e); }
+      }
+      showToast('✓ Datos locales migrados al servidor compartido', false);
+    }catch(e){
+      console.warn('[SGCIA] Migración omitida:', e.message);
+    }
   },
-  load(){
+
+  // GET /api/state → reemplaza TREATMENTS y DESCARGAS_LOG con lo del server
+  async refresh(forced=false){
+    setSyncStatus('syncing');
+    try{
+      const j = await _api('/state');
+      await this._maybeMigrate(j);
+
+      // Si el modal de tratamiento está abierto y editando, preservar los datos
+      // que el usuario está escribiendo en este momento — no sobrescribir.
+      const overlay = document.getElementById('treatOverlay');
+      const modalOpen = overlay && overlay.style.display === 'flex' && CURRENT_TREAT_NUM;
+      const localCur = modalOpen ? TREATMENTS[CURRENT_TREAT_NUM] : null;
+
+      // Reemplazar TREATMENTS in-place (preservando referencia)
+      Object.keys(TREATMENTS).forEach(k => delete TREATMENTS[k]);
+      Object.assign(TREATMENTS, j.treatments || {});
+      if(modalOpen && localCur) TREATMENTS[CURRENT_TREAT_NUM] = localCur;
+
+      // Reemplazar DESCARGAS_LOG in-place
+      DESCARGAS_LOG.length = 0;
+      DESCARGAS_LOG.push(...(j.descargas || []));
+
+      // Guardar metadata de adjuntos (count por clave) para mostrar las píldoras 📎
+      this._attMeta = j.attMeta || {};
+
+      // Espejo local para resiliencia offline
+      try{
+        localStorage.setItem('sgcia_treatments', JSON.stringify(TREATMENTS));
+        localStorage.setItem('sgcia_descargas', JSON.stringify(DESCARGAS_LOG.map(({blob,...d})=>d)));
+      }catch(e){}
+
+      // Re-render
+      if(typeof renderTableOnly === 'function') renderTableOnly();
+      if(typeof updateTabBadges === 'function') updateTabBadges();
+      if(typeof renderDescargasTab === 'function') renderDescargasTab();
+      const bd = document.getElementById('badge-descargas');
+      if(bd) bd.textContent = DESCARGAS_LOG.length || '0';
+      setSyncStatus('synced');
+      if(forced) showToast('✓ Datos sincronizados con el servidor', false);
+      return j;
+    }catch(e){
+      console.error('[SGCIA] refresh error:', e);
+      setSyncStatus('offline');
+      // Fallback: leer del localStorage (modo lectura solo)
+      this._loadFromLocal();
+      if(forced) showToast('⚠ Sin conexión — mostrando última copia local', true);
+    }
+  },
+
+  _loadFromLocal(){
     try{
       const t = localStorage.getItem('sgcia_treatments');
       if(t) Object.assign(TREATMENTS, JSON.parse(t));
       const d = localStorage.getItem('sgcia_descargas');
-      if(d) DESCARGAS_LOG = JSON.parse(d);
-    }catch(e){ console.warn('Error cargando estado:', e.message); }
+      if(d){ DESCARGAS_LOG.length = 0; DESCARGAS_LOG.push(...JSON.parse(d)); }
+    }catch(e){ console.warn('Error cargando estado local:', e.message); }
   },
-  saveAttachments(num, files){
+
+  // Mantenida por compatibilidad con el código existente — ya no carga desde
+  // localStorage sino que dispara la sincronización con el server.
+  load(){
+    this._loadFromLocal(); // primer paint inmediato con datos locales
+    // El refresh real se dispara en init() (DOMContentLoaded) — ver más abajo
+  },
+
+  // Llamada cada vez que cambia TREATMENTS o DESCARGAS_LOG. Empuja al server.
+  // Usa debounce 250ms para coalescer ráfagas de cambios.
+  save(){
+    // Espejo local sincrónico
     try{
-      localStorage.setItem('sgcia_att_'+num, JSON.stringify(files));
-      ATTACHMENTS[num] = files;
-      return true;
+      localStorage.setItem('sgcia_treatments', JSON.stringify(TREATMENTS));
+      const desc = DESCARGAS_LOG.map(({blob, ...d})=>d);
+      localStorage.setItem('sgcia_descargas', JSON.stringify(desc));
+    }catch(e){ console.warn('Error guardando estado local:', e.message); }
+
+    setSyncStatus('syncing');
+    if(this._pushTimer) clearTimeout(this._pushTimer);
+    this._pushTimer = setTimeout(() => this._doPush(), 250);
+  },
+
+  async _doPush(retries=0){
+    try{
+      const desc = DESCARGAS_LOG.map(({blob, ...d})=>d);
+      await _api('/state', { method:'PUT', body:{ treatments: TREATMENTS, descargas: desc } });
+      setSyncStatus('synced');
     }catch(e){
-      showToast('⚠ Sin espacio para guardar adjunto: '+e.message, true);
-      return false;
+      console.error('[SGCIA] save error:', e);
+      setSyncStatus('error');
+      if(retries < 3){
+        setTimeout(() => this._doPush(retries+1), 2000 * (retries+1));
+      } else {
+        showToast('⚠ Error guardando en servidor — los cambios siguen en este equipo. Reintentando…', true);
+        setTimeout(() => this._doPush(0), 10000);
+      }
     }
   },
+
+  // ── Adjuntos ───────────────────────────────────────────────────────────
+  // loadAttachments es SÍNCRONO (lo necesita renderTable). Devuelve:
+  //  - el array completo si ya fue descargado
+  //  - un stub con .length correcto si solo conocemos la metadata (count)
+  //  - lo que haya en localStorage como último recurso
   loadAttachments(num){
     return this.loadAttachmentsKey('sgcia_att_'+num);
   },
   loadAttachmentsKey(key){
+    if(this._attLoaded[key] && ATTACHMENTS[key]) return ATTACHMENTS[key];
+    // ¿hay metadata del server?
+    if(this._attMeta[key]){
+      // Devolver stub con length correcto, y disparar fetch en background
+      this.fetchAttachmentsKey(key);
+      return _metaStub(this._attMeta[key].count);
+    }
+    // Sin metadata: probar localStorage como fallback
     if(ATTACHMENTS[key] !== undefined) return ATTACHMENTS[key];
     try{
       const d = localStorage.getItem(key);
@@ -1694,21 +1903,97 @@ const STORE = {
     }catch(e){ ATTACHMENTS[key] = []; }
     return ATTACHMENTS[key];
   },
-  saveAttachmentsKey(key, files){
+
+  // Descarga el contenido completo (base64) de los adjuntos de una clave.
+  // Se llama explícitamente al abrir el modal y al generar el Word.
+  async fetchAttachmentsKey(key){
+    if(this._attLoaded[key]) return ATTACHMENTS[key] || [];
     try{
-      localStorage.setItem(key, JSON.stringify(files));
-      ATTACHMENTS[key] = files;
-      return true;
+      const j = await _api('/attachments?key=' + encodeURIComponent(key));
+      ATTACHMENTS[key] = j.files || [];
+      this._attLoaded[key] = true;
+      try{ localStorage.setItem(key, JSON.stringify(ATTACHMENTS[key])); }catch(e){}
+      // Re-render si corresponde a la clave que se está mostrando
+      if(typeof renderAttachList === 'function' && CURRENT_TREAT_NUM &&
+         (key === 'sgcia_att_'+CURRENT_TREAT_NUM || key === 'sgcia_att_trat_'+CURRENT_TREAT_NUM)){
+        renderAttachList();
+      }
+      return ATTACHMENTS[key];
     }catch(e){
-      showToast('⚠ Sin espacio para guardar adjunto: '+e.message, true);
-      return false;
+      console.warn('[SGCIA] fetchAttachmentsKey error:', e);
+      return ATTACHMENTS[key] || [];
     }
   },
+  async fetchAttachments(num){
+    return this.fetchAttachmentsKey('sgcia_att_'+num);
+  },
+
+  // Pre-carga ambas claves (verificación + tratamiento) de un hallazgo.
+  async ensureAttachmentsLoaded(num){
+    await Promise.all([
+      this.fetchAttachmentsKey('sgcia_att_'+num),
+      this.fetchAttachmentsKey('sgcia_att_trat_'+num),
+    ]);
+  },
+
+  saveAttachments(num, files){
+    return this.saveAttachmentsKey('sgcia_att_'+num, files);
+  },
+  saveAttachmentsKey(key, files){
+    ATTACHMENTS[key] = files;
+    this._attLoaded[key] = true;
+    this._attMeta[key] = { count: files.length, totalSize: files.reduce((a,f)=>a+(f.size||0),0) };
+    try{ localStorage.setItem(key, JSON.stringify(files)); }catch(e){}
+    setSyncStatus('syncing');
+    _api('/attachments?key=' + encodeURIComponent(key), { method:'PUT', body:{ files } })
+      .then(() => setSyncStatus('synced'))
+      .catch(e => {
+        console.error('[SGCIA] saveAttachmentsKey error:', e);
+        setSyncStatus('error');
+        showToast('⚠ Error guardando adjunto en servidor: ' + e.message, true);
+      });
+    return true;
+  },
+
   clearAttachment(num, idx){
-    const files = this.loadAttachments(num);
+    const files = this.loadAttachments(num).slice();
     files.splice(idx, 1);
     this.saveAttachments(num, files);
-  }
+  },
+
+  // Borra una clave de adjuntos del servidor (se llama desde borrarTratamiento)
+  async deleteAttachmentsKey(key){
+    delete ATTACHMENTS[key];
+    delete this._attLoaded[key];
+    delete this._attMeta[key];
+    try{ localStorage.removeItem(key); }catch(e){}
+    try{
+      await _api('/attachments?key=' + encodeURIComponent(key), { method:'DELETE' });
+    }catch(e){ console.warn('[SGCIA] deleteAttachmentsKey error:', e); }
+  },
+
+  // Auto-refresh cada 30s + en cambio de visibilidad (otra pestaña → vuelve)
+  _startAutoRefresh(){
+    if(this._refreshTimer) return;
+    this._refreshTimer = setInterval(() => {
+      const overlay = document.getElementById('treatOverlay');
+      if(overlay && overlay.style.display === 'flex') return; // no interrumpir edición
+      this.refresh().catch(()=>{});
+    }, 30000);
+    document.addEventListener('visibilitychange', () => {
+      if(document.visibilityState === 'visible'){
+        const overlay = document.getElementById('treatOverlay');
+        if(overlay && overlay.style.display === 'flex') return;
+        this.refresh().catch(()=>{});
+      }
+    });
+  },
+
+  // Limpia el log de descargas también del server
+  async clearDescargasOnServer(){
+    try{ await _api('/clear-descargas', { method:'POST' }); }
+    catch(e){ console.warn('[SGCIA] clearDescargasOnServer:', e); }
+  },
 };
 
 // Helper global para acceder a attachments desde renderTable
@@ -1809,6 +2094,49 @@ function openTreatmentSheet(num){
   
   document.getElementById('tPendingAlert').style.display='none';
   document.getElementById('treatOverlay').classList.add('show');
+
+  // Trazabilidad de auditoría: traer del servidor lo último que cargaron los
+  // demás usuarios para este hallazgo (tratamiento + ambas listas de adjuntos)
+  // y refrescar el modal.
+  (async () => {
+    try{
+      // Fetch attachments en paralelo
+      await STORE.ensureAttachmentsLoaded(r.num);
+      // Refrescar el tratamiento completo desde el server (sin pisar lo que el
+      // usuario empezó a tipear si ya lo hizo)
+      const j = await _api('/state').catch(()=>null);
+      if(!j) { renderAttachList(); return; }
+      const remoteTr = (j.treatments || {})[r.num];
+      // Si ya hay datos locales NO guardados (el usuario empezó a editar), respetarlos.
+      // Solo cargar el remoteTr si los campos del modal siguen "vacíos vs lo guardado".
+      if(remoteTr && (!TREATMENTS[r.num] || JSON.stringify(TREATMENTS[r.num]) !== JSON.stringify(remoteTr))){
+        const localUserStartedEditing =
+            (document.getElementById('tCausa').value !== (TREATMENTS[r.num]?.causa || '')) ||
+            (document.getElementById('tObservaciones').value !== (TREATMENTS[r.num]?.observaciones || ''));
+        if(!localUserStartedEditing){
+          TREATMENTS[r.num] = remoteTr;
+          // Re-poblar los campos visibles
+          document.getElementById('tCausa').value         = remoteTr.causa || '';
+          document.getElementById('tAccion').value        = remoteTr.accion || '';
+          document.getElementById('tRespImpl').value      = remoteTr.respImpl || r.resp || '';
+          document.getElementById('tEvidencia').value     = remoteTr.evidencia || '';
+          document.getElementById('tVerificador').value   = remoteTr.verificador || '';
+          document.getElementById('tFechaVerif').value    = remoteTr.fechaVerif || '';
+          document.getElementById('tObservaciones').value = remoteTr.observaciones || '';
+          if(remoteTr.fechaImpl) document.getElementById('tFechaImpl').value = remoteTr.fechaImpl;
+          const _dvi = document.getElementById('tDescVerifImpl'); if(_dvi) _dvi.value = remoteTr.descVerifImpl || '';
+          const _dve = document.getElementById('tDescVerifEfec'); if(_dve) _dve.value = remoteTr.descVerifEfec || '';
+          const savedTipoAccion = remoteTr.tipoAccion || 'CORRECTIVA';
+          document.querySelectorAll('input[name="tipoAccion"]').forEach(radio => { radio.checked = radio.value === savedTipoAccion; });
+          loadAnalysisData(remoteTr);
+          _syncVerif(); _syncResp();
+          updateTreatAlertTag(r.num);
+          checkVerificador();
+        }
+      }
+      renderAttachList();
+    }catch(e){ console.warn('[SGCIA] openTreatmentSheet refresh:', e); }
+  })();
 }
 
 function updateTreatAlertTag(num){
@@ -1888,7 +2216,8 @@ function loadCSV(evt){
           removed.forEach(r => {
             if(TREATMENTS[r.num]){
               delete TREATMENTS[r.num];
-              localStorage.removeItem('sgcia_att_'+r.num);
+              STORE.deleteAttachmentsKey('sgcia_att_'+r.num);
+              STORE.deleteAttachmentsKey('sgcia_att_trat_'+r.num);
             }
           });
           STORE.save();
@@ -2844,12 +3173,8 @@ function solicitarBorradoTratamiento(){
 
   // Borrar todo
   delete TREATMENTS[num];
-  localStorage.removeItem('sgcia_att_' + num);
-  localStorage.removeItem('sgcia_att_trat_' + num);
-  if(typeof ATTACHMENTS !== 'undefined'){
-    delete ATTACHMENTS['sgcia_att_' + num];
-    delete ATTACHMENTS['sgcia_att_trat_' + num];
-  }
+  STORE.deleteAttachmentsKey('sgcia_att_' + num);
+  STORE.deleteAttachmentsKey('sgcia_att_trat_' + num);
   STORE.save();
 
   showToast('✓ Tratamiento del hallazgo N° ' + num + ' borrado correctamente', false);
@@ -2937,6 +3262,10 @@ async function downloadTreatmentNow(){
   const orig = btn.innerHTML;
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Generando...';
   btn.disabled = true;
+
+  // Asegurar que tenemos el contenido completo (base64) de los adjuntos antes
+  // de armar el Word, ya que pueden haber sido subidos por otro usuario.
+  await STORE.ensureAttachmentsLoaded(num);
 
   // Persist — marca pendingReview:false, downloaded:true
   _persistTreatment(false, true);
@@ -3062,9 +3391,11 @@ async function reDownload(idx){
 }
 
 function clearDescargas(){
-  if(!confirm('¿Limpiar el historial de descargas de esta sesión?')) return;
+  if(!confirm('¿Limpiar el historial de descargas de esta sesión?\n\nSe limpia para todos los usuarios (es compartido).')) return;
   DESCARGAS_LOG = [];
-  localStorage.removeItem('sgcia_descargas');
+  try{ localStorage.removeItem('sgcia_descargas'); }catch(e){}
+  STORE.clearDescargasOnServer();
+  STORE.save();
   document.getElementById('badge-descargas').textContent = '0';
   renderDescargasTab();
 }
