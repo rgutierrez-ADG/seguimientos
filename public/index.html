@@ -1171,31 +1171,28 @@ function updateTabBadges(){
 
 // initApp: se llama DESPUÉS del login exitoso con Google
 window.initApp = async function() {
-  // 1) Paint inmediato con datos locales
-  STORE.load();
+  // 1) Paint inmediato con datos locales (no bloquea)
+  STORE._loadFromLocal();
   updateClock();
+
+  // 2) Sincronizar con el servidor Y cargar CSV en paralelo
+  const [stateResult] = await Promise.all([
+    STORE.refresh(),
+    autoLoadCSV(),
+  ]);
+
+  // 3) Render con datos reales
   populateFilters();
   renderAll();
-  autoLoadCSV();
   const bd = document.getElementById('badge-descargas');
   if(bd) bd.textContent = DESCARGAS_LOG.length || '0';
 
-  // 2) Sincronizar con el servidor
-  await STORE.refresh();
-
-  // 3) Limpiar el hallazgo de prueba 391 si quedó migrado
-  if(TREATMENTS['391']){
-    delete TREATMENTS['391'];
-    STORE.deleteAttachmentsKey('sgcia_att_391');
-    STORE.deleteAttachmentsKey('sgcia_att_trat_391');
-    STORE.save();
-  }
-
-  // 4) Auto-refresh periódico para reflejar los cambios de los demás
+  // 4) Auto-refresh periódico (cada 60s, no 30s)
   STORE._startAutoRefresh();
 };
 
 function autoLoadCSV(){
+  return new Promise(resolveCSV => {
   // Prioridad: 1) GitHub raw  2) datos.csv local  3) DATA embebido (silencioso)
   const GITHUB_RAW = 'https://raw.githubusercontent.com/rgutierrez-ADG/seguimientos/main/public/datos.csv';
   const LOCAL_CSV  = './datos.csv';
@@ -1261,6 +1258,7 @@ function autoLoadCSV(){
   tryFetch(GITHUB_RAW, 'GitHub ✓', () =>
     tryFetch(LOCAL_CSV, 'datos.csv local ✓', applyFallback)
   );
+  });
 }
 
 function updateClock(){
@@ -1941,38 +1939,8 @@ const STORE = {
   // Migración inicial: si el servidor está vacío y hay datos en localStorage,
   // empujarlos al servidor para no perder lo que ya cargaron los usuarios.
   async _maybeMigrate(serverState){
-    if(this._migrationDone) return;
-    this._migrationDone = true;
-    try{
-      const serverEmpty = (!serverState.treatments || Object.keys(serverState.treatments).length === 0)
-                       && (!serverState.descargas || serverState.descargas.length === 0);
-      if(!serverEmpty) return;
-      const localT = localStorage.getItem('sgcia_treatments');
-      const localD = localStorage.getItem('sgcia_descargas');
-      const lt = localT ? JSON.parse(localT) : {};
-      const ld = localD ? JSON.parse(localD) : [];
-      const hasLocal = Object.keys(lt).length > 0 || ld.length > 0;
-      if(!hasLocal) return;
-      console.log('[SGCIA] Migrando datos locales al servidor (primera vez)…');
-      await _api('/state', { method:'PUT', body:{ treatments: lt, descargas: ld } });
-      // Migrar adjuntos también
-      const attKeys = [];
-      for(let i=0; i<localStorage.length; i++){
-        const k = localStorage.key(i);
-        if(k && (k.startsWith('sgcia_att_') || k.startsWith('sgcia_att_trat_'))) attKeys.push(k);
-      }
-      for(const k of attKeys){
-        try{
-          const files = JSON.parse(localStorage.getItem(k) || '[]');
-          if(files.length){
-            await _api('/attachments?key=' + encodeURIComponent(k), { method:'PUT', body:{ files } });
-          }
-        }catch(e){ console.warn('Error migrando adjunto', k, e); }
-      }
-      showToast('✓ Datos locales migrados al servidor compartido', false);
-    }catch(e){
-      console.warn('[SGCIA] Migración omitida:', e.message);
-    }
+    // Migración ya completada — datos en el server
+    return;
   },
 
   // GET /api/state → reemplaza TREATMENTS y DESCARGAS_LOG con lo del server
@@ -1980,7 +1948,6 @@ const STORE = {
     setSyncStatus('syncing');
     try{
       const j = await _api('/state');
-      await this._maybeMigrate(j);
 
       // Si el modal de tratamiento está abierto y editando, preservar los datos
       // que el usuario está escribiendo en este momento — no sobrescribir.
@@ -2172,7 +2139,7 @@ const STORE = {
       const overlay = document.getElementById('treatOverlay');
       if(overlay && overlay.style.display === 'flex') return; // no interrumpir edición
       this.refresh().catch(()=>{});
-    }, 30000);
+    }, 60000);
     document.addEventListener('visibilitychange', () => {
       if(document.visibilityState === 'visible'){
         const overlay = document.getElementById('treatOverlay');
