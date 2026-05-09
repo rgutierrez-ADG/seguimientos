@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>SGCIA · R-SIG-AC 01 · Acciones Correctivas y Preventivas</title>
+<link rel="icon" href="data:,">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -710,6 +711,7 @@ td{padding:9px 12px;vertical-align:middle}
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Exportar PDF
     </button>
+    <button class="tb-btn" onclick="exportCSV()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       Exportar CSV
     </button>
@@ -3836,8 +3838,7 @@ function apExportLog(){
   const headers = ['Fecha','Usuario','Acción','Hallazgo','Detalle'];
   const rows = AP_LOG.map(e => [
     e.ts ? new Date(e.ts).toLocaleString('es-AR') : '',
-    e.user||'', e.action||'', e.target||'', (e.details||'').replace(/[
-]+/g,' ')
+    e.user||'', e.action||'', e.target||'', String(e.details||'').split(/\s+/).join(' ')
   ]);
   const csv = [headers, ...rows]
     .map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(','))
@@ -3980,9 +3981,8 @@ function apRenderCerrados(){
 function apReopenTreatment(num){
   const r = DATA.find(d=>d.num===String(num));
   if(!r) return;
-  if(!confirm('¿Reabrir el hallazgo N° '+num+' "'+r.clasif+'"?
+  if(!confirm('Reabrir el hallazgo N° '+num+'? El estado pasará de Cerrado a En proceso. Esta acción queda registrada en el log de auditoría.')) return;
 
-El estado pasará de Cerrado a En proceso. Esta acción queda registrada en el log de auditoría.')) return;
   if(!TREATMENTS[num]) TREATMENTS[num] = {};
   TREATMENTS[num].estadoOverride      = 'En proceso';
   TREATMENTS[num].fechaCierreOverride = '';
