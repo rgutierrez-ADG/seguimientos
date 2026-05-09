@@ -1,20 +1,40 @@
-# wrangler.toml — Configuración del Worker SGCIA
+# wrangler.toml — Configuración de despliegue del Worker SGCIA
+#
+# Pasos para desplegar (una sola vez):
+#
+#   1) Instalar wrangler si no lo tenés:
+#        npm install -g wrangler
+#        wrangler login
+#
+#   2) Crear el namespace de KV:
+#        wrangler kv:namespace create SGCIA_KV
+#      (copiá el "id" que devuelve y reemplazalo abajo en kv_namespaces.id)
+#
+#   3) Configurar el token compartido (lo usan todos los usuarios del equipo):
+#        wrangler secret put SGCIA_TOKEN
+#      (te va a pedir que escribas el valor — usá uno largo y privado, ej: "ManAg-2026-x9k2pqrw")
+#      ESE MISMO VALOR hay que ponerlo en index.html en window.SGCIA_TOKEN
+#
+#   4) Asegurate de tener la estructura:
+#        worker.js
+#        wrangler.toml
+#        public/
+#          └── index.html      ← el archivo modificado
+#
+#   5) Desplegar:
+#        wrangler deploy
+#
+# Para actualizar después solo cambiá el HTML en public/ y volvé a correr `wrangler deploy`.
 
-name                = "sgcia-acciones-correctivas"
-main                = "worker.js"
-compatibility_date  = "2025-04-01"
+name = "sgcia-acciones-correctivas"
+main = "worker.js"
+compatibility_date = "2025-04-01"
 
 # Activos estáticos: el worker sirve public/index.html en /
 assets = { directory = "./public", binding = "ASSETS" }
 
-# Namespace KV donde se guardan los tratamientos compartidos
+# Namespace KV donde se guardan los tratamientos compartidos.
+# Reemplazá el id con el que te devuelve `wrangler kv:namespace create SGCIA_KV`
 [[kv_namespaces]]
 binding = "SGCIA_KV"
-id      = "e0c6f95fc5d445199c613bd0dec3eb44"
-
-# Variables públicas (no son secretos)
-[vars]
-GOOGLE_CLIENT_ID = "74540137626-h4c9lc55rvcm65vids5lhf1hep12oh16.apps.googleusercontent.com"
-
-# SGCIA_SECRET se setea como secret (NUNCA va en este archivo):
-#   wrangler secret put SGCIA_SECRET
+id = "REEMPLAZAR_CON_EL_ID_DEVUELTO_POR_WRANGLER"
