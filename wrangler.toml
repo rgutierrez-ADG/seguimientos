@@ -1,13 +1,20 @@
-# wrangler.toml — Configuración de despliegue del Worker SGCIA
+# wrangler.toml — Configuración del Worker SGCIA
 
-name = "sgcia-acciones-correctivas"
-main = "worker.js"
-compatibility_date = "2025-04-01"
+name                = "sgcia-acciones-correctivas"
+main                = "worker.js"
+compatibility_date  = "2025-04-01"
 
 # Activos estáticos: el worker sirve public/index.html en /
 assets = { directory = "./public", binding = "ASSETS" }
 
-# Namespace KV donde se guardan los tratamientos compartidos.
+# Namespace KV donde se guardan los tratamientos compartidos
 [[kv_namespaces]]
 binding = "SGCIA_KV"
-id = "e0c6f95fc5d445199c613bd0dec3eb44"
+id      = "e0c6f95fc5d445199c613bd0dec3eb44"
+
+# Variables públicas (no son secretos)
+[vars]
+GOOGLE_CLIENT_ID = "74540137626-h4c9lc55rvcm65vids5lhf1hep12oh16.apps.googleusercontent.com"
+
+# SGCIA_SECRET se setea como secret (NUNCA va en este archivo):
+#   wrangler secret put SGCIA_SECRET
