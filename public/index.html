@@ -576,7 +576,7 @@ td{padding:9px 12px;vertical-align:middle}
     <div id="__userNameEl">—</div>
     <div id="__userMailEl">—</div>
   </div>
-  <span id="__userAdmTag">ADMIN</span>
+  <span id="__userAdmTag" onclick="openAdminPanel()" style="cursor:pointer" title="Abrir panel admin">🛡 ADMIN</span>
   <button id="__logoutBtn" onclick="__sgciaLogout()" title="Cerrar sesión">⏏ Salir</button>
 </div>
 
@@ -640,8 +640,10 @@ td{padding:9px 12px;vertical-align:middle}
     activateProtections();
     // Iniciar la app después del login
     if(typeof window.initApp === 'function') window.initApp();
-    // Mostrar botón admin si corresponde
-    if(typeof apCheckAndShowBtn === 'function') apCheckAndShowBtn();
+    // Mostrar botón admin si corresponde (setTimeout para respetar el orden de carga del JS)
+    setTimeout(function(){
+      if(typeof apCheckAndShowBtn === 'function') apCheckAndShowBtn();
+    }, 100);
     // Guardar email en descarga para trazabilidad
     window._lastDownloadUser = user.email;
   }
@@ -702,7 +704,7 @@ td{padding:9px 12px;vertical-align:middle}
   <div class="topbar-right">
     <button class="tb-btn" id="adminPanelBtn"
       onclick="openAdminPanel()"
-      style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4)"
+      style="display:none;background:linear-gradient(135deg,#bf360c,#e64a19);border:1px solid rgba(255,200,150,.5);font-weight:800"
       title="Panel de Administrador">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       Admin
@@ -1202,7 +1204,7 @@ window.initApp = async function() {
 
 function autoLoadCSV(){
   // Prioridad: 1) GitHub raw  2) datos.csv local  3) DATA embebido (silencioso)
-  const GITHUB_RAW = 'https://raw.githubusercontent.com/rgutierrez-ADG/seguimiento-maniagro/main/datos.csv';
+  const GITHUB_RAW = 'https://raw.githubusercontent.com/rgutierrez-ADG/seguimientos/main/public/datos.csv';
   const LOCAL_CSV  = './datos.csv';
   const prog = document.getElementById('uprog');
   const ic   = document.getElementById('uprogItems');
@@ -3753,8 +3755,10 @@ let AP_ALLOWLIST = [];  // emails externos autorizados
 let AP_ADMINS = [];     // lista de admins
 
 function isAdminMode(){
-  const email = (window.CURRENT_USER_INFO && window.CURRENT_USER_INFO.email) || '';
-  return ADMIN_EMAILS.includes(email.toLowerCase());
+  const info  = window.CURRENT_USER_INFO;
+  const email = (info && info.email) ? info.email.toLowerCase() : '';
+  // Verificar tanto contra la lista local como contra el flag isAdmin del JWT
+  return ADMIN_EMAILS.includes(email) || !!(info && info.isAdmin);
 }
 
 // Mostrar el botón Admin en el topbar si corresponde
