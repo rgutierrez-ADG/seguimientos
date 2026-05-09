@@ -18,3 +18,4 @@ GOOGLE_CLIENT_ID = "74540137626-h4c9lc55rvcm65vids5lhf1hep12oh16.apps.googleuser
 
 # SGCIA_SECRET se setea como secret (NUNCA va en este archivo):
 #   wrangler secret put SGCIA_SECRET
+
