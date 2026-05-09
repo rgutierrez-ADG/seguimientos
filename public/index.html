@@ -507,6 +507,8 @@ td{padding:9px 12px;vertical-align:middle}
     if(user.isAdmin) document.getElementById('__userAdmTag').style.display='inline-block';
     userBar.classList.add('show');
     activateProtections();
+    // Iniciar la app después del login
+    if(typeof window.initApp === 'function') window.initApp();
   }
 
   window.__sgciaLogout = async function(){
@@ -1030,8 +1032,9 @@ function updateTabBadges(){
 }
 
 
-window.addEventListener('DOMContentLoaded', async () => {
-  // 1) Paint inmediato con datos locales (si hay) para no mostrar pantalla vacía
+// initApp: se llama DESPUÉS del login exitoso con Google
+window.initApp = async function() {
+  // 1) Paint inmediato con datos locales
   STORE.load();
   updateClock();
   populateFilters();
@@ -1040,8 +1043,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const bd = document.getElementById('badge-descargas');
   if(bd) bd.textContent = DESCARGAS_LOG.length || '0';
 
-  // 2) Sincronizar con el servidor compartido — esto trae lo que cargaron los
-  //    demás usuarios. Es la corrección crítica para la trazabilidad de auditoría.
+  // 2) Sincronizar con el servidor
   await STORE.refresh();
 
   // 3) Limpiar el hallazgo de prueba 391 si quedó migrado
@@ -1054,7 +1056,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // 4) Auto-refresh periódico para reflejar los cambios de los demás
   STORE._startAutoRefresh();
-});
+};
 
 function autoLoadCSV(){
   // Prioridad: 1) GitHub raw  2) datos.csv local  3) DATA embebido (silencioso)
