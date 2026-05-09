@@ -360,139 +360,194 @@ td{padding:9px 12px;vertical-align:middle}
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     🔒 BLOQUE DE PROTECCIÓN — LOGIN + DISUASIÓN
-     Contraseña: Maniagro.2026!
-     Para portar a otro dashboard: copiar esta sección completa
-     (desde aquí hasta el cierre del bloque) al inicio de <body>
-═══════════════════════════════════════════════════════════════════════ -->
-
+<!-- ═══════════════════════════════════════════════════════════════════
+     🔒 LOGIN CORPORATIVO — Google Identity Services
+     Solo accesos con dominio @maniagro.com
+═══════════════════════════════════════════════════════════════════ -->
 <style>
-  /* Login overlay */
-  #__authOverlay{position:fixed;inset:0;background:linear-gradient(135deg,#0d2138,#1B5E99);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',Tahoma,sans-serif}
-  #__authBox{background:#fff;border-radius:14px;padding:38px 42px;box-shadow:0 12px 60px rgba(0,0,0,.45);max-width:380px;width:90%;text-align:center}
-  #__authBox h2{color:#1a2533;font-size:20px;margin:0 0 8px;font-weight:700}
-  #__authBox p{color:#607080;font-size:12px;margin:0 0 24px;line-height:1.5}
-  #__authPwd{width:100%;padding:11px 14px;font-size:14px;border:1.5px solid #c5d5e8;border-radius:8px;outline:none;transition:border-color .15s;font-family:inherit;box-sizing:border-box}
-  #__authPwd:focus{border-color:#1B5E99}
-  #__authBtn{width:100%;margin-top:14px;padding:11px;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#1B5E99,#0d2138);border:none;border-radius:8px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase}
-  #__authBtn:hover{filter:brightness(1.1)}
-  #__authErr{color:#c62828;font-size:11px;margin-top:10px;min-height:14px;font-weight:600}
-
-  /* Foco perdido */
-  #__blurShield{position:fixed;inset:0;background:#fff;z-index:99998;display:none;align-items:center;justify-content:center;flex-direction:column;font-family:'Segoe UI',Tahoma,sans-serif}
-  #__blurShield h3{color:#1B5E99;font-size:18px;margin:0 0 10px}
+  #__authOverlay{
+    position:fixed;inset:0;z-index:99999;display:flex;align-items:center;
+    justify-content:center;font-family:'Segoe UI',Tahoma,sans-serif;
+    background:linear-gradient(135deg,#0d2138,#1B5E99);
+  }
+  #__authBox{
+    background:#fff;border-radius:14px;padding:40px 44px;
+    box-shadow:0 12px 60px rgba(0,0,0,.45);max-width:420px;width:90%;text-align:center;
+  }
+  #__authBox h2{color:#1a2533;font-size:20px;margin:0 0 6px;font-weight:700}
+  #__authBox p{color:#607080;font-size:12px;margin:0 0 26px;line-height:1.6}
+  #__gBtn{display:flex;justify-content:center;min-height:44px}
+  #__authBusy{display:none;margin-top:16px;color:#1565c0;font-weight:600;font-size:12px}
+  #__authBusy.show{display:block}
+  #__authErr{
+    display:none;margin-top:14px;padding:10px 13px;
+    background:#ffebee;border:1px solid #ef9a9a;border-radius:8px;
+    font-size:12px;color:#c62828;font-weight:600;text-align:left;line-height:1.5;
+  }
+  #__authErr.show{display:block}
+  #__authNote{
+    margin-top:16px;padding:10px 13px;background:#fff8e1;
+    border:1px solid #ffe082;border-radius:8px;
+    font-size:11px;color:#6d4c00;line-height:1.5;text-align:left;
+  }
+  #__userBar{
+    position:fixed;bottom:14px;left:14px;z-index:1000;
+    background:#fff;border:1px solid #c5d5e8;border-radius:8px;
+    padding:6px 10px;display:none;align-items:center;gap:9px;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);font-family:'IBM Plex Sans',sans-serif;font-size:11px;
+  }
+  #__userBar.show{display:flex}
+  #__userPic{width:24px;height:24px;border-radius:50%;object-fit:cover}
+  #__userNameEl{font-weight:600;color:#1a2533;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #__userMailEl{font-size:10px;color:#607080;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #__userAdmTag{
+    background:#fff3e0;color:#e65100;border:1px solid #ff8f00;
+    font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;letter-spacing:.4px;display:none;
+  }
+  #__logoutBtn{
+    background:none;border:none;color:#c62828;cursor:pointer;
+    font-size:11px;font-weight:600;padding:3px 7px;border-radius:5px;transition:background .15s;
+  }
+  #__logoutBtn:hover{background:#ffebee}
+  #__blurShield{
+    position:fixed;inset:0;background:#fff;z-index:99998;
+    display:none;align-items:center;justify-content:center;
+    flex-direction:column;font-family:'Segoe UI',Tahoma,sans-serif;
+  }
+  #__blurShield h3{color:#1B5E99;font-size:18px;margin:0 0 8px}
   #__blurShield p{color:#607080;font-size:12px;margin:0}
-
-  /* Anti-selección global mientras protegido */
-  body.__protected{user-select:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none}
+  body.__protected{user-select:none;-webkit-user-select:none}
   body.__protected input,body.__protected textarea{user-select:text;-webkit-user-select:text}
-
-  /* DevTools detected */
-  #__devtoolsShield{position:fixed;inset:0;background:#fff;z-index:99999;display:none;align-items:center;justify-content:center;flex-direction:column;font-family:'Segoe UI',Tahoma,sans-serif;text-align:center;padding:40px}
-  #__devtoolsShield h3{color:#c62828;font-size:20px;margin:0 0 10px}
-  #__devtoolsShield p{color:#607080;font-size:13px;margin:0;max-width:400px}
 </style>
 
-<!-- Login -->
 <div id="__authOverlay">
   <div id="__authBox">
-    <h2>🔒 Acceso Restringido</h2>
-    <p>SGCIA · R-SIG-AC 01<br>Sistema de uso interno — Maniagro Argentina</p>
-    <input type="password" id="__authPwd" placeholder="Contraseña" autocomplete="off" autofocus>
-    <button id="__authBtn">Ingresar</button>
+    <h2>🔒 SGCIA · R-SIG-AC 01</h2>
+    <p>Sistema de Gestión de Calidad e Inocuidad<br>Maniagro Argentina</p>
+    <div id="__gBtn"></div>
+    <div id="__authBusy">⏳ Verificando con el servidor…</div>
     <div id="__authErr"></div>
+    <div id="__authNote">
+      ⚠ Solo usuarios con cuenta <strong>@maniagro.com</strong> pueden acceder.
+      Tu email y todas tus acciones quedan registradas en el log de auditoría.
+    </div>
   </div>
 </div>
 
-<!-- Pantalla al perder foco -->
 <div id="__blurShield">
   <h3>🔒 Sesión bloqueada</h3>
   <p>Hacé click en la ventana para volver al dashboard</p>
 </div>
 
-<!-- DevTools detectado -->
-<div id="__devtoolsShield">
-  <h3>⚠ Acceso bloqueado</h3>
-  <p>Se detectó el uso de herramientas de desarrollador.<br>Cerrá las DevTools y recargá la página para continuar.</p>
+<div id="__userBar">
+  <img id="__userPic" src="" alt="">
+  <div>
+    <div id="__userNameEl">—</div>
+    <div id="__userMailEl">—</div>
+  </div>
+  <span id="__userAdmTag">ADMIN</span>
+  <button id="__logoutBtn" onclick="__sgciaLogout()" title="Cerrar sesión">⏏ Salir</button>
 </div>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (function(){
-  const PWD = 'Maniagro.2026!';
+  const API = '/api';
+  const GCI = '74540137626-h4c9lc55rvcm65vids5lhf1hep12oh16.apps.googleusercontent.com';
+
   const overlay = document.getElementById('__authOverlay');
-  const pwdInput = document.getElementById('__authPwd');
-  const btn = document.getElementById('__authBtn');
-  const errEl = document.getElementById('__authErr');
+  const errEl   = document.getElementById('__authErr');
+  const busyEl  = document.getElementById('__authBusy');
+  const userBar = document.getElementById('__userBar');
 
-  function tryAuth(){
-    if(pwdInput.value === PWD){
-      overlay.style.display = 'none';
-      document.body.classList.add('__protected');
-      activarProtecciones();
-    } else {
-      errEl.textContent = '⚠ Contraseña incorrecta';
-      pwdInput.value = '';
-      pwdInput.focus();
-      setTimeout(()=>errEl.textContent='', 2500);
-    }
-  }
-  btn.addEventListener('click', tryAuth);
-  pwdInput.addEventListener('keydown', e => { if(e.key === 'Enter') tryAuth(); });
+  function showErr(msg){ errEl.textContent=msg; errEl.classList.add('show'); busyEl.classList.remove('show'); }
+  function clearErr(){ errEl.classList.remove('show'); }
 
-  function activarProtecciones(){
-    
-    // 1. Bloquear click derecho
-    document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
-
-    // 2. Bloquear atajos
-    document.addEventListener('keydown', e => {
-      const k = e.key;
-      // F12
-      if(k === 'F12'){ e.preventDefault(); return false; }
-      // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
-      if((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'I' || k === 'i' || k === 'J' || k === 'j' || k === 'C' || k === 'c')){
-        e.preventDefault(); return false;
-      }
-      // Ctrl+U (ver código)
-      if((e.ctrlKey || e.metaKey) && (k === 'u' || k === 'U')){ e.preventDefault(); return false; }
-      // Ctrl+S (guardar)
-      if((e.ctrlKey || e.metaKey) && (k === 's' || k === 'S')){ e.preventDefault(); return false; }
-      // Ctrl+P (imprimir)
-      if((e.ctrlKey || e.metaKey) && (k === 'p' || k === 'P')){ e.preventDefault(); return false; }
+  function initGIS(){
+    if(!window.google?.accounts?.id){ setTimeout(initGIS,200); return; }
+    google.accounts.id.initialize({
+      client_id: GCI,
+      callback: onGoogleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: false,
+      ux_mode: 'popup',
+      hd: 'maniagro.com',
     });
-
-    // 3. Pantalla blanca al perder foco (anti grabación de pantalla simple)
-    const shield = document.getElementById('__blurShield');
-    window.addEventListener('blur', () => { shield.style.display = 'flex'; });
-    window.addEventListener('focus', () => { shield.style.display = 'none'; });
-    document.addEventListener('visibilitychange', () => {
-      if(document.hidden) shield.style.display = 'flex';
-      else shield.style.display = 'none';
-    });
-
-    // 4. Detección de DevTools (heurística por diferencia de tamaño)
-    const devShield = document.getElementById('__devtoolsShield');
-    const checkDev = () => {
-      const widthThreshold = window.outerWidth - window.innerWidth > 160;
-      const heightThreshold = window.outerHeight - window.innerHeight > 160;
-      if(widthThreshold || heightThreshold){
-        devShield.style.display = 'flex';
-      } else {
-        devShield.style.display = 'none';
-      }
-    };
-    setInterval(checkDev, 800);
-
-    // 5. Bloquear arrastrar imágenes
-    document.addEventListener('dragstart', e => { e.preventDefault(); return false; });
+    google.accounts.id.renderButton(
+      document.getElementById('__gBtn'),
+      { theme:'filled_blue', size:'large', text:'signin_with', shape:'rectangular', width:300 }
+    );
   }
+
+  async function onGoogleCredential(response){
+    clearErr();
+    busyEl.classList.add('show');
+    try {
+      const r = await fetch(API+'/auth/google',{
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = await r.json();
+      if(!r.ok){ showErr(data.error||'Error '+r.status); return; }
+      onLoginOk(data.user);
+    } catch(err){ showErr('Error de red: '+err.message); }
+  }
+
+  function onLoginOk(user){
+    window.CURRENT_USER      = user.email;
+    window.CURRENT_USER_INFO = user;
+    overlay.style.display    = 'none';
+    document.body.classList.add('__protected');
+    const pic = document.getElementById('__userPic');
+    if(user.picture){ pic.src=user.picture; pic.style.display='block'; }
+    else { pic.style.display='none'; }
+    document.getElementById('__userNameEl').textContent = user.name||user.email;
+    document.getElementById('__userMailEl').textContent = user.email;
+    if(user.isAdmin) document.getElementById('__userAdmTag').style.display='inline-block';
+    userBar.classList.add('show');
+    activateProtections();
+  }
+
+  window.__sgciaLogout = async function(){
+    if(!confirm('¿Cerrar sesión?')) return;
+    try { await fetch(API+'/auth/logout',{method:'POST',credentials:'include'}); } catch(e){}
+    location.reload();
+  };
+
+  async function checkSession(){
+    try {
+      const r    = await fetch(API+'/auth/me',{credentials:'include'});
+      const data = await r.json();
+      if(data.authenticated){ onLoginOk(data.user); return true; }
+    } catch(e){}
+    return false;
+  }
+
+  function activateProtections(){
+    document.addEventListener('contextmenu',e=>{e.preventDefault();return false;});
+    document.addEventListener('keydown',e=>{
+      if(e.key==='F12'){e.preventDefault();return false;}
+      if((e.ctrlKey||e.metaKey)&&e.shiftKey&&/^[ijcIJC]$/.test(e.key)){e.preventDefault();return false;}
+      if((e.ctrlKey||e.metaKey)&&/^[uUsSpP]$/.test(e.key)){e.preventDefault();return false;}
+    });
+    const shield=document.getElementById('__blurShield');
+    window.addEventListener('blur',()=>{shield.style.display='flex';});
+    window.addEventListener('focus',()=>{shield.style.display='none';});
+    document.addEventListener('visibilitychange',()=>{
+      shield.style.display=document.hidden?'flex':'none';
+    });
+    document.addEventListener('dragstart',e=>{e.preventDefault();return false;});
+  }
+
+  checkSession().then(found=>{ if(!found) initGIS(); });
 })();
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     FIN DEL BLOQUE DE PROTECCIÓN
-═══════════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════
+     FIN DEL BLOQUE DE LOGIN
+═══════════════════════════════════════════════════════════════════ -->
+
 
 
 <!-- TOPBAR -->
@@ -1695,9 +1750,7 @@ let ATTACHMENTS = {};  // keyed by 'sgcia_att_{num}' / 'sgcia_att_trat_{num}', s
 // Si el HTML se sirve desde el mismo Worker, dejá API_BASE='/api'.
 // Si está hosteado aparte (ej: GitHub Pages), poné la URL absoluta del Worker:
 //   window.SGCIA_API_BASE = 'https://sgcia-acciones-correctivas.<tu-cuenta>.workers.dev/api';
-// El token tiene que coincidir con el SGCIA_TOKEN que pusiste en `wrangler secret put`.
-window.SGCIA_API_BASE = 'https://seguimientos.rgutierrez-689.workers.dev/api';
-window.SGCIA_TOKEN    = window.SGCIA_TOKEN    || 'Maniagro.2026!';
+window.SGCIA_API_BASE = '/api'; // Mismo origen — Worker sirve el HTML
 
 function setSyncStatus(state, msgOverride){
   const pill = document.getElementById('syncPill');
@@ -1714,14 +1767,15 @@ function setSyncStatus(state, msgOverride){
 }
 
 async function _api(path, opts={}){
-  const headers = Object.assign({
-    'X-SGCIA-Token': window.SGCIA_TOKEN,
-  }, opts.headers || {});
+  const headers = Object.assign({}, opts.headers || {});
   if(opts.body && typeof opts.body !== 'string'){
     headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(opts.body);
   }
-  const r = await fetch(window.SGCIA_API_BASE + path, { ...opts, headers, cache:'no-store' });
+  const r = await fetch(window.SGCIA_API_BASE + path, {
+    ...opts, headers, cache:'no-store', credentials:'include'
+  });
+  if(r.status === 401){ location.reload(); throw new Error('Sesión expirada'); }
   if(!r.ok){
     const txt = await r.text().catch(()=>'');
     throw new Error(`API ${path} → ${r.status} ${txt.slice(0,120)}`);
