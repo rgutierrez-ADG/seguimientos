@@ -356,6 +356,137 @@ td{padding:9px 12px;vertical-align:middle}
   .kpi-item{flex:1 1 calc(50% - 1px);border-right:1px solid var(--border)!important;border-bottom:1px solid var(--border)}
   .row2,.row3,.row3x1{grid-template-columns:1fr}
 }
+
+/* ════ PANEL ADMINISTRADOR ════ */
+#adminPanel{
+  position:fixed;inset:0;z-index:5000;background:#f0f4f8;
+  display:none;flex-direction:column;overflow:hidden;
+}
+#adminPanel.show{display:flex}
+.ap-topbar{
+  background:linear-gradient(90deg,#bf360c,#e64a19,#ff7043);
+  border-bottom:3px solid #8d1f07;
+  padding:0 22px;height:58px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:0 2px 16px rgba(0,0,0,.25);flex-shrink:0;
+}
+.ap-topbar-title{
+  font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;
+  color:#fff;letter-spacing:1px;text-transform:uppercase;
+}
+.ap-topbar-user{
+  background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+  color:#fff;padding:4px 12px;border-radius:6px;
+  font-size:11px;font-weight:600;
+}
+.ap-close-btn{
+  margin-left:auto;background:rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.4);color:#fff;
+  padding:7px 16px;border-radius:7px;cursor:pointer;
+  font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;transition:background .15s;
+}
+.ap-close-btn:hover{background:rgba(255,255,255,.35)}
+.ap-tabs{
+  background:#fff;border-bottom:2px solid #dce6f0;
+  padding:0 22px;display:flex;gap:4px;flex-shrink:0;
+}
+.ap-tab{
+  padding:11px 20px 9px;font-family:'Rajdhani',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;
+  color:#607080;border:none;background:none;cursor:pointer;
+  border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;
+}
+.ap-tab:hover{color:#bf360c}
+.ap-tab.active{color:#bf360c;border-bottom-color:#bf360c}
+.ap-body{flex:1;overflow-y:auto;padding:20px 24px}
+.ap-section{display:none}
+.ap-section.active{display:block}
+.ap-card{
+  background:#fff;border:1px solid #dce6f0;border-radius:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px;overflow:hidden;
+}
+.ap-card-header{
+  background:#f4f7fb;border-bottom:1px solid #dce6f0;
+  padding:12px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.ap-card-title{
+  font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;
+  color:#1a2533;text-transform:uppercase;letter-spacing:.5px;
+}
+.ap-stat{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#fff;border:1px solid #dce6f0;border-radius:6px;
+  padding:3px 10px;font-size:11px;font-weight:700;color:#445566;
+}
+/* Log table */
+.ap-log-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.ap-log-tbl th{
+  background:#bf360c;color:#fff;padding:9px 12px;text-align:left;
+  font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;z-index:1;
+}
+.ap-log-tbl td{padding:8px 12px;border-bottom:1px solid #eef2f7;vertical-align:middle}
+.ap-log-tbl tr:hover td{background:#fef9f7}
+.ap-action-badge{
+  display:inline-block;padding:2px 8px;border-radius:4px;
+  font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+}
+.ab-login{background:#e8f5e9;color:#1b5e20}
+.ab-logout{background:#eceff1;color:#455a64}
+.ab-open{background:#e0f2f1;color:#00695c}
+.ab-save{background:#e3f2fd;color:#1565c0}
+.ab-download{background:#f3e5f5;color:#6a1b9a}
+.ab-reopen{background:#fff3e0;color:#e65100}
+.ab-failed{background:#ffebee;color:#c62828}
+/* Filters */
+.ap-filters{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 18px;
+  background:#f9fbfe;border-bottom:1px solid #dce6f0;
+}
+.ap-filters input,.ap-filters select{
+  padding:6px 10px;font-size:12px;border:1.5px solid #c5d5e8;
+  border-radius:6px;outline:none;font-family:inherit;background:#fff;
+}
+.ap-filters input:focus,.ap-filters select:focus{border-color:#bf360c}
+/* Tratamientos cerrados */
+.cerrado-row{background:#fafffe}
+.cerrado-row:hover td{background:#e8f5e9!important}
+.btn-reopen-admin{
+  background:linear-gradient(135deg,#bf360c,#8d1f07);border:none;
+  color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;
+  font-size:10px;font-weight:700;font-family:'Rajdhani',sans-serif;
+  letter-spacing:.3px;transition:opacity .15s;
+}
+.btn-reopen-admin:hover{opacity:.85}
+/* Allowlist / accesos */
+.ap-allowlist-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:#f4f7fb;border:1px solid #dce6f0;border-radius:8px;margin-bottom:6px;
+}
+.ap-allowlist-email{flex:1;font-size:12px;font-weight:600;color:#1a2533}
+.ap-allowlist-type{
+  font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;
+  background:#e3f0ff;color:#1565c0;border:1px solid #90caf955;
+}
+.ap-allowlist-type.admin{background:#fff3e0;color:#e65100;border-color:#ff8f0055}
+.btn-del-email{
+  background:none;border:none;color:#c62828;cursor:pointer;
+  font-size:14px;padding:2px 5px;transition:background .15s;border-radius:4px;
+}
+.btn-del-email:hover{background:#ffebee}
+/* Stats cards */
+.ap-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.ap-stat-card{
+  background:#fff;border:1px solid #dce6f0;border-radius:10px;
+  padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.ap-stat-num{
+  font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;
+  color:#bf360c;line-height:1;
+}
+.ap-stat-lbl{font-size:10px;color:#607080;text-transform:uppercase;letter-spacing:.7px;margin-top:3px}
+@media(max-width:700px){.ap-stats-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -509,6 +640,10 @@ td{padding:9px 12px;vertical-align:middle}
     activateProtections();
     // Iniciar la app después del login
     if(typeof window.initApp === 'function') window.initApp();
+    // Mostrar botón admin si corresponde
+    if(typeof apCheckAndShowBtn === 'function') apCheckAndShowBtn();
+    // Guardar email en descarga para trazabilidad
+    window._lastDownloadUser = user.email;
   }
 
   window.__sgciaLogout = async function(){
@@ -565,6 +700,13 @@ td{padding:9px 12px;vertical-align:middle}
     </div>
   </div>
   <div class="topbar-right">
+    <button class="tb-btn" id="adminPanelBtn"
+      onclick="openAdminPanel()"
+      style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4)"
+      title="Panel de Administrador">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Admin
+    </button>
     <button class="tb-btn" onclick="openEmailConfig()" id="emailConfigBtn" title="Configurar alertas por email">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       Alertas Email
@@ -650,7 +792,7 @@ td{padding:9px 12px;vertical-align:middle}
     </div>
   </div>
 
-  <button class="tab-btn" id="tab-descargas" onclick="switchTab('descargas')" style="margin-left:auto">
+  <button class="tab-btn" id="tab-descargas" onclick="switchTab('descargas')" style="display:none;margin-left:auto">
     📥 Descargas Realizadas
     <span class="tab-badge" style="background:#e8f5e9;color:#2e7d32" id="badge-descargas">0</span>
   </button>
@@ -3354,6 +3496,7 @@ async function downloadTreatmentNow(){
       clasif:     r2.clasif||'—',
       hallazgo:   r2.hallazgo||'—',
       verificador,
+      user:       window.CURRENT_USER || '(desconocido)',
       fecha:      new Date().toLocaleString('es-AR'),
       blob:       LAST_DOCX_BLOB,
       snapshot:   JSON.parse(JSON.stringify(TREATMENTS[num]||{})),
@@ -3597,6 +3740,399 @@ function closeDescOverlay(e){
   if(e.target === document.getElementById('descOverlay'))
     document.getElementById('descOverlay').style.display = 'none';
 }
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PANEL ADMINISTRADOR
+// Acceso: solo mdip@maniagro.com y rgutierrez@maniagro.com
+// ═══════════════════════════════════════════════════════════════════
+
+const ADMIN_EMAILS = ['mdip@maniagro.com', 'rgutierrez@maniagro.com'];
+let AP_LOG = [];        // log de actividad cargado del servidor
+let AP_ALLOWLIST = [];  // emails externos autorizados
+let AP_ADMINS = [];     // lista de admins
+
+function isAdminMode(){
+  const email = (window.CURRENT_USER_INFO && window.CURRENT_USER_INFO.email) || '';
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
+// Mostrar el botón Admin en el topbar si corresponde
+function apCheckAndShowBtn(){
+  const btn = document.getElementById('adminPanelBtn');
+  const tabDesc = document.getElementById('tab-descargas');
+  if(!btn) return;
+  if(isAdminMode()){
+    btn.style.display = 'flex';
+    // En modo admin, mostrar también la pestaña de descargas
+    if(tabDesc) tabDesc.style.display = '';
+  } else {
+    btn.style.display = 'none';
+    if(tabDesc) tabDesc.style.display = 'none';
+  }
+}
+
+async function openAdminPanel(){
+  if(!isAdminMode()){
+    showToast('⛔ Acceso denegado — solo administradores', true);
+    return;
+  }
+  document.getElementById('adminPanel').classList.add('show');
+  document.getElementById('apUserLabel').textContent = window.CURRENT_USER_INFO.email;
+  // Registrar acceso al panel
+  logActivity('admin_panel_open', '', 'Abrió el panel de administrador');
+  // Cargar datos
+  await Promise.all([apLoadLog(), apLoadAllowlist(), apLoadAdmins()]);
+  apTab('log');
+}
+
+function closeAdminPanel(){
+  document.getElementById('adminPanel').classList.remove('show');
+}
+
+function apTab(name){
+  document.querySelectorAll('.ap-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ap-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('apTab' + name.charAt(0).toUpperCase() + name.slice(1))?.classList.add('active');
+  document.getElementById('apSec' + name.charAt(0).toUpperCase() + name.slice(1))?.classList.add('active');
+  if(name === 'log')       apRenderLog();
+  if(name === 'descargas') apRenderDescargas();
+  if(name === 'cerrados')  apRenderCerrados();
+  if(name === 'accesos')   apRenderAccesos();
+}
+
+// ── LOG DE ACTIVIDAD ────────────────────────────────────────────────
+async function apLoadLog(){
+  try {
+    const j = await _api('/log?limit=2000');
+    AP_LOG = j.entries || [];
+    apRenderLog();
+  } catch(e){
+    showToast('⚠ No se pudo cargar el log: '+e.message, true);
+  }
+}
+
+function apRenderLog(){
+  const search = (document.getElementById('apLogSearch')?.value || '').toLowerCase();
+  const action = document.getElementById('apLogAction')?.value || '';
+  const from   = document.getElementById('apLogFrom')?.value || '';
+  const to     = document.getElementById('apLogTo')?.value || '';
+
+  let entries = [...AP_LOG];
+  if(action) entries = entries.filter(e => (e.action||'').startsWith(action));
+  if(from)   entries = entries.filter(e => e.ts >= from);
+  if(to)     entries = entries.filter(e => e.ts.slice(0,10) <= to);
+  if(search) entries = entries.filter(e =>
+    (e.user||'').includes(search) ||
+    (e.target||'').includes(search) ||
+    (e.details||'').toLowerCase().includes(search) ||
+    (e.action||'').includes(search)
+  );
+
+  // Stats
+  const st = e => (e.action||'');
+  const el = id => document.getElementById(id);
+  el('apStatTotal').textContent     = AP_LOG.length;
+  el('apStatLogins').textContent    = AP_LOG.filter(e=>st(e)==='login').length;
+  el('apStatSaves').textContent     = AP_LOG.filter(e=>st(e)==='save_treatment').length;
+  el('apStatDownloads').textContent = AP_LOG.filter(e=>st(e)==='download_word').length;
+  el('apLogCount').textContent      = entries.length + ' entradas';
+
+  const ACTION_MAP = {
+    login:            ['ab-login',    'Acceso'],
+    logout:           ['ab-logout',   'Salida'],
+    failed_login:     ['ab-failed',   'Denegado'],
+    open_treatment:   ['ab-open',     'Abrió trat.'],
+    save_treatment:   ['ab-save',     'Guardó trat.'],
+    download_word:    ['ab-download', 'Descargó Word'],
+    reopen:           ['ab-reopen',   'Reabrió trat.'],
+    admin_panel_open: ['ab-open',     'Panel admin'],
+  };
+
+  const tbody = document.getElementById('apLogBody');
+  if(!tbody) return;
+  if(!entries.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#607080">Sin entradas que coincidan</td></tr>';
+    return;
+  }
+  tbody.innerHTML = entries.map(e => {
+    const dt = e.ts ? new Date(e.ts).toLocaleString('es-AR') : '—';
+    const [cls, lbl] = ACTION_MAP[e.action] || ['ab-open', e.action||'—'];
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;white-space:nowrap;color:#607080">${dt}</td>
+      <td style="font-weight:600;color:#1a2533">${e.user||'—'}</td>
+      <td><span class="ap-action-badge ${cls}">${lbl}</span></td>
+      <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:#bf360c">${e.target||'—'}</td>
+      <td style="font-size:11px;color:#455a64;max-width:340px;word-break:break-word">${(e.details||'—').slice(0,120)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function apExportLog(){
+  const headers = ['Fecha','Usuario','Acción','Hallazgo','Detalle'];
+  const rows = AP_LOG.map(e => [
+    e.ts ? new Date(e.ts).toLocaleString('es-AR') : '',
+    e.user||'', e.action||'', e.target||'', (e.details||'').replace(/[
+]+/g,' ')
+  ]);
+  const csv = [headers, ...rows]
+    .map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(','))
+    .join('\r\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'SGCIA_Log_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
+  logActivity('export_log', '', 'Exportó log CSV ('+AP_LOG.length+' entradas)');
+}
+
+// ── DESCARGAS ────────────────────────────────────────────────────────
+function apRenderDescargas(){
+  const tbody = document.getElementById('apDescBody');
+  const count = document.getElementById('apDescCount');
+  if(!tbody) return;
+  if(count) count.textContent = DESCARGAS_LOG.length + ' descargas';
+  if(!DESCARGAS_LOG.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:#607080">Sin descargas registradas</td></tr>';
+    return;
+  }
+  // Contar descargas por hallazgo
+  const countByNum = {};
+  DESCARGAS_LOG.forEach(d => { countByNum[d.num] = (countByNum[d.num]||0)+1; });
+  tbody.innerHTML = [...DESCARGAS_LOG].reverse().map((d,i)=>`
+    <tr>
+      <td style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:#bf360c">${d.idx||'—'}</td>
+      <td style="font-size:11px;max-width:200px;word-break:break-all;font-weight:600">${d.nombre||'—'}</td>
+      <td>
+        <span style="font-size:10px;font-weight:700;color:#1565c0">N° ${d.num||'—'}</span>
+        <div style="font-size:9px;color:#607080">${d.clasif||''}</div>
+        <span style="font-size:9px;background:#fce4ec;color:#c62828;padding:1px 6px;border-radius:10px;font-weight:700">${countByNum[d.num]||1}× descargado</span>
+      </td>
+      <td style="font-size:11px">${(DATA.find(r=>r.num===d.num)||{}).area||'—'}</td>
+      <td style="font-size:11px">${d.verificador||'—'}</td>
+      <td style="font-size:11px;font-weight:600;color:#1a2533">${d.user||'(sesión anterior)'}</td>
+      <td style="font-size:11px;color:#607080;white-space:nowrap">${d.fecha||'—'}</td>
+      <td>
+        <button onclick="apReDownload(${DESCARGAS_LOG.length-1-i})"
+          style="background:#2e7d32;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700">
+          ⬇ Re-descargar
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+async function apReDownload(idx){
+  const d = DESCARGAS_LOG[idx];
+  if(!d){ showToast('⚠ Descarga no encontrada', true); return; }
+  if(d.blob){
+    const url = URL.createObjectURL(d.blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=d.nombre; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },3000);
+    logActivity('re_download', d.num, 'Re-descargó Word: '+d.nombre);
+    return;
+  }
+  showToast('⏳ Regenerando documento…', false);
+  const saved = CURRENT_TREAT_NUM;
+  CURRENT_TREAT_NUM = d.num;
+  if(d.snapshot) TREATMENTS[d.num] = d.snapshot;
+  try{
+    await STORE.ensureAttachmentsLoaded(d.num);
+    const blob = await buildTreatmentDocx(d.num);
+    d.blob = blob;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=d.nombre; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },3000);
+    showToast('✓ Re-descargado: '+d.nombre, false);
+    logActivity('re_download', d.num, 'Re-descargó Word (regenerado): '+d.nombre);
+  }catch(err){
+    showToast('⚠ Error: '+err.message, true);
+  }finally{
+    CURRENT_TREAT_NUM = saved;
+  }
+}
+
+function apClearDescargas(){
+  if(!confirm('¿Limpiar el historial de descargas? Esta acción afecta a todos los usuarios.')) return;
+  DESCARGAS_LOG.length = 0;
+  try{ localStorage.removeItem('sgcia_descargas'); }catch(e){}
+  STORE.clearDescargasOnServer();
+  STORE.save();
+  apRenderDescargas();
+  renderTableOnly();
+  showToast('✓ Historial de descargas limpiado', false);
+  logActivity('clear_descargas','','Limpió el historial de descargas');
+}
+
+// ── TRATAMIENTOS CERRADOS ────────────────────────────────────────────
+function apRenderCerrados(){
+  const search = (document.getElementById('apCerradoSearch')?.value||'').toLowerCase();
+  const tbody  = document.getElementById('apCerradoBody');
+  const count  = document.getElementById('apCerradoCount');
+  if(!tbody) return;
+
+  // Obtener todos los hallazgos cerrados (estado real o override)
+  const cerrados = DATA.filter(r => {
+    const tr = TREATMENTS[r.num];
+    const estado = (tr && tr.estadoOverride) || r.estado;
+    return estado === 'Cerrado';
+  }).filter(r => {
+    if(!search) return true;
+    return r.num.includes(search) || (r.area||'').toLowerCase().includes(search) ||
+           (r.resp||'').toLowerCase().includes(search) || (r.clasif||'').toLowerCase().includes(search);
+  });
+
+  if(count) count.textContent = cerrados.length + ' cerrados';
+
+  if(!cerrados.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#607080">Sin hallazgos cerrados</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = cerrados.map(r => {
+    const tr   = TREATMENTS[r.num] || {};
+    const fcie = tr.fechaCierreOverride || r.fechaCierre || '—';
+    const verif = tr.verificador || '—';
+    return `<tr class="cerrado-row">
+      <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:#2e7d32;font-size:14px">N° ${r.num}</td>
+      <td style="font-size:11px;max-width:140px">${r.clasif||'—'}</td>
+      <td style="font-size:11px;font-weight:600">${r.area||'—'}</td>
+      <td style="font-size:11px">${r.resp||'—'}</td>
+      <td style="font-size:11px;color:#2e7d32;font-weight:600">${fcie}</td>
+      <td style="font-size:11px">${verif}</td>
+      <td>
+        <button class="btn-reopen-admin" onclick="apReopenTreatment('${r.num}')">
+          🔓 Reabrir
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function apReopenTreatment(num){
+  const r = DATA.find(d=>d.num===String(num));
+  if(!r) return;
+  if(!confirm('¿Reabrir el hallazgo N° '+num+' "'+r.clasif+'"?
+
+El estado pasará de Cerrado a En proceso. Esta acción queda registrada en el log de auditoría.')) return;
+  if(!TREATMENTS[num]) TREATMENTS[num] = {};
+  TREATMENTS[num].estadoOverride      = 'En proceso';
+  TREATMENTS[num].fechaCierreOverride = '';
+  TREATMENTS[num].downloaded          = false;
+  TREATMENTS[num].reopenedAt          = new Date().toISOString();
+  TREATMENTS[num].reopenedBy          = window.CURRENT_USER;
+  STORE.save();
+  logActivity('reopen', num, 'Reabrió hallazgo: '+r.clasif+' · '+r.area);
+  renderTableOnly();
+  updateTabBadges();
+  apRenderCerrados();
+  showToast('✓ Hallazgo N° '+num+' reabierto · Pasa a "En proceso"', false);
+}
+
+// ── GESTIÓN DE ACCESOS ───────────────────────────────────────────────
+async function apLoadAllowlist(){
+  try {
+    const j = await _api('/allowlist');
+    AP_ALLOWLIST = j.emails || [];
+    apRenderAccesos();
+  }catch(e){ console.warn('allowlist:', e.message); }
+}
+async function apLoadAdmins(){
+  try {
+    const j = await _api('/admins');
+    AP_ADMINS = j.emails || [];
+    apRenderAccesos();
+  }catch(e){ console.warn('admins:', e.message); }
+}
+
+function apRenderAccesos(){
+  // Allowlist
+  const al = document.getElementById('apAllowlistItems');
+  if(al){
+    al.innerHTML = AP_ALLOWLIST.length
+      ? AP_ALLOWLIST.map((e,i)=>`
+          <div class="ap-allowlist-item">
+            <span class="ap-allowlist-email">${e}</span>
+            <span class="ap-allowlist-type">Externo</span>
+            <button class="btn-del-email" onclick="apRemoveAllowlist(${i})" title="Quitar">✕</button>
+          </div>`).join('')
+      : '<p style="font-size:11px;color:#607080;font-style:italic">Sin excepciones configuradas</p>';
+  }
+  // Admins
+  const adm = document.getElementById('apAdminItems');
+  if(adm){
+    adm.innerHTML = AP_ADMINS.length
+      ? AP_ADMINS.map((e,i)=>`
+          <div class="ap-allowlist-item">
+            <span class="ap-allowlist-email">${e}</span>
+            <span class="ap-allowlist-type admin">Admin</span>
+            ${AP_ADMINS.length>1?`<button class="btn-del-email" onclick="apRemoveAdmin(${i})" title="Quitar">✕</button>`:'<span style="width:20px"></span>'}
+          </div>`).join('')
+      : '<p style="font-size:11px;color:#607080;font-style:italic">Sin admins configurados</p>';
+  }
+}
+
+async function apAddToAllowlist(){
+  const inp   = document.getElementById('apNewEmail');
+  const email = (inp.value||'').trim().toLowerCase();
+  if(!email || !email.includes('@')){ showToast('⚠ Email inválido', true); return; }
+  if(AP_ALLOWLIST.includes(email)){ showToast('ℹ Ya está en la lista', false); return; }
+  AP_ALLOWLIST.push(email);
+  try {
+    await _api('/allowlist', { method:'PUT', body:{ emails: AP_ALLOWLIST } });
+    inp.value = '';
+    apRenderAccesos();
+    logActivity('add_allowlist', email, 'Agregó email a la allowlist');
+    showToast('✓ '+email+' agregado como usuario externo', false);
+  }catch(e){ AP_ALLOWLIST.pop(); showToast('⚠ Error: '+e.message, true); }
+}
+
+async function apRemoveAllowlist(idx){
+  const email = AP_ALLOWLIST[idx];
+  if(!confirm('¿Quitar '+email+' de los accesos externos?')) return;
+  AP_ALLOWLIST.splice(idx, 1);
+  try {
+    await _api('/allowlist', { method:'PUT', body:{ emails: AP_ALLOWLIST } });
+    apRenderAccesos();
+    logActivity('remove_allowlist', email, 'Quitó email de la allowlist');
+    showToast('✓ '+email+' quitado', false);
+  }catch(e){ showToast('⚠ Error: '+e.message, true); }
+}
+
+async function apAddAdmin(){
+  const inp   = document.getElementById('apNewAdmin');
+  const email = (inp.value||'').trim().toLowerCase();
+  if(!email || !email.includes('@')){ showToast('⚠ Email inválido', true); return; }
+  if(AP_ADMINS.includes(email)){ showToast('ℹ Ya es admin', false); return; }
+  AP_ADMINS.push(email);
+  try {
+    await _api('/admins', { method:'PUT', body:{ emails: AP_ADMINS } });
+    inp.value = '';
+    apRenderAccesos();
+    logActivity('add_admin', email, 'Agregó nuevo administrador');
+    showToast('✓ '+email+' es ahora administrador', false);
+  }catch(e){ AP_ADMINS.pop(); showToast('⚠ Error: '+e.message, true); }
+}
+
+async function apRemoveAdmin(idx){
+  const email = AP_ADMINS[idx];
+  if(AP_ADMINS.length <= 1){ showToast('⚠ Debe haber al menos un admin', true); return; }
+  if(!confirm('¿Quitar '+email+' de los administradores?')) return;
+  AP_ADMINS.splice(idx, 1);
+  try {
+    await _api('/admins', { method:'PUT', body:{ emails: AP_ADMINS } });
+    apRenderAccesos();
+    logActivity('remove_admin', email, 'Quitó administrador');
+    showToast('✓ '+email+' ya no es admin', false);
+  }catch(e){ showToast('⚠ Error: '+e.message, true); }
+}
+
+// Llamar apCheckAndShowBtn después del login
+// Se integra con onLoginOk del bloque de Google
 </script>
 
 <!-- EMAIL CONFIG MODAL -->
@@ -3851,5 +4387,165 @@ function closeDescOverlay(e){
     <p id="descText" style="font-size:13px;color:#1a2533;line-height:1.75;white-space:pre-wrap;background:#f4f7fb;border-radius:8px;padding:14px;border:1px solid #dce6f0;margin:0"></p>
   </div>
 </div>
+
+<!-- ═══ PANEL ADMINISTRADOR ════════════════════════════════════════════ -->
+<div id="adminPanel">
+  <div class="ap-topbar">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span class="ap-topbar-title">Panel de Administrador · SGCIA</span>
+    <span class="ap-topbar-user" id="apUserLabel">—</span>
+    <button class="ap-close-btn" onclick="closeAdminPanel()">✕ Cerrar panel</button>
+  </div>
+  <div class="ap-tabs">
+    <button class="ap-tab active" onclick="apTab('log')" id="apTabLog">📋 Log de Actividad</button>
+    <button class="ap-tab" onclick="apTab('descargas')" id="apTabDescargas">📥 Descargas</button>
+    <button class="ap-tab" onclick="apTab('cerrados')" id="apTabCerrados">🔓 Tratamientos Cerrados</button>
+    <button class="ap-tab" onclick="apTab('accesos')" id="apTabAccesos">👥 Gestión de Accesos</button>
+  </div>
+  <div class="ap-body">
+
+    <!-- ── LOG DE ACTIVIDAD ── -->
+    <div class="ap-section active" id="apSecLog">
+      <div class="ap-stats-grid" id="apLogStats">
+        <div class="ap-stat-card"><div class="ap-stat-num" id="apStatTotal">—</div><div class="ap-stat-lbl">Total eventos</div></div>
+        <div class="ap-stat-card"><div class="ap-stat-num" id="apStatLogins">—</div><div class="ap-stat-lbl">Accesos</div></div>
+        <div class="ap-stat-card"><div class="ap-stat-num" id="apStatSaves">—</div><div class="ap-stat-lbl">Guardados</div></div>
+        <div class="ap-stat-card"><div class="ap-stat-num" id="apStatDownloads">—</div><div class="ap-stat-lbl">Descargas Word</div></div>
+      </div>
+      <div class="ap-card">
+        <div class="ap-card-header">
+          <span class="ap-card-title">Historial completo de actividad</span>
+          <div class="ap-filters" style="padding:0;border:none;background:none;flex:1">
+            <input type="text" id="apLogSearch" placeholder="Buscar usuario, hallazgo, acción…" oninput="apRenderLog()" style="flex:1;min-width:200px">
+            <select id="apLogAction" onchange="apRenderLog()">
+              <option value="">Todas las acciones</option>
+              <option value="login">Accesos</option>
+              <option value="open_treatment">Abrir tratamiento</option>
+              <option value="save_treatment">Guardar tratamiento</option>
+              <option value="download_word">Descargar Word</option>
+              <option value="reopen">Reabrir tratamiento</option>
+              <option value="failed_login">Acceso denegado</option>
+            </select>
+            <input type="date" id="apLogFrom" onchange="apRenderLog()" title="Desde">
+            <input type="date" id="apLogTo" onchange="apRenderLog()" title="Hasta">
+            <button onclick="apExportLog()" style="background:#bf360c;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700">⬇ CSV</button>
+          </div>
+          <span class="ap-stat" id="apLogCount">— entradas</span>
+        </div>
+        <div style="overflow-x:auto;max-height:480px;overflow-y:auto">
+          <table class="ap-log-tbl">
+            <thead>
+              <tr>
+                <th>Fecha y Hora</th>
+                <th>Usuario</th>
+                <th>Acción</th>
+                <th>Hallazgo N°</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="apLogBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DESCARGAS ── -->
+    <div class="ap-section" id="apSecDescargas">
+      <div class="ap-card">
+        <div class="ap-card-header">
+          <span class="ap-card-title">📥 Historial de descargas de tratamientos</span>
+          <span class="ap-stat" id="apDescCount">— descargas</span>
+          <button onclick="apClearDescargas()" style="margin-left:auto;background:none;border:1px solid #ef9a9a;color:#c62828;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">🗑 Limpiar historial</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ap-log-tbl">
+            <thead>
+              <tr>
+                <th>#</th><th>Archivo</th><th>Hallazgo</th><th>Área</th>
+                <th>Verificado por</th><th>Descargado por</th><th>Fecha</th><th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="apDescBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TRATAMIENTOS CERRADOS ── -->
+    <div class="ap-section" id="apSecCerrados">
+      <div class="ap-card">
+        <div class="ap-card-header">
+          <span class="ap-card-title">🔓 Tratamientos cerrados — Reabrir para editar</span>
+          <div class="ap-filters" style="padding:0;border:none;background:none">
+            <input type="text" id="apCerradoSearch" placeholder="Buscar N°, área, responsable…" oninput="apRenderCerrados()">
+          </div>
+          <span class="ap-stat" id="apCerradoCount">—</span>
+        </div>
+        <div style="overflow-x:auto;max-height:520px;overflow-y:auto">
+          <table class="ap-log-tbl">
+            <thead>
+              <tr>
+                <th>N°</th><th>Clasificación</th><th>Área</th><th>Responsable</th>
+                <th>Fecha cierre</th><th>Verificador</th><th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="apCerradoBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── GESTIÓN DE ACCESOS ── -->
+    <div class="ap-section" id="apSecAccesos">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- Allowlist -->
+        <div class="ap-card">
+          <div class="ap-card-header">
+            <span class="ap-card-title">📧 Excepciones (emails externos)</span>
+          </div>
+          <div style="padding:16px">
+            <p style="font-size:11px;color:#607080;margin-bottom:12px;line-height:1.5">
+              Emails fuera de @maniagro.com que tienen acceso autorizado.
+            </p>
+            <div id="apAllowlistItems" style="margin-bottom:12px"></div>
+            <div style="display:flex;gap:8px">
+              <input type="email" id="apNewEmail" placeholder="nuevo@dominio.com"
+                style="flex:1;padding:8px 10px;font-size:12px;border:1.5px solid #c5d5e8;border-radius:6px;outline:none"
+                onkeydown="if(event.key==='Enter')apAddToAllowlist()">
+              <button onclick="apAddToAllowlist()"
+                style="background:#1565c0;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">
+                + Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Admins -->
+        <div class="ap-card">
+          <div class="ap-card-header">
+            <span class="ap-card-title">🛡 Administradores</span>
+          </div>
+          <div style="padding:16px">
+            <p style="font-size:11px;color:#607080;margin-bottom:12px;line-height:1.5">
+              Usuarios con acceso al panel de administrador.
+            </p>
+            <div id="apAdminItems" style="margin-bottom:12px"></div>
+            <div style="display:flex;gap:8px">
+              <input type="email" id="apNewAdmin" placeholder="admin@maniagro.com"
+                style="flex:1;padding:8px 10px;font-size:12px;border:1.5px solid #c5d5e8;border-radius:6px;outline:none"
+                onkeydown="if(event.key==='Enter')apAddAdmin()">
+              <button onclick="apAddAdmin()"
+                style="background:#bf360c;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">
+                + Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- ═══ FIN PANEL ADMINISTRADOR ════════════════════════════════════════ -->
+
 </body>
 </html>
