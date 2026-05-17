@@ -3738,6 +3738,21 @@ function apCheckAndShowBtn(){
   }
 }
 
+async function logActivity(action, target, details){
+  try {
+    await _api('/log', {
+      method: 'POST',
+      body: {
+        action:  action,
+        target:  String(target  || ''),
+        details: String(details || '')
+      }
+    });
+  } catch(e) {
+    console.warn('[SGCIA] logActivity error:', e.message);
+  }
+}
+
 async function openAdminPanel(){
   if(!isAdminMode()){
     showToast('⛔ Acceso denegado — solo administradores', true);
@@ -3745,11 +3760,11 @@ async function openAdminPanel(){
   }
   document.getElementById('adminPanel').classList.add('show');
   document.getElementById('apUserLabel').textContent = window.CURRENT_USER_INFO.email;
-  // Registrar acceso al panel
-  logActivity('admin_panel_open', '', 'Abrió el panel de administrador');
-  // Cargar datos
+  // Cargar datos primero, DESPUÉS registrar (evita crash si falla)
   await Promise.all([apLoadLog(), apLoadAllowlist(), apLoadAdmins()]);
   apTab('log');
+  // Registrar acceso al panel (no bloqueante)
+  logActivity('admin_panel_open', '', 'Abrió el panel de administrador').catch(()=>{});
 }
 
 function closeAdminPanel(){
