@@ -1,0 +1,265 @@
+# GUÍA DE CONFIGURACIÓN — Backup Automático SGCIA
+## Google Drive + Cloudflare KV · Mayo 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Tiempo estimado: 20-30 minutos
+Dificultad: Media (necesitás acceso a Google Cloud y Cloudflare)
+
+---
+
+## PASO 1 — Crear la Service Account en Google Cloud
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Una Service Account es una cuenta técnica (no humana) que el Worker usa 
+para subir archivos a Drive sin que dependa de la sesión de nadie.
+
+1. Abrí: https://console.cloud.google.com
+2. Seleccioná el proyecto donde está configurado el OAuth2 de SGCIA
+3. Menú izquierdo → "IAM y administración" → "Cuentas de servicio"
+4. Click en "+ CREAR CUENTA DE SERVICIO"
+5. Completá:
+   - Nombre: sgcia-backup
+   - ID: sgcia-backup (se autocompleta)
+   - Descripción: Cuenta para backup automático de SGCIA
+6. Click "CREAR Y CONTINUAR"
+7. En "Conceder acceso" → NO hace falta agregar ningún rol → Click "CONTINUAR"
+8. Click "LISTO"
+
+─── Crear la clave JSON ───────────────────────────────────────────────────────
+
+9.  En la lista de cuentas de servicio, click en "sgcia-backup"
+10. Tab "CLAVES"
+11. Click "AGREGAR CLAVE" → "Crear clave nueva"
+12. Tipo: JSON → Click "CREAR"
+13. Se descarga automáticamente un archivo .json — GUARDALO EN UN LUGAR SEGURO
+    (tiene este formato):
+    {
+      "type": "service_account",
+      "project_id": "tu-proyecto",
+      "private_key_id": "abc123...",
+      "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+      "client_email": "sgcia-backup@tu-proyecto.iam.gserviceaccount.com",
+      ...
+    }
+
+⚠️  IMPORTANTE: Ese archivo JSON es la credencial. No lo subas a GitHub ni lo
+    compartas. Lo vamos a cargar como secret en Cloudflare.
+
+---
+
+## PASO 2 — Dar acceso a la carpeta de Drive
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+La Service Account necesita permiso para escribir en tu carpeta de Drive.
+
+1. Abrí Google Drive: https://drive.google.com
+2. Navegá a la carpeta donde querés los backups:
+   https://drive.google.com/drive/u/0/folders/1sOli6L1yOof5nKyxgRKMXmRUa5izyBVq
+3. Click derecho en la carpeta → "Compartir"
+4. En "Agregar personas o grupos" pegá el email de la Service Account:
+   sgcia-backup@TU-PROYECTO.iam.gserviceaccount.com
+   (lo encontrás en el JSON descargado, campo "client_email")
+5. Permiso: "Editor"
+6. Destildá "Notificar a las personas"
+7. Click "Compartir"
+
+✅ Listo — la Service Account ya puede subir archivos a esa carpeta.
+
+---
+
+## PASO 3 — Crear el KV namespace de backups en Cloudflare
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+En terminal (donde tenés Wrangler instalado):
+
+```bash
+wrangler kv namespace create BACKUPS_KV
+```
+
+Te devuelve algo así:
+  ✅ Success!
+  Add the following to your wrangler.toml:
+  [[kv_namespaces]]
+  binding = "BACKUPS_KV"
+  id = "NUEVO_ID_AQUI"
+
+Copiá ese ID y reemplazalo en wrangler-backup.toml:
+  Línea: id = "REEMPLAZAR_CON_ID_DE_BACKUPS_KV"
+  Cambiar por: id = "NUEVO_ID_AQUI"
+
+---
+
+## PASO 4 — Cargar los secrets en Cloudflare
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Los secrets se cargan encriptados y NUNCA aparecen en el código.
+
+─── Secret 1: SA_KEY (el JSON de la Service Account) ────────────────────────
+
+En terminal:
+```bash
+wrangler secret put SA_KEY --config wrangler-backup.toml
+```
+
+Te va a pedir que pegues el valor. Abrí el archivo JSON descargado en el 
+Paso 1, copiá TODO el contenido (desde { hasta }) y pegálo. Enter.
+
+⚠️  Es un JSON en una sola línea o multilínea — ambos funcionan.
+
+─── Secret 2: BACKUP_RUN_TOKEN (para ejecución manual) ──────────────────────
+
+Generá un token seguro:
+```bash
+openssl rand -hex 32
+```
+Copiá el resultado (ej: a3f9c2e8d1b7...) y luego:
+```bash
+wrangler secret put BACKUP_RUN_TOKEN --config wrangler-backup.toml
+```
+Pegá el token generado. Guardátelo — lo vas a necesitar para el Paso 6.
+
+---
+
+## PASO 5 — Deploy del Worker de backup
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+```bash
+wrangler deploy --config wrangler-backup.toml
+```
+
+Debería mostrarte:
+  ✅ Deployed sgcia-backup (X.XX sec)
+  https://sgcia-backup.TU_SUBDOMINIO.workers.dev
+
+  Current Deployment ID: abc123...
+  Current Version ID: abc123...
+
+  Triggers:
+    Schedule: 0 2 * * *   ← confirma que el cron está activo
+
+---
+
+## PASO 6 — Probar el backup manualmente
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Sin esperar al cron de las 2 AM, podés forzar un backup ahora:
+
+```bash
+curl -X GET \
+  -H "X-Backup-Token: TU_BACKUP_RUN_TOKEN" \
+  https://sgcia-backup.TU_SUBDOMINIO.workers.dev/run-backup
+```
+
+Reemplazá:
+  - TU_BACKUP_RUN_TOKEN → el token del Paso 4
+  - TU_SUBDOMINIO       → el subdominio de tu cuenta Cloudflare Workers
+
+Respuesta esperada:
+  {
+    "ok": true,
+    "errores": [],
+    "duracion": "2.34"
+  }
+
+Si ves "ok": true → ¡Funcionó! Revisá:
+  A) Google Drive → carpeta → debería aparecer backup_sgcia_YYYY-MM-DD.json
+  B) Cloudflare Dashboard → Workers KV → BACKUPS_KV → clave backup:YYYY-MM-DD
+
+---
+
+## PASO 7 — Verificar en Cloudflare Dashboard (opcional)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. https://dash.cloudflare.com
+2. Workers & Pages → KV
+3. Click en "BACKUPS_KV"
+4. Deberías ver la clave: backup:2026-05-21 (o la fecha de hoy)
+5. Click en la clave para ver el JSON completo del backup
+
+---
+
+## CRONOGRAMA AUTOMÁTICO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Hora de ejecución:  02:00 UTC = 23:00 ARG (verano) / 22:00 ARG (invierno)
+  Frecuencia:         Todos los días
+  Retención en KV:    90 días (luego se borra automáticamente)
+  Retención en Drive: Indefinida (podés borrar manualmente los viejos)
+
+Nomenclatura de archivos en Drive:
+  backup_sgcia_2026-05-21.json
+  backup_sgcia_2026-05-22.json
+  backup_sgcia_2026-05-23.json
+  ...
+
+---
+
+## QUÉ CONTIENE CADA BACKUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cada archivo JSON incluye:
+
+  metadata:
+    - timestamp       → Cuándo se hizo el backup
+    - cantHallazgos   → Cuántos hallazgos había en ese momento
+    - cantAdjuntos    → Cuántos archivos adjuntos
+    - cantLogs        → Cuántas entradas de auditoría
+
+  state:
+    - treatments      → TODOS los hallazgos con sus tratamientos completos
+    - descargas       → Historial de descargas
+
+  admins:           → Lista de administradores activos
+  allowlist:        → Lista de usuarios externos autorizados
+  adjuntosKeys:     → Lista de claves de adjuntos (los binarios NO se copian
+                      por tamaño, pero quedan en el KV original de Cloudflare)
+
+---
+
+## CÓMO RESTAURAR UN BACKUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+En caso de pérdida de datos:
+
+1. Bajá el backup deseado desde Drive (ej: backup_sgcia_2026-05-20.json)
+2. En terminal:
+
+```bash
+# Restaurar el estado (tratamientos)
+wrangler kv key put "state" --path ./backup_sgcia_2026-05-20.json \
+  --binding SGCIA_KV
+
+# O leer el JSON, extraer el campo "state" y subirlo:
+cat backup_sgcia_2026-05-20.json | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+print(json.dumps(data['state']))
+" > state_restaurado.json
+
+wrangler kv key put "state" --path ./state_restaurado.json \
+  --binding SGCIA_KV
+```
+
+3. Verificar en la plataforma que los datos están correctos.
+
+---
+
+## ERRORES COMUNES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Error: "Error obteniendo token Google: 400"
+  → El SA_KEY está mal formateado. Asegurate de pegar el JSON completo.
+
+Error: "Error subiendo a Drive: 403"
+  → La Service Account no tiene acceso a la carpeta. Repasar Paso 2.
+
+Error: "BACKUPS_KV is not defined"
+  → El ID en wrangler-backup.toml no fue reemplazado. Repasar Paso 3.
+
+Error: "No autorizado" al llamar /run-backup
+  → El header X-Backup-Token no coincide. Usar el token del Paso 4.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SGCIA - Sistema de Gestión de Acciones Correctivas y Preventivas
+Equipo de SGCIA · Mayo 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
