@@ -1,0 +1,32 @@
+# wrangler-backup.toml
+# ─────────────────────────────────────────────────────────────────────────────
+# Configuración del Worker de backup de SGCIA
+# Worker INDEPENDIENTE del principal — corre en paralelo sin afectarlo
+# ─────────────────────────────────────────────────────────────────────────────
+
+name               = "sgcia-backup"
+main               = "backup-worker.js"
+compatibility_date = "2025-05-01"
+
+# ── Variables públicas ───────────────────────────────────────────────────────
+[vars]
+DRIVE_FOLDER_ID = "1sOli6L1yOof5nKyxgRKMXmRUa5izyBVq"
+
+# ── Secrets (NO van acá, se cargan con wrangler secret put) ──────────────────
+# SA_KEY           → JSON completo de la Service Account de Google
+# BACKUP_RUN_TOKEN → Token para ejecutar backup manual por HTTP
+
+# ── KV Namespaces ────────────────────────────────────────────────────────────
+[[kv_namespaces]]
+# KV principal de SGCIA — SOLO LECTURA desde este worker
+binding = "SGCIA_KV"
+id      = "e0c6f95fc5d445199c613bd0dec3eb44"   # Tu KV ID existente
+
+[[kv_namespaces]]
+# KV de backups — se crea nuevo (ver paso 2 de la guía)
+binding = "BACKUPS_KV"
+id      = "REEMPLAZAR_CON_ID_DE_BACKUPS_KV"     # ← completar después del paso 2
+
+# ── Cron Trigger ─────────────────────────────────────────────────────────────
+[triggers]
+crons = ["0 2 * * *"]   # Todos los días a las 02:00 UTC (23:00 ARG en verano)
