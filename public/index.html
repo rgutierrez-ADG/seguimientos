@@ -2952,7 +2952,39 @@ async function buildTreatmentDocx(num){
     t6 = tbl([attC1, attC2], annexRows);
   }
 
-  const docBody = t1+gap+t2+gap+t3+gap+t4+gap+t5+(t6?gap+t6:'');
+  var t6b = '';
+  var _ishi = t.ishi || {};
+  var _pq = t.pq || [];
+  var _cr = t.causaRaiz || '';
+  var _hasIshi = ISHI_CATS.some(function(cat){ return (_ishi[cat.id]||[]).some(function(v){return v;}); });
+  var _hasPq = _pq.some(function(v){return v;});
+  if(_hasIshi || _hasPq || _cr){
+    var ishiRows = [];
+    ishiRows.push(tr(300, tc(p(run('AN\u00c1LISIS DE CAUSA RA\u00cdZ',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w:BW,span:4,bg:'37474F',col:'888888',bsz:6})));
+    if(_hasIshi){
+      ishiRows.push(tr(260, tc(p(run('Diagrama de Ishikawa \u2014 6M',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w:BW,span:4,bg:'F0F4F8'})));
+      for(var _ci=0; _ci<ISHI_CATS.length; _ci+=2){
+        var ca=ISHI_CATS[_ci],cb=ISHI_CATS[_ci+1];
+        var _vA=((_ishi[ca.id]||[]).filter(Boolean)).join('\n\u2022 ');
+        var _vB=cb?((_ishi[cb.id]||[]).filter(Boolean)).join('\n\u2022 '):'';
+        var _hw=Math.round(BW/2);
+        ishiRows.push(tr(60,tc(p(run(ca.label,{b:true,sz:SZ_LBL,col:'1565C0'}),{sp0:40,sp1:20}),{w:_hw,bg:'E8EEF6'}),tc(p(run(cb?cb.label:'',{b:true,sz:SZ_LBL,col:'1565C0'}),{sp0:40,sp1:20}),{w:BW-_hw,bg:'E8EEF6'})));
+        ishiRows.push(tr(Math.max(120,(_vA.length+_vB.length>100)?280:160),tc(p(run(_vA?'\u2022 '+_vA:'\u2014',{sz:SZ_BODY}),{sp0:40,sp1:40}),{w:_hw,pad:{t:40,b:40,l:100,r:60}}),tc(p(run(_vB?'\u2022 '+_vB:'\u2014',{sz:SZ_BODY}),{sp0:40,sp1:40}),{w:BW-_hw,pad:{t:40,b:40,l:100,r:60}})));
+      }
+    }
+    if(_hasPq){
+      ishiRows.push(tr(260, tc(p(run('An\u00e1lisis 5 Por Qu\u00e9',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w:BW,span:4,bg:'F0F4F8'})));
+      var _cw1=Math.round(BW*0.18);
+      _pq.forEach(function(v,i){ if(!v)return; ishiRows.push(tr(Math.max(200,Math.ceil(v.length/80)*120),tc(p(run('Por qu\u00e9 '+(i+1)+':',{b:true,sz:SZ_LBL,col:'1565C0'}),{sp0:50,sp1:50}),{w:_cw1,bg:'EAF3DE'}),tc(p(run(v,{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW-_cw1,span:3,pad:{t:50,b:50,l:120,r:80}}))); });
+    }
+    if(_cr){
+      ishiRows.push(tr(260, tc(p(run('Causa Ra\u00edz Identificada',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w:BW,span:4,bg:'EAF3DE'})));
+      ishiRows.push(tr(Math.max(200,Math.ceil(_cr.length/80)*120),tc(p(run(_cr,{b:true,sz:SZ_BODY,col:'1B5E20'}),{sp0:60,sp1:60}),{w:BW,span:4,pad:{t:60,b:60,l:150,r:150}})));
+    }
+    var _c1=Math.round(BW*0.18),_c2=Math.round(BW*0.27),_c3=Math.round(BW*0.27),_c4=BW-_c1-_c2-_c3;
+    t6b = tbl([_c1,_c2,_c3,_c4], ishiRows);
+  }
+  const docBody = t1+gap+t2+gap+t3+gap+t4+gap+t5+(t6b?gap+t6b:'')+(t6?gap+t6:'');
   const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${docBody}<w:sectPr><w:headerReference w:type="default" r:id="rId3"/><w:footerReference w:type="default" r:id="rId4"/><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1000" w:bottom="1800" w:left="1000" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
 
   const hdrXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>${hdrTbl}<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:p></w:hdr>`;
@@ -2962,7 +2994,12 @@ async function buildTreatmentDocx(num){
   function b64Arr(b){const d=atob(b),a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);return a;}
 
   const zip=new JSZip();
-  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`);
+  // Dynamic Content_Types for all image extensions
+  const _attExtMap = {'jpg':'image/jpeg','jpeg':'image/jpeg','png':'image/png','gif':'image/gif','bmp':'image/bmp','webp':'image/webp','tiff':'image/tiff','tif':'image/tiff'};
+  const _usedExts = new Set(['jpg']);
+  attachImgRids.forEach(att => { const _e = att.name.split('.').pop().toLowerCase(); if(_attExtMap[_e]) _usedExts.add(_e); });
+  const _ctDefaults = [..._usedExts].map(ext => `<Default Extension="${ext}" ContentType="${_attExtMap[ext]||'application/octet-stream'}"/>`).join('');
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml">${_ctDefaults}<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`);
   zip.file('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
   zip.file('word/_rels/document.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>${attachImgRels}</Relationships>`);
   zip.file('word/_rels/header1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.jpg"/></Relationships>`);
@@ -3434,6 +3471,9 @@ async function downloadTreatmentNow(){
   STORE.save();
   renderTableOnly();
   updateTabBadges();
+
+  // Sincronizar estado al Google Sheet
+  _api('/sheet-estado', { method: 'POST', body: { num, estado: 'Cerrado' } }).catch(e => console.warn('[SGCIA] sheet-estado:', e));
 
   const r2 = DATA.find(d=>d.num===num) || {};
   const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
