@@ -1198,72 +1198,67 @@ window.initApp = async function() {
 };
 
 function autoLoadCSV(){
-  return new Promise(resolveCSV => {
-  // Prioridad: 1) GitHub raw  2) datos.csv local  3) DATA embebido (silencioso)
-  const GITHUB_RAW = 'https://raw.githubusercontent.com/rgutierrez-ADG/seguimientos/main/public/datos.csv';
-  const LOCAL_CSV  = './datos.csv';
-  const prog = document.getElementById('uprog');
-  const ic   = document.getElementById('uprogItems');
-  ic.innerHTML = '<div class="uprog-item"><span class="uprog-dot pend" id="ud0"></span><span>Sincronizando datos…</span></div>';
+  return new Promise(function(resolveCSV){
+  var prog = document.getElementById('uprog');
+  var ic   = document.getElementById('uprogItems');
+  ic.innerHTML = '<div class="uprog-item"><span class="uprog-dot pend" id="ud0"></span><span>Cargando desde Google Sheet\u2026</span></div>';
   prog.classList.add('show');
 
-  const PARSE_FIELDS = r => {
-    const clean = k => (r[k.trim()]||'').trim();
-    return {
-      fecha:clean('Fecha'), anio:clean('Año'), num:clean('Número'),
-      tipoAud:clean('Tipo de Auditoría'), clasif:clean('Clasificación'),
-      req:clean('Requisito'), hallazgo:clean('Tipo de Hallazgo'),
-      accion:clean('Tipo de acción'), area:clean('Area responsable de tratamiento'),
-      resp:clean('Responsable'), plazo:clean('Plazo'),
-      estado:clean('Estado de Plan de acción'), fechaCierre:clean('Fecha Cierre'),
-      dias:clean('Dias sin resolver'), desc:clean('Descripción'), auditor:clean('Auditor'),
-    };
-  };
+  fetch('/api/sheet-data', { credentials:'include', cache:'no-store' })
+    .then(function(resp){
+      if(!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.json();
+    })
+    .then(function(data){
+      if(data.error) throw new Error(data.error);
+      var rows = data.values || [];
+      if(rows.length < 2) throw new Error('Sin datos en el Sheet');
+      var headers = rows[0].map(function(h){ return (h||'').trim(); });
+      function idx(k){ return headers.indexOf(k); }
+      var parsed = rows.slice(1).map(function(r){
+        return {
+          fecha:       (r[idx('Fecha')]                           ||'').trim(),
+          anio:        (r[idx('A\u00f1o')]                       ||'').trim(),
+          num:         (r[idx('N\u00famero')]                    ||'').trim(),
+          tipoAud:     (r[idx('Tipo de Auditor\u00eda')]         ||'').trim(),
+          clasif:      (r[idx('Clasificaci\u00f3n')]             ||'').trim(),
+          req:         (r[idx('Requisito')]                       ||'').trim(),
+          hallazgo:    (r[idx('Tipo de Hallazgo')]                ||'').trim(),
+          accion:      (r[idx('Tipo de acci\u00f3n')]            ||'').trim(),
+          area:        (r[idx('Area responsable de tratamiento')] ||'').trim(),
+          resp:        (r[idx('Responsable')]                     ||'').trim(),
+          plazo:       (r[idx('Plazo')]                           ||'').trim(),
+          estado:      (r[idx('Estado de Plan de acci\u00f3n')]  ||'').trim(),
+          fechaCierre: (r[idx('Fecha Cierre')]                    ||'').trim(),
+          dias:        (r[idx('Dias sin resolver')]               ||'').trim(),
+          desc:        (r[idx('Descripci\u00f3n')]               ||'').trim(),
+          auditor:     (r[idx('Auditor')]                         ||'').trim(),
+        };
+      }).filter(function(r){ return r.num; });
 
-  const applyData = (parsed, source) => {
-    if(!parsed.length) return applyFallback();
-    // Sync treatment pendingReview flags with CSV estado
-    parsed.forEach(newR => {
-      const oldR = DATA.find(d => d.num === newR.num);
-      if(oldR && oldR.estado !== newR.estado && newR.estado === 'Cerrado'){
-        if(TREATMENTS[newR.num]) TREATMENTS[newR.num].pendingReview = false;
-      }
+      // Sync treatment flags with Sheet estado
+      parsed.forEach(function(newR){
+        var oldR = DATA.find(function(d){ return d.num === newR.num; });
+        if(oldR && oldR.estado !== newR.estado && newR.estado === 'Cerrado'){
+          if(TREATMENTS[newR.num]) TREATMENTS[newR.num].pendingReview = false;
+        }
+      });
+      DATA = parsed;
+      document.getElementById('ud0').className = 'uprog-dot ok';
+      prog.querySelector('.uprog-title').textContent = '\u2713 ' + parsed.length + ' registros \u00b7 Google Sheet';
+      setTimeout(function(){ prog.classList.remove('show'); }, 3000);
+      updateTabBadges(); populateFilters(); renderAll(); updateClock();
+      resolveCSV();
+    })
+    .catch(function(e){
+      console.error('[SGCIA] Sheet read error:', e);
+      document.getElementById('ud0').className = 'uprog-dot err';
+      prog.querySelector('.uprog-title').textContent = '\u26a0 Error leyendo Sheet: ' + e.message;
+      setTimeout(function(){ prog.classList.remove('show'); }, 5000);
+      // Fallback: usar DATA embebido
+      updateTabBadges(); populateFilters(); renderAll(); updateClock();
+      resolveCSV();
     });
-    DATA = parsed;
-    document.getElementById('ud0').className = 'uprog-dot ok';
-    prog.querySelector('.uprog-title').textContent = '✓ ' + parsed.length + ' registros · ' + source;
-    setTimeout(() => prog.classList.remove('show'), 3000);
-    updateTabBadges(); populateFilters(); renderAll(); updateClock();
-  };
-
-  const applyFallback = () => {
-    document.getElementById('ud0').className = 'uprog-dot ok';
-    prog.querySelector('.uprog-title').textContent = '✓ ' + DATA.length + ' registros (datos embebidos)';
-    setTimeout(() => prog.classList.remove('show'), 2000);
-    updateTabBadges(); populateFilters(); renderAll(); updateClock();
-  };
-
-  const tryFetch = (url, source, onFail) => {
-    fetch(url + '?nc=' + Date.now(), { cache: 'no-store' })
-      .then(res => { if(!res.ok) throw new Error(res.status); return res.text(); })
-      .then(text => {
-        Papa.parse(text, {
-          header: true, skipEmptyLines: true,
-          complete: res => {
-            const normalised = res.data.map(row => {
-              const n = {}; Object.keys(row).forEach(k => { n[k.trim()] = (row[k]||'').trim(); }); return n;
-            });
-            applyData(normalised.map(PARSE_FIELDS).filter(r => r.num), source);
-          },
-          error: () => onFail()
-        });
-      })
-      .catch(() => onFail());
-  };
-
-  tryFetch(GITHUB_RAW, 'GitHub ✓', () =>
-    tryFetch(LOCAL_CSV, 'datos.csv local ✓', applyFallback)
-  );
   });
 }
 
@@ -2917,8 +2912,9 @@ async function buildTreatmentDocx(num){
       const isImg = f.type && f.type.startsWith('image/');
       if(isImg){
         const rId = 'rIdAtt'+(i+1);
-        attachImgRids.push({rId, name:'att_'+i+'_'+f.name, data: f.data, type: f.type});
-        attachImgRels += `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/att_${i}_${esc(f.name)}"/>`;
+        var _sfn=(f.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
+        attachImgRids.push({rId, name:'att_'+i+'_'+_sfn, data: f.data, type: f.type});
+        attachImgRels += `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/att_${i}_${(f.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_')}"/>`;
         // 2 images per row → each cell ~half width. 914400 EMU = 1 inch.
         // Cell width = (BW/2) DXA * 914400/1440 EMU ~ 3506600 EMU; height ~2800000 EMU
         const cellW = Math.round(BW/2);
