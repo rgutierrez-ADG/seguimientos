@@ -970,6 +970,10 @@ td{padding:9px 12px;vertical-align:middle}
       <select id="fTipo" onchange="renderTable()"><option value="">Todos</option></select>
     </div>
     <button class="btn-sm" onclick="resetFilters()">↺ Limpiar</button>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--dim2);font-weight:600;white-space:nowrap;user-select:none">
+      <input type="checkbox" id="fVerCerrados" onchange="renderTable()" style="width:14px;height:14px;accent-color:var(--green);cursor:pointer">
+      Ver cerrados
+    </label>
     <div class="filter-count" id="filterCount">— registros</div>
   </div>
 
@@ -1534,8 +1538,16 @@ function renderTable(){
   const estado = document.getElementById('fEstado')?.value || '';
   const tipo   = document.getElementById('fTipo')?.value || '';
 
-  // Base filter: only No iniciado + En proceso
-  let rows = getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
+  // Base filter: No iniciado + En proceso (+ Cerrado si checkbox tildado)
+  const _verCerrados = document.getElementById('fVerCerrados')?.checked || false;
+  let rows = getViewData().filter(r => {
+    if(r.estado === 'No iniciado' || r.estado === 'En proceso') return true;
+    if(r.estado === 'Cerrado' && _verCerrados) return true;
+    // También mostrar cerrados localmente (descargados en esta sesión)
+    const _tr = TREATMENTS[r.num];
+    if((_tr && (_tr.downloaded || _tr.cierre)) && _verCerrados) return true;
+    return false;
+  });
   if(area)   rows = rows.filter(r=>r.area===area);
   if(resp)   rows = rows.filter(r=>r.resp===resp);
   if(estado) rows = rows.filter(r=>r.estado===estado);
@@ -1555,8 +1567,8 @@ function renderTable(){
   rows.sort((a,b)=>parseInt(b.dias||0)-parseInt(a.dias||0));
 
   tbody.innerHTML = rows.map((r,i)=>{
-    const esCls = r.estado==='No iniciado'?'es-noiniciado':'es-enproceso';
-    const esDot = r.estado==='No iniciado'?'🔴':'🔵';
+    const esCls = r.estado==='No iniciado'?'es-noiniciado':r.estado==='Cerrado'?'es-cerrado':'es-enproceso';
+    const esDot = r.estado==='No iniciado'?'🔴':r.estado==='Cerrado'?'🟢':'🔵';
     const hCls = r.hallazgo.includes('No Conformidad Mayor')?'hc-ncm hc-nc':
                  r.hallazgo.includes('No Conformidad')?'hc-nc':
                  r.hallazgo.includes('Oportunidad')?'hc-om':'hc-obs';
@@ -3473,7 +3485,14 @@ async function downloadTreatmentNow(){
   updateTabBadges();
 
   // Sincronizar estado al Google Sheet
-  _api('/sheet-estado', { method: 'POST', body: { num, estado: 'Cerrado' } }).catch(e => console.warn('[SGCIA] sheet-estado:', e));
+  // Actualizar DATA local y KPIs en tiempo real
+    var _localRec = DATA.find(function(d){ return d.num===String(num); });
+    if(_localRec) _localRec.estado = 'Cerrado';
+    renderAll();
+    // Sync Sheet + reload
+    _api('/sheet-estado', { method: 'POST', body: { num, estado: 'Cerrado' } })
+      .then(function(){ autoLoadCSV(); })
+      .catch(e => console.warn('[SGCIA] sheet-estado:', e));
 
   const r2 = DATA.find(d=>d.num===num) || {};
   const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
