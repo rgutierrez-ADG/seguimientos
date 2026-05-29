@@ -970,10 +970,6 @@ td{padding:9px 12px;vertical-align:middle}
       <select id="fTipo" onchange="renderTable()"><option value="">Todos</option></select>
     </div>
     <button class="btn-sm" onclick="resetFilters()">↺ Limpiar</button>
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--dim2);font-weight:600;white-space:nowrap;user-select:none">
-      <input type="checkbox" id="fVerCerrados" onchange="renderTable()" style="width:14px;height:14px;accent-color:var(--green);cursor:pointer">
-      Ver cerrados
-    </label>
     <div class="filter-count" id="filterCount">— registros</div>
   </div>
 
@@ -1198,51 +1194,72 @@ window.initApp = async function() {
 };
 
 function autoLoadCSV(){
-  return new Promise(function(resolveCSV){
-  var prog = document.getElementById('uprog');
-  var ic   = document.getElementById('uprogItems');
-  ic.innerHTML = '<div class="uprog-item"><span class="uprog-dot pend" id="ud0"></span><span>Cargando CSV desde GitHub\u2026</span></div>';
+  return new Promise(resolveCSV => {
+  // Prioridad: 1) GitHub raw  2) datos.csv local  3) DATA embebido (silencioso)
+  const GITHUB_RAW = '/api/csv-data';
+  const LOCAL_CSV  = './datos.csv';
+  const prog = document.getElementById('uprog');
+  const ic   = document.getElementById('uprogItems');
+  ic.innerHTML = '<div class="uprog-item"><span class="uprog-dot pend" id="ud0"></span><span>Sincronizando datos…</span></div>';
   prog.classList.add('show');
-  var CSV_URL = '/api/csv-data'; // Proxied via Worker to avoid corporate network blocks
-  fetch(CSV_URL + '?t=' + Date.now(), { cache:'no-store' })
-    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-    .then(function(csv){
-      var parsed = Papa.parse(csv, { header:true, skipEmptyLines:true });
-      var rows = parsed.data.map(function(r){
-        return {
-          fecha:       (r['Fecha']                            ||'').trim(),
-          anio:        (r['A\u00f1o']                       ||'').trim(),
-          num:         (r['N\u00famero']                    ||'').trim(),
-          tipoAud:     (r['Tipo de Auditor\u00eda']         ||'').trim(),
-          clasif:      (r['Clasificaci\u00f3n']             ||'').trim(),
-          req:         (r['Requisito']                        ||'').trim(),
-          hallazgo:    (r['Tipo de Hallazgo']                 ||'').trim(),
-          accion:      (r['Tipo de acci\u00f3n']            ||'').trim(),
-          area:        (r['Area responsable de tratamiento']  ||'').trim(),
-          resp:        (r['Responsable']                      ||'').trim(),
-          plazo:       (r['Plazo']                            ||'').trim(),
-          estado:      (r['Estado de Plan de acci\u00f3n']  ||'').trim(),
-          fechaCierre: (r['Fecha Cierre']                     ||'').trim(),
-          dias:        (r['Dias sin resolver']                ||'').trim(),
-          desc:        (r['Descripci\u00f3n']               ||'').trim(),
-          auditor:     (r['Auditor']                          ||'').trim(),
-        };
-      }).filter(function(r){ return r.num; });
-      DATA = rows;
-      document.getElementById('ud0').className = 'uprog-dot ok';
-      prog.querySelector('.uprog-title').textContent = '\u2713 ' + rows.length + ' registros \u00b7 CSV';
-      setTimeout(function(){ prog.classList.remove('show'); }, 3000);
-      updateTabBadges(); populateFilters(); renderAll(); updateClock();
-      resolveCSV();
-    })
-    .catch(function(e){
-      console.error('[SGCIA] CSV error:', e);
-      document.getElementById('ud0').className = 'uprog-dot err';
-      prog.querySelector('.uprog-title').textContent = '\u26a0 Error: ' + e.message;
-      setTimeout(function(){ prog.classList.remove('show'); }, 5000);
-      updateTabBadges(); populateFilters(); renderAll(); updateClock();
-      resolveCSV();
+
+  const PARSE_FIELDS = r => {
+    const clean = k => (r[k.trim()]||'').trim();
+    return {
+      fecha:clean('Fecha'), anio:clean('Año'), num:clean('Número'),
+      tipoAud:clean('Tipo de Auditoría'), clasif:clean('Clasificación'),
+      req:clean('Requisito'), hallazgo:clean('Tipo de Hallazgo'),
+      accion:clean('Tipo de acción'), area:clean('Area responsable de tratamiento'),
+      resp:clean('Responsable'), plazo:clean('Plazo'),
+      estado:clean('Estado de Plan de acción'), fechaCierre:clean('Fecha Cierre'),
+      dias:clean('Dias sin resolver'), desc:clean('Descripción'), auditor:clean('Auditor'),
+    };
+  };
+
+  const applyData = (parsed, source) => {
+    if(!parsed.length) return applyFallback();
+    // Sync treatment pendingReview flags with CSV estado
+    parsed.forEach(newR => {
+      const oldR = DATA.find(d => d.num === newR.num);
+      if(oldR && oldR.estado !== newR.estado && newR.estado === 'Cerrado'){
+        if(TREATMENTS[newR.num]) TREATMENTS[newR.num].pendingReview = false;
+      }
     });
+    DATA = parsed;
+    document.getElementById('ud0').className = 'uprog-dot ok';
+    prog.querySelector('.uprog-title').textContent = '✓ ' + parsed.length + ' registros · ' + source;
+    setTimeout(() => prog.classList.remove('show'), 3000);
+    updateTabBadges(); populateFilters(); renderAll(); updateClock();
+  };
+
+  const applyFallback = () => {
+    document.getElementById('ud0').className = 'uprog-dot ok';
+    prog.querySelector('.uprog-title').textContent = '✓ ' + DATA.length + ' registros (datos embebidos)';
+    setTimeout(() => prog.classList.remove('show'), 2000);
+    updateTabBadges(); populateFilters(); renderAll(); updateClock();
+  };
+
+  const tryFetch = (url, source, onFail) => {
+    fetch(url + '?nc=' + Date.now(), { cache: 'no-store' })
+      .then(res => { if(!res.ok) throw new Error(res.status); return res.text(); })
+      .then(text => {
+        Papa.parse(text, {
+          header: true, skipEmptyLines: true,
+          complete: res => {
+            const normalised = res.data.map(row => {
+              const n = {}; Object.keys(row).forEach(k => { n[k.trim()] = (row[k]||'').trim(); }); return n;
+            });
+            applyData(normalised.map(PARSE_FIELDS).filter(r => r.num), source);
+          },
+          error: () => onFail()
+        });
+      })
+      .catch(() => onFail());
+  };
+
+  tryFetch(GITHUB_RAW, 'GitHub ✓', () =>
+    tryFetch(LOCAL_CSV, 'datos.csv local ✓', applyFallback)
+  );
   });
 }
 
@@ -1517,16 +1534,8 @@ function renderTable(){
   const estado = document.getElementById('fEstado')?.value || '';
   const tipo   = document.getElementById('fTipo')?.value || '';
 
-  // Base filter: No iniciado + En proceso (+ Cerrado si checkbox tildado)
-  const _verCerrados = document.getElementById('fVerCerrados')?.checked || false;
-  let rows = getViewData().filter(r => {
-    if(r.estado === 'No iniciado' || r.estado === 'En proceso') return true;
-    if(r.estado === 'Cerrado' && _verCerrados) return true;
-    // También mostrar cerrados localmente (descargados en esta sesión)
-    const _tr = TREATMENTS[r.num];
-    if((_tr && (_tr.downloaded || _tr.cierre)) && _verCerrados) return true;
-    return false;
-  });
+  // Base filter: only No iniciado + En proceso
+  let rows = getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
   if(area)   rows = rows.filter(r=>r.area===area);
   if(resp)   rows = rows.filter(r=>r.resp===resp);
   if(estado) rows = rows.filter(r=>r.estado===estado);
@@ -1546,8 +1555,8 @@ function renderTable(){
   rows.sort((a,b)=>parseInt(b.dias||0)-parseInt(a.dias||0));
 
   tbody.innerHTML = rows.map((r,i)=>{
-    const esCls = r.estado==='No iniciado'?'es-noiniciado':r.estado==='Cerrado'?'es-cerrado':'es-enproceso';
-    const esDot = r.estado==='No iniciado'?'🔴':r.estado==='Cerrado'?'🟢':'🔵';
+    const esCls = r.estado==='No iniciado'?'es-noiniciado':'es-enproceso';
+    const esDot = r.estado==='No iniciado'?'🔴':'🔵';
     const hCls = r.hallazgo.includes('No Conformidad Mayor')?'hc-ncm hc-nc':
                  r.hallazgo.includes('No Conformidad')?'hc-nc':
                  r.hallazgo.includes('Oportunidad')?'hc-om':'hc-obs';
@@ -2896,9 +2905,8 @@ async function buildTreatmentDocx(num){
       const isImg = f.type && f.type.startsWith('image/');
       if(isImg){
         const rId = 'rIdAtt'+(i+1);
-        var _sfn=(f.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_');
-        attachImgRids.push({rId, name:'att_'+i+'_'+_sfn, data: f.data, type: f.type});
-        attachImgRels += `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/att_${i}_${(f.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]/g,'_')}"/>`;
+        attachImgRids.push({rId, name:'att_'+i+'_'+f.name, data: f.data, type: f.type});
+        attachImgRels += `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/att_${i}_${esc(f.name)}"/>`;
         // 2 images per row → each cell ~half width. 914400 EMU = 1 inch.
         // Cell width = (BW/2) DXA * 914400/1440 EMU ~ 3506600 EMU; height ~2800000 EMU
         const cellW = Math.round(BW/2);
@@ -2944,39 +2952,7 @@ async function buildTreatmentDocx(num){
     t6 = tbl([attC1, attC2], annexRows);
   }
 
-  var t6b = '';
-  var _ishi = t.ishi || {};
-  var _pq = t.pq || [];
-  var _cr = t.causaRaiz || '';
-  var _hasIshi = ISHI_CATS.some(function(cat){ return (_ishi[cat.id]||[]).some(function(v){return v;}); });
-  var _hasPq = _pq.some(function(v){return v;});
-  if(_hasIshi || _hasPq || _cr){
-    var ishiRows = [];
-    ishiRows.push(tr(300, tc(p(run('AN\u00c1LISIS DE CAUSA RA\u00cdZ',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:80,sp1:80}),{w:BW,span:4,bg:'37474F',col:'888888',bsz:6})));
-    if(_hasIshi){
-      ishiRows.push(tr(260, tc(p(run('Diagrama de Ishikawa \u2014 6M',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w:BW,span:4,bg:'F0F4F8'})));
-      for(var _ci=0; _ci<ISHI_CATS.length; _ci+=2){
-        var ca=ISHI_CATS[_ci],cb=ISHI_CATS[_ci+1];
-        var _vA=((_ishi[ca.id]||[]).filter(Boolean)).join('\n\u2022 ');
-        var _vB=cb?((_ishi[cb.id]||[]).filter(Boolean)).join('\n\u2022 '):'';
-        var _hw=Math.round(BW/2);
-        ishiRows.push(tr(60,tc(p(run(ca.label,{b:true,sz:SZ_LBL,col:'1565C0'}),{sp0:40,sp1:20}),{w:_hw,bg:'E8EEF6'}),tc(p(run(cb?cb.label:'',{b:true,sz:SZ_LBL,col:'1565C0'}),{sp0:40,sp1:20}),{w:BW-_hw,bg:'E8EEF6'})));
-        ishiRows.push(tr(Math.max(120,(_vA.length+_vB.length>100)?280:160),tc(p(run(_vA?'\u2022 '+_vA:'\u2014',{sz:SZ_BODY}),{sp0:40,sp1:40}),{w:_hw,pad:{t:40,b:40,l:100,r:60}}),tc(p(run(_vB?'\u2022 '+_vB:'\u2014',{sz:SZ_BODY}),{sp0:40,sp1:40}),{w:BW-_hw,pad:{t:40,b:40,l:100,r:60}})));
-      }
-    }
-    if(_hasPq){
-      ishiRows.push(tr(260, tc(p(run('An\u00e1lisis 5 Por Qu\u00e9',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w:BW,span:4,bg:'F0F4F8'})));
-      var _cw1=Math.round(BW*0.18);
-      _pq.forEach(function(v,i){ if(!v)return; ishiRows.push(tr(Math.max(200,Math.ceil(v.length/80)*120),tc(p(run('Por qu\u00e9 '+(i+1)+':',{b:true,sz:SZ_LBL,col:'1565C0'}),{sp0:50,sp1:50}),{w:_cw1,bg:'EAF3DE'}),tc(p(run(v,{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW-_cw1,span:3,pad:{t:50,b:50,l:120,r:80}}))); });
-    }
-    if(_cr){
-      ishiRows.push(tr(260, tc(p(run('Causa Ra\u00edz Identificada',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w:BW,span:4,bg:'EAF3DE'})));
-      ishiRows.push(tr(Math.max(200,Math.ceil(_cr.length/80)*120),tc(p(run(_cr,{b:true,sz:SZ_BODY,col:'1B5E20'}),{sp0:60,sp1:60}),{w:BW,span:4,pad:{t:60,b:60,l:150,r:150}})));
-    }
-    var _c1=Math.round(BW*0.18),_c2=Math.round(BW*0.27),_c3=Math.round(BW*0.27),_c4=BW-_c1-_c2-_c3;
-    t6b = tbl([_c1,_c2,_c3,_c4], ishiRows);
-  }
-  const docBody = t1+gap+t2+gap+t3+gap+t4+gap+t5+(t6b?gap+t6b:'')+(t6?gap+t6:'');
+  const docBody = t1+gap+t2+gap+t3+gap+t4+gap+t5+(t6?gap+t6:'');
   const docXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${docBody}<w:sectPr><w:headerReference w:type="default" r:id="rId3"/><w:footerReference w:type="default" r:id="rId4"/><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1000" w:bottom="1800" w:left="1000" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>`;
 
   const hdrXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ${NS}>${hdrTbl}<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:p></w:hdr>`;
@@ -2986,12 +2962,7 @@ async function buildTreatmentDocx(num){
   function b64Arr(b){const d=atob(b),a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);return a;}
 
   const zip=new JSZip();
-  // Dynamic Content_Types for all image extensions
-  const _attExtMap = {'jpg':'image/jpeg','jpeg':'image/jpeg','png':'image/png','gif':'image/gif','bmp':'image/bmp','webp':'image/webp','tiff':'image/tiff','tif':'image/tiff'};
-  const _usedExts = new Set(['jpg']);
-  attachImgRids.forEach(att => { const _e = att.name.split('.').pop().toLowerCase(); if(_attExtMap[_e]) _usedExts.add(_e); });
-  const _ctDefaults = [..._usedExts].map(ext => `<Default Extension="${ext}" ContentType="${_attExtMap[ext]||'application/octet-stream'}"/>`).join('');
-  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml">${_ctDefaults}<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`);
+  zip.file('[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>`);
   zip.file('_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`);
   zip.file('word/_rels/document.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>${attachImgRels}</Relationships>`);
   zip.file('word/_rels/header1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.jpg"/></Relationships>`);
@@ -3463,16 +3434,6 @@ async function downloadTreatmentNow(){
   STORE.save();
   renderTableOnly();
   updateTabBadges();
-
-  // Sincronizar estado al Google Sheet
-  // Actualizar DATA local y KPIs en tiempo real
-    var _localRec = DATA.find(function(d){ return d.num===String(num); });
-    if(_localRec) _localRec.estado = 'Cerrado';
-    renderAll();
-    // Sync Sheet + reload
-    _api('/sheet-estado', { method: 'POST', body: { num, estado: 'Cerrado' } })
-      .then(function(){ autoLoadCSV(); })
-      .catch(e => console.warn('[SGCIA] sheet-estado:', e));
 
   const r2 = DATA.find(d=>d.num===num) || {};
   const dateStr = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
