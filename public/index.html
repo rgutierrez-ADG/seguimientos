@@ -1203,7 +1203,7 @@ function autoLoadCSV(){
   var ic   = document.getElementById('uprogItems');
   ic.innerHTML = '<div class="uprog-item"><span class="uprog-dot pend" id="ud0"></span><span>Cargando CSV desde GitHub\u2026</span></div>';
   prog.classList.add('show');
-  var CSV_URL = 'https://raw.githubusercontent.com/rgutierrez-ADG/seguimientos/main/public/datos.csv';
+  var CSV_URL = '/api/csv-data'; // Proxied via Worker to avoid corporate network blocks
   fetch(CSV_URL + '?t=' + Date.now(), { cache:'no-store' })
     .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
     .then(function(csv){
