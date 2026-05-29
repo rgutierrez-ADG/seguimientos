@@ -1240,7 +1240,7 @@ function autoLoadCSV(){
   };
 
   const tryFetch = (url, source, onFail) => {
-    fetch(url + '?nc=' + Date.now(), { cache: 'no-store' })
+    fetch(url + '?nc=' + Date.now(), { cache: 'no-store', credentials: 'include' })
       .then(res => { if(!res.ok) throw new Error(res.status); return res.text(); })
       .then(text => {
         Papa.parse(text, {
