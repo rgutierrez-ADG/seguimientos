@@ -1,6 +1,6 @@
 # wrangler.toml — Configuración del Worker SGCIA
 
-name                = "sgcia-acciones-correctivas"
+name = "seguimientos"
 main                = "worker.js"
 compatibility_date  = "2025-04-01"
 
