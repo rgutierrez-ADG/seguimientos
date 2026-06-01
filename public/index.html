@@ -867,7 +867,7 @@ td{padding:9px 12px;vertical-align:middle}
     <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:22px 18px">
       <div style="font-family:var(--display);font-size:12px;font-weight:700;color:var(--dim2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:6px">
         <span class="card-dot" style="background:#1565c0"></span>Tasa de Cierre
-        <span class="tag tag-b" style="margin-left:0">CIERRE</span>
+        <span class="tag tag-b" style="margin-left:0">NC + OBS</span>
       </div>
       <div style="position:relative;width:240px;height:150px;margin-bottom:10px;display:flex;align-items:center;justify-content:center">
         <canvas id="ringCierre" width="240" height="150" style="display:block"></canvas>
@@ -964,6 +964,7 @@ td{padding:9px 12px;vertical-align:middle}
         <option value="">No iniciado + En proceso</option>
         <option value="No iniciado">Solo No iniciados</option>
         <option value="En proceso">Solo En proceso</option>
+        <option value="Cerrado">Solo Cerrados</option>
       </select>
     </div>
     <div class="fl"><span class="fl-lbl">Tipo Hallazgo</span>
@@ -1279,7 +1280,11 @@ function calcKPIs(data){
   const enProceso  = data.filter(r => r.estado === 'En proceso').length;
   const noIniciado = data.filter(r => r.estado === 'No iniciado').length;
   // % Cierre excluye Oportunidad de Mejora (por norma no es obligatorio tratarla)
-  const dataExOM     = data.filter(r => !r.hallazgo.includes('Oportunidad'));
+  // Usa hallazgo con fallback a clasif por si algún campo está vacío
+  const dataExOM     = data.filter(r => {
+    const tipo = r.hallazgo || r.clasif || '';
+    return !tipo.includes('Oportunidad');
+  });
   const cerradosExOM = dataExOM.filter(r => r.estado === 'Cerrado').length;
   const totalExOM    = dataExOM.length;
   const pctCierre    = totalExOM > 0 ? ((cerradosExOM/totalExOM)*100).toFixed(1) : 0;
@@ -1534,8 +1539,10 @@ function renderTable(){
   const estado = document.getElementById('fEstado')?.value || '';
   const tipo   = document.getElementById('fTipo')?.value || '';
 
-  // Base filter: only No iniciado + En proceso
-  let rows = getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
+  // Base filter: only No iniciado + En proceso (or Cerrado if explicitly selected)
+  let rows = estado === 'Cerrado'
+    ? getViewData().filter(r => r.estado === 'Cerrado')
+    : getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
   if(area)   rows = rows.filter(r=>r.area===area);
   if(resp)   rows = rows.filter(r=>r.resp===resp);
   if(estado) rows = rows.filter(r=>r.estado===estado);
@@ -2634,7 +2641,7 @@ function drawGauge(canvas, pct, color, label){
   ctx.font = '500 10px IBM Plex Sans, sans-serif';
   ctx.fillStyle = '#607080';
   ctx.textBaseline = 'top';
-  ctx.fillText('Tasa de Cierre', cx, cy + 8);
+  ctx.fillText('NC + Obs (excl. OM)', cx, cy + 8);
 }
 
 
@@ -4185,7 +4192,7 @@ async function apRemoveAdmin(idx){
 </div>
 
 <!-- TREATMENT SHEET MODAL -->
-<div class="treat-overlay" id="treatOverlay" onclick="closeTreatIfBg(event)">
+<div class="treat-overlay" id="treatOverlay">
   <div class="treat-modal">
     <div class="treat-header">
       <span class="treat-badge" id="tBadgeNum">N° —</span>
