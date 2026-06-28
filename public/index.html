@@ -1336,9 +1336,9 @@ function renderAll(){
 
   // Metrics card
   st('ringPct', k.pctCierre + '%');
-  st('mCerrados', k.cerrados);
-  st('mPendientes', k.enProceso + k.noIniciado);
-  st('mTotal', k.total);
+  st('mCerrados', k.cerradosExOM);
+  st('mPendientes', k.totalExOM - k.cerradosExOM);
+  st('mTotal', k.totalExOM);
   st('leadTime', k.leadTime + ' días');
   st('onTime', k.pctOT + '%');
   st('onTimeSub', k.ot + '/' + k.otTot + ' cerradas a tiempo');
