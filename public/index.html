@@ -961,7 +961,7 @@ td{padding:9px 12px;vertical-align:middle}
     </div>
     <div class="fl"><span class="fl-lbl">Estado</span>
       <select id="fEstado" onchange="renderTable()">
-        <option value="">No iniciado + En proceso</option>
+        <option value="pendientes">No iniciado + En proceso</option> <option value="todos">Todos (No iniciado + En proceso + Cerrado)</option>
         <option value="No iniciado">Solo No iniciados</option>
         <option value="En proceso">Solo En proceso</option>
         <option value="Cerrado">Solo Cerrados</option>
@@ -1540,13 +1540,19 @@ function renderTable(){
   const tipo   = document.getElementById('fTipo')?.value || '';
 
   // Base filter: only No iniciado + En proceso (or Cerrado if explicitly selected)
-  let rows = estado === 'Cerrado'
-    ? getViewData().filter(r => r.estado === 'Cerrado')
-    : getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
-  if(area)   rows = rows.filter(r=>r.area===area);
-  if(resp)   rows = rows.filter(r=>r.resp===resp);
-  if(estado) rows = rows.filter(r=>r.estado===estado);
-  if(tipo)   rows = rows.filter(r=>r.hallazgo===tipo);
+  let rows;
+  if(estado === 'todos'){
+    rows = getViewData();
+  } else if(estado === 'Cerrado'){
+    rows = getViewData().filter(r => r.estado === 'Cerrado');
+  } else if(estado === 'No iniciado' || estado === 'En proceso'){
+    rows = getViewData().filter(r => r.estado === estado);
+  } else {
+    rows = getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
+  }
+  if(area) rows = rows.filter(r=>r.area===area);
+  if(resp) rows = rows.filter(r=>r.resp===resp);
+  if(tipo) rows = rows.filter(r=>r.hallazgo===tipo);
 
   const tbody = document.getElementById('tableBody');
   if(!tbody) return;
