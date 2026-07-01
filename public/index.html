@@ -3644,6 +3644,44 @@ function getFileIcon(type){
 }
 function formatBytes(b){ return b>1048576?(b/1048576).toFixed(1)+' MB':b>1024?(b/1024).toFixed(0)+' KB':b+' B'; }
 
+async function openAttachment(storageKey, idx){
+  // Asegurar que el base64 esté en memoria (puede venir de otro usuario)
+  let files = STORE.loadAttachmentsKey(storageKey);
+  if(!files[idx] || !files[idx].data){
+    showToast('⏳ Cargando archivo...', false);
+    files = await STORE.fetchAttachmentsKey(storageKey);
+  }
+  const f = files[idx];
+  if(!f || !f.data){ showToast('⚠ No se pudo cargar el archivo', true); return; }
+
+  const isViewable = f.type && (f.type.startsWith('image/') || f.type === 'application/pdf');
+
+  if(!isViewable){
+    if(!confirm('Este archivo se descargará en tu equipo. ¿Continuás?')) return;
+    const bin = atob(f.data);
+    const arr = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+    const blob = new Blob([arr], {type: f.type});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = f.name; a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 3000);
+    return;
+  }
+
+  // Imágenes y PDFs: abrir en pestaña nueva
+  const bin = atob(f.data);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  const blob = new Blob([arr], {type: f.type});
+  const url  = URL.createObjectURL(blob);
+  const tab  = window.open(url, '_blank');
+  if(!tab){ showToast('⚠ El navegador bloqueó la pestaña nueva — permitilo en la barra de direcciones', true); }
+  // Revocar después de un tiempo prudencial
+  setTimeout(()=> URL.revokeObjectURL(url), 30000);
+}
+
 function renderAttachListFor(listId, storageKey){
   const list = document.getElementById(listId);
   if(!list) return;
@@ -3657,6 +3695,10 @@ function renderAttachListFor(listId, storageKey){
       <span class="attach-item-icon">${getFileIcon(f.type)}</span>
       <span class="attach-item-name" title="${f.name}">${f.name}</span>
       <span class="attach-item-size">${formatBytes(f.size)}</span>
+      <button onclick="openAttachment('${storageKey}',${i})" title="Ver archivo"
+        style="background:#e3f0ff;border:1px solid #90caf9;color:#1565c0;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;padding:2px 8px;flex-shrink:0">
+        👁 Ver
+      </button>
       <button class="attach-del" onclick="removeAttachmentKey('${storageKey}',${i},'${listId}')" title="Quitar">×</button>
     </div>`).join('');
 }
