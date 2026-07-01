@@ -927,14 +927,23 @@ td{padding:9px 12px;vertical-align:middle}
   <div class="sec-title"><span>Análisis por Área y Tipo</span><span class="sec-line"></span></div>
   <div class="row2" style="margin-bottom:16px">
 
-    <!-- Top 5 Áreas -->
-    <div class="card">
+    <!-- Card Tratamiento -->
+    <div class="card" onclick="openTratamientoModal()" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 18px #1565c022'" onmouseout="this.style.boxShadow=''">
       <div class="card-title">
-        <span class="card-dot" style="background:#e65100"></span>
-        Top 5 Áreas con más Hallazgos
-        <span class="tag tag-a">RANKING</span>
+        <span class="card-dot" style="background:#1565c0"></span>
+        Hallazgos En Proceso con Tratamiento
+        <span class="tag tag-b">EN PROCESO</span>
       </div>
-      <div class="cw" style="height:220px"><canvas id="barAreas"></canvas></div>
+      <div id="tratCard" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:10px">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:56px;font-weight:700;color:#1565c0;line-height:1" id="tratNum">—</div>
+        <div style="font-size:12px;color:#607080">hallazgos En Proceso con tratamiento cargado</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#2e7d32" id="tratPct">—</div>
+        <div style="font-size:11px;color:#607080">sobre <span id="tratTotal" style="font-weight:700;color:#1a2533">—</span> En Proceso totales</div>
+        <div style="width:100%;background:#e0e8f4;border-radius:4px;height:6px;margin-top:4px">
+          <div id="tratBar" style="height:6px;border-radius:4px;background:linear-gradient(90deg,#1565c0,#42a5f5);width:0%;transition:width .8s"></div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:#90caf9;text-align:center;margin-top:6px">▼ Tocá para ver desglose por área</div>
     </div>
 
     <!-- Distribución por tipo hallazgo -->
@@ -1431,44 +1440,25 @@ function renderPieEstado(k){
   }
 }
 
-function renderBarAreas(){
-  const ctx = document.getElementById('barAreas')?.getContext('2d');
-  if(!ctx) return;
-  if(CHARTS.areas) CHARTS.areas.destroy();
+function renderTratamientoCard(){
+  const vd = getViewData();
+  const enProceso = vd.filter(r => r.estado === 'En proceso');
+  const total = enProceso.length;
+  const tratados = enProceso.filter(r => TREATMENTS[r.num] && Object.keys(TREATMENTS[r.num]).length > 0).length;
+  const pct = total > 0 ? ((tratados/total)*100).toFixed(1) : 0;
 
-  const cnts = {};
-  getViewData().forEach(r=>{ cnts[r.clasif] = (cnts[r.clasif]||0)+1; });
-  const sorted = Object.entries(cnts).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  const topColors = ['#c62828','#e65100','#1565c0','#2e7d32','#6a1b9a'];
-  const labels = sorted.map(([k])=>k);
-  const values = sorted.map(([,v])=>v);
-
-  CHARTS.areas = new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels,
-      datasets:[{
-        label:'Hallazgos',
-        data:values,
-        backgroundColor: topColors.map(c=>c+'aa'),
-        borderColor: topColors,
-        borderWidth:1.5, borderRadius:6,
-      }]
-    },
-    options:{
-      indexAxis:'y',
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{backgroundColor:'#1a2533',titleColor:'#fff',bodyColor:'#dce6f0'}
-      },
-      scales:{
-        x:{ticks:{color:'#607080',font:{size:10}},grid:{color:'#dce6f044'},beginAtZero:true},
-        y:{ticks:{color:'#445566',font:{size:11,weight:'600'}},grid:{display:false}}
-      }
-    }
-  });
+  const el = id => document.getElementById(id);
+  el('tratNum').textContent  = tratados;
+  el('tratPct').textContent  = pct + '%';
+  el('tratTotal').textContent = total;
+  el('tratBar').style.width  = pct + '%';
 }
+
+function openTratamientoModal(){
+  const vd = getViewData();
+  const years = [...new Set(vd.map(r=>r.anio).filter(Boolean))].sort();
+
+  // Constru
 
 function renderBarTipos(k){
   const ctx = document.getElementById('barTipos')?.getContext('2d');
