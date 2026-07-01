@@ -3094,7 +3094,7 @@ const ISHI_CATS = [
   {id:'medio',    label:'Medio amb.',   color:'#0F6E56', lite:'#5DCAA5', bx:445, side:'bottom',
    desc:'<b>Medio ambiente</b><br>Entorno de trabajo físico (temperatura, humedad, iluminación, ruido) y clima laboral. Factores externos que afectan la producción.'},
 ];
-const ISHI_N=5, ISHI_CY=120, ISHI_SX1=50, ISHI_SX2=572;
+const ISHI_N=3, ISHI_CY=120, ISHI_SX1=50, ISHI_SX2=572;
 
 function _svgEl(tag,attrs){
   const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -3164,6 +3164,41 @@ function showMDesc(catId){
   },50);
 }
 
+function _addIshiField(catId, extraContainer){
+  const cat=ISHI_CATS.find(c=>c.id===catId);if(!cat)return;
+  const inputs=[...document.querySelectorAll(`input[data-cat="${catId}"]`)];
+  const idx=inputs.length;
+  const r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:4px;margin-bottom:3px';r.dataset.extraField='1';
+  const n=document.createElement('span');n.style.cssText='font-size:10px;color:#aaa;width:10px;flex-shrink:0;text-align:right';n.textContent=idx+1;
+  const inp=document.createElement('input');inp.type='text';inp.placeholder='Causa...';
+  inp.style.cssText='flex:1;font-size:11px;padding:3px 7px;border-radius:5px;border:0.5px solid #dce6f0;background:#fff;color:#1a2533;font-family:inherit';
+  inp.dataset.cat=catId;inp.dataset.idx=idx;inp.dataset.extra='1';
+  inp.addEventListener('input',()=>{refreshIshiDiagram();checkGuardar();});
+  r.appendChild(n);r.appendChild(inp);
+  // Agregar al contenedor de extras de esa categoría
+  const ec=document.getElementById('ishi-extra-'+catId);if(ec)ec.appendChild(r);
+  // Actualizar SVG — nueva rama extra en la misma diagonal
+  _addIshiSvgBranch(cat,idx);
+}
+
+function _addIshiSvgBranch(cat,idx){
+  const s=document.getElementById('ishi-svg');if(!s)return;
+  const ang=Math.PI/4,L=85;
+  const isTop=cat.side==='top';
+  const ox=cat.bx,oy=ISHI_CY+(isTop?-L:L);
+  const tx=cat.bx+L*Math.cos(ang),ty=ISHI_CY;
+  const t=(idx+1)/(idx+2); // posición en la rama
+  const mx=ox+(tx-ox)*t,my=oy+(ty-oy)*t,sl=20;
+  const px=isTop?-sl*Math.sin(ang):sl*Math.sin(ang);
+  const py=isTop?-sl*Math.cos(ang):sl*Math.cos(ang);
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',mx+px);line.setAttribute('y1',my+py);
+  line.setAttribute('x2',mx);line.setAttribute('y2',my);
+  line.setAttribute('stroke',cat.color);line.setAttribute('stroke-width','0.7');
+  line.setAttribute('opacity','0.15');line.setAttribute('id',`isub-${cat.id}-${idx}`);
+  s.appendChild(line);
+}
+
 function buildIshikawaInputs(){
   const g=document.getElementById('ishi-grid');if(!g)return;g.innerHTML='';
   ISHI_CATS.forEach(cat=>{
@@ -3176,7 +3211,6 @@ function buildIshikawaInputs(){
     const nm=document.createElement('span');
     nm.style.cssText=`font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:${cat.color};flex:1;cursor:default`;
     nm.textContent=cat.label;
-    // Info button
     const info=document.createElement('button');
     info.textContent='?';
     info.title='Ver descripción de '+cat.label;
@@ -3192,8 +3226,28 @@ function buildIshikawaInputs(){
       inp.addEventListener('input',()=>{refreshIshiDiagram();checkGuardar();});
       r.appendChild(n);r.appendChild(inp);b.appendChild(r);
     }
+    // Contenedor para campos extra (se agregan dinámicamente)
+    const ec=document.createElement('div');ec.id='ishi-extra-'+cat.id;b.appendChild(ec);
     g.appendChild(b);
   });
+
+  // Botón global + dropdown debajo del grid
+  const wrap=document.createElement('div');
+  wrap.style.cssText='grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:6px';
+  const sel=document.createElement('select');sel.id='ishi-add-select';
+  sel.style.cssText='flex:1;font-size:11px;padding:5px 8px;border-radius:6px;border:0.5px solid #c5d5e8;background:#fff;color:#1a2533;font-family:inherit';
+  const defOpt=document.createElement('option');defOpt.value='';defOpt.textContent='Seleccionar M...';sel.appendChild(defOpt);
+  ISHI_CATS.forEach(cat=>{
+    const opt=document.createElement('option');opt.value=cat.id;opt.textContent=cat.label;sel.appendChild(opt);
+  });
+  const btn=document.createElement('button');
+  btn.textContent='+ Agregar causa';
+  btn.style.cssText='background:#1565c0;color:#fff;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:inherit;white-space:nowrap';
+  btn.onclick=()=>{
+    const catId=sel.value;if(!catId){showToast('⚠ Seleccioná una M primero',true);return;}
+    _addIshiField(catId);sel.value='';
+  };
+  wrap.appendChild(sel);wrap.appendChild(btn);g.appendChild(wrap);
 }
 
 function refreshIshiDiagram(){
@@ -3224,12 +3278,16 @@ function build5PQ(){
     ta.style.cssText='min-height:40px;font-size:12px;transition:background .15s';
     ta.placeholder=i===0?'Completá el diagnóstico...':'Habilitado al completar el anterior...';
     if(i>0){ta.disabled=true;ta.style.background='#f4f7fb';ta.style.color='#aaa';}
-    ta.addEventListener('input',()=>{refresh5PQ();checkGuardar();});
+    ta.addEventListener('input',()=>{_autoResizeTa(ta);refresh5PQ();checkGuardar();});
     blk.appendChild(lbl);blk.appendChild(ta);row.appendChild(num);row.appendChild(blk);c.appendChild(row);
     if(i<4){const arr=document.createElement('div');arr.style.cssText='padding:2px 0 2px 34px;color:#aaa;font-size:13px';arr.textContent='↓';c.appendChild(arr);}
   }
 }
 
+function _autoResizeTa(ta){
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
+}
 function refresh5PQ(){
   for(let i=2;i<=5;i++){
     const prev=document.getElementById('pq'+(i-1));
@@ -3281,7 +3339,7 @@ function loadAnalysisData(tr){
     });
     refreshIshiDiagram();
   }
-  if(tr.pq){for(let i=1;i<=5;i++){const ta=document.getElementById('pq'+i);if(ta&&tr.pq[i-1]!==undefined)ta.value=tr.pq[i-1];}refresh5PQ();}
+  if(tr.pq){for(let i=1;i<=5;i++){const ta=document.getElementById('pq'+i);if(ta&&tr.pq[i-1]!==undefined){ta.value=tr.pq[i-1];_autoResizeTa(ta);}}refresh5PQ();}
   if(tr.causaRaiz){const rt=document.getElementById('tCausaRaiz');if(rt)rt.value=tr.causaRaiz;const rb=document.getElementById('raiz-box');if(rb)rb.style.display='block';}
   checkGuardar();
 }
