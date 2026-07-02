@@ -1818,8 +1818,9 @@ function _buildEmailParams(num, eventType){
   const t  = TREATMENTS[num] || {};
   const fImpl = t.fechaImpl
     ? t.fechaImpl.split('-').reverse().join('/') : (r.plazo||'—');
-  const fVerif = t.fechaVerif
-    ? t.fechaVerif.split('-').reverse().join('/') : '—';
+  const _fVerifRaw = t.fechaVerifEfec || t.fechaVerif;
+  const fVerif = _fVerifRaw
+    ? _fVerifRaw.split('-').reverse().join('/') : '—';
   const ahora = new Date().toLocaleString('es-AR',{
     day:'2-digit',month:'2-digit',year:'numeric',
     hour:'2-digit',minute:'2-digit'
@@ -1838,7 +1839,7 @@ function _buildEmailParams(num, eventType){
     accion:       t.accion     || '(sin completar)',
     resp_impl:    t.respImpl   || r.resp || '—',
     fecha_impl:   fImpl,
-    verificador:  t.verificador|| '—',
+    verificador:  t.verificadorEfec || t.verificador || '—',
     fecha_verif:  fVerif,
     fecha_hora:   ahora,
     auditor:      r.auditor    || '—',
@@ -2311,8 +2312,6 @@ function openTreatmentSheet(num){
   document.getElementById('tAccion').value       = tr.accion       || '';
   document.getElementById('tRespImpl').value     = tr.respImpl     || r.resp || '';
   document.getElementById('tEvidencia').value    = tr.evidencia    || '';
-  document.getElementById('tVerificador').value  = tr.verificador  || '';
-  document.getElementById('tFechaVerif').value   = tr.fechaVerif   || '';
   document.getElementById('tObservaciones').value= tr.observaciones|| '';
   initAnalysis();
   loadAnalysisData(tr);
@@ -2320,6 +2319,10 @@ function openTreatmentSheet(num){
   if(_dvi) _dvi.value = tr.descVerifImpl || '';
   const _dve = document.getElementById('tDescVerifEfec');
   if(_dve) _dve.value = tr.descVerifEfec || '';
+  const _ve = document.getElementById('tVerificadorEfec');
+  if(_ve) _ve.value = tr.verificadorEfec || tr.verificador || '';
+  const _fve = document.getElementById('tFechaVerifEfec');
+  if(_fve) _fve.value = tr.fechaVerifEfec || tr.fechaVerif || '';
 
   // Fecha impl: pre-fill with plazo
   const fi = document.getElementById('tFechaImpl');
@@ -2328,11 +2331,12 @@ function openTreatmentSheet(num){
   else { fi.value=''; }
 
   // Sync readonly mirror fields — using global functions to avoid listener stacking
-  _syncVerif();
   _syncResp();
 
   updateTreatAlertTag(r.num);
-  checkVerificador();
+  // "Cerrar Tratamiento" solo visible para auditores habilitados
+  const btnCerrarTrat = document.getElementById('btnDescargaWord');
+  if(btnCerrarTrat) btnCerrarTrat.style.display = isAuditorMode() ? 'flex' : 'none';
   renderAttachList();
   // Reset buttons
   
@@ -2364,18 +2368,17 @@ function openTreatmentSheet(num){
           document.getElementById('tAccion').value        = remoteTr.accion || '';
           document.getElementById('tRespImpl').value      = remoteTr.respImpl || r.resp || '';
           document.getElementById('tEvidencia').value     = remoteTr.evidencia || '';
-          document.getElementById('tVerificador').value   = remoteTr.verificador || '';
-          document.getElementById('tFechaVerif').value    = remoteTr.fechaVerif || '';
           document.getElementById('tObservaciones').value = remoteTr.observaciones || '';
           if(remoteTr.fechaImpl) document.getElementById('tFechaImpl').value = remoteTr.fechaImpl;
           const _dvi = document.getElementById('tDescVerifImpl'); if(_dvi) _dvi.value = remoteTr.descVerifImpl || '';
           const _dve = document.getElementById('tDescVerifEfec'); if(_dve) _dve.value = remoteTr.descVerifEfec || '';
+          const _ve  = document.getElementById('tVerificadorEfec'); if(_ve) _ve.value = remoteTr.verificadorEfec || remoteTr.verificador || '';
+          const _fve = document.getElementById('tFechaVerifEfec'); if(_fve) _fve.value = remoteTr.fechaVerifEfec || remoteTr.fechaVerif || '';
           const savedTipoAccion = remoteTr.tipoAccion || 'CORRECTIVA';
           document.querySelectorAll('input[name="tipoAccion"]').forEach(radio => { radio.checked = radio.value === savedTipoAccion; });
           loadAnalysisData(remoteTr);
-          _syncVerif(); _syncResp();
+          _syncResp();
           updateTreatAlertTag(r.num);
-          checkVerificador();
         }
       }
       renderAttachList();
@@ -2812,7 +2815,6 @@ async function buildTreatmentDocx(num){
   const acTipo=t.tipoAccion||rec.accion||'Correctiva';
   const isC=acTipo.toUpperCase().includes('CORRECTIVA'), isP=acTipo.toUpperCase().includes('PREVENTIVA');
   const hoy=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
-  const fVerifStr=t.fechaVerif?t.fechaVerif.split('-').reverse().join('/'):'';
   const fImplStr=t.fechaImpl?t.fechaImpl.split('-').reverse().join('/'):(rec.plazo||'');
   const gap=`<w:p><w:pPr><w:spacing w:before="80" w:after="0"/></w:pPr></w:p>`;
 
@@ -2911,20 +2913,8 @@ async function buildTreatmentDocx(num){
   const t5=tbl([BC1,BC2,BC3,BC4],[
     tr(280,tc(p(run('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n  (a completar por equipo auditor):',{b:false,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4})),
     tr((t.descVerifImpl?400:160), tc(p(run(t.descVerifImpl||'',{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
-    tr(300,
-      lblX(BC1,'Aprobaci\u00f3n de Cierre'),
-      tcX(BC2,t.verificador||''),
-      tcX(BC3,t.areaVerif||''),
-      tcX(BC4,fVerifStr)
-    ),
     tr(280,tc(p(run('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',{b:false,it:true,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4})),
     tr((t.descVerifEfec?400:160), tc(p(run(t.descVerifEfec||'',{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
-    tr(300,
-      lblX(BC1,'Aprobaci\u00f3n de Cierre'),
-      tcX(BC2,t.verificador||''),
-      tcX(BC3,t.evidencia||''),
-      tcX(BC4,fVerifStr)
-    ),
   ]);
 
   // ── Header ──────────────────────────────────────────────────────────────────
@@ -3071,23 +3061,6 @@ async function buildTreatmentDocx(num){
 // ═══ DESCARGAS HISTORIAL ═════════════════════════════════════════════════════
 let DESCARGAS_LOG = [];
 
-function checkVerificador(){
-  const v = (document.getElementById('tVerificador')||{}).value||'';
-  const btn = document.getElementById('btnDescargaWord');
-  if(!btn) return;
-  if(v.trim()){
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    btn.style.cursor  = 'pointer';
-    btn.title = 'Descargar hoja de tratamiento en Word';
-  } else {
-    btn.disabled = true;
-    btn.style.opacity = '0.45';
-    btn.style.cursor  = 'not-allowed';
-    btn.title = "Completá 'Eficacia Verificada por' para habilitar la descarga";
-  }
-}
-
 // Guardar datos (sin descargar) — muestra la alerta de revisión pendiente
 function saveTreatData(){
   if(!CURRENT_TREAT_NUM) return;
@@ -3128,15 +3101,6 @@ function syncTipoAccion(){
   // Visual feedback handled by CSS :checked selector
 }
 
-// Sync readonly mirrors — global so they don't stack on each modal open
-function _syncVerif(){
-  const v  = document.getElementById('tVerificador');
-  const fv = document.getElementById('tFechaVerif');
-  const ve = document.getElementById('tVerificadorEfec');
-  const fe = document.getElementById('tFechaVerifEfec');
-  if(ve && v)  ve.value = v.value;
-  if(fe && fv) fe.value = fv.value;
-}
 function _syncResp(){
   const ri = document.getElementById('tRespImpl');
   const fi = document.getElementById('tFechaImpl');
@@ -3446,11 +3410,6 @@ function solicitarPdf(){
   openPdf();
 }
 
-function solicitarDescargaWord(){
-  if(!pedirPasswordParaAccion('Descargar Word del tratamiento requiere autorización')) return;
-  downloadTreatmentNow();
-}
-
 function solicitarReDownload(idx){
   if(!pedirPasswordParaAccion('Re-descargar tratamiento requiere autorización')) return;
   reDownload(idx);
@@ -3486,29 +3445,6 @@ function solicitarBorradoTratamiento(){
 }
 
 
-function marcarCierre(){
-  const num = CURRENT_TREAT_NUM;
-  if(!num) return;
-  // Verificar que Verificación de Efectividad esté completada
-  const efec = (document.getElementById('tDescVerifEfec')||{}).value || '';
-  const verif = (document.getElementById('tVerificador')||{}).value || '';
-  if(!verif.trim() || !efec.trim()){
-    showToast('⚠ Completá la Verificación de Efectividad del Plan de Acción antes de pasar a Cierre', true);
-    return;
-  }
-  if(!confirm('¿Confirmar que el hallazgo N° ' + num + ' pasa a CIERRE?')) return;
-  // Guardar todos los datos del formulario antes de marcar cierre
-  _persistTreatment(false, TREATMENTS[num]?.downloaded || false);
-  TREATMENTS[num].cierre       = true;
-  TREATMENTS[num].pendingReview = false;
-  TREATMENTS[num].cierreAt     = new Date().toISOString();
-  STORE.save();
-  renderTableOnly();
-  updateTabBadges();
-  showToast('✔ Hallazgo N° ' + num + ' pasado a Cierre — datos guardados', false);
-  closeTreat();
-}
-
 function _collectFormData(){
   return {
     causa:         document.getElementById('tCausa').value.trim(),
@@ -3524,8 +3460,8 @@ function _collectFormData(){
     areaVerif:     '',
     descVerifImpl: (document.getElementById('tDescVerifImpl')||{}).value||'',
     descVerifEfec: (document.getElementById('tDescVerifEfec')||{}).value||'',
-    verificador:   document.getElementById('tVerificador').value.trim(),
-    fechaVerif:    document.getElementById('tFechaVerif').value,
+    verificadorEfec: (document.getElementById('tVerificadorEfec')||{}).value ? document.getElementById('tVerificadorEfec').value.trim() : '',
+    fechaVerifEfec:  (document.getElementById('tFechaVerifEfec')||{}).value || '',
     observaciones: document.getElementById('tObservaciones').value.trim(),
     savedAt:       new Date().toISOString(),
   };
@@ -3548,9 +3484,9 @@ async function downloadTreatmentNow(){
   const num = CURRENT_TREAT_NUM;
   if(!num){ showToast('⚠ Error: no hay hallazgo seleccionado', true); return; }
 
-  const verificador = document.getElementById('tVerificador').value.trim();
-  if(!verificador){
-    showToast('⚠ Completá el campo "Eficacia Verificada por" primero', true);
+  const efectividad = (document.getElementById('tDescVerifEfec')||{}).value.trim();
+  if(!efectividad){
+    showToast('⚠ Completá la Verificación de Efectividad del Plan de Acción antes de cerrar', true);
     return;
   }
   const causa  = document.getElementById('tCausa').value.trim();
@@ -3559,6 +3495,7 @@ async function downloadTreatmentNow(){
     showToast('⚠ Completá la Causa Raíz y la Acción Correctiva', true);
     return;
   }
+  const verificadorEfec = (document.getElementById('tVerificadorEfec')||{}).value.trim();
 
   const btn  = document.getElementById('btnDescargaWord');
   const orig = btn.innerHTML;
@@ -3569,8 +3506,11 @@ async function downloadTreatmentNow(){
   // de armar el Word, ya que pueden haber sido subidos por otro usuario.
   await STORE.ensureAttachmentsLoaded(num);
 
-  // Persist — marca pendingReview:false, downloaded:true
+  // Persist — marca pendingReview:false, downloaded:true, cierre:true (cierra el tratamiento)
   _persistTreatment(false, true);
+  TREATMENTS[num].cierre        = true;
+  TREATMENTS[num].pendingReview = false;
+  TREATMENTS[num].cierreAt      = new Date().toISOString();
   STORE.save();
   renderTableOnly();
   updateTabBadges();
@@ -3599,7 +3539,7 @@ async function downloadTreatmentNow(){
       num,
       clasif:     r2.clasif||'—',
       hallazgo:   r2.hallazgo||'—',
-      verificador,
+      verificador: verificadorEfec,
       user:       window.CURRENT_USER || '(desconocido)',
       fecha:      new Date().toLocaleString('es-AR'),
       blob:       LAST_DOCX_BLOB,
@@ -3609,19 +3549,16 @@ async function downloadTreatmentNow(){
     renderDescargasTab();
     document.getElementById('badge-descargas').textContent = DESCARGAS_LOG.length;
 
-    showToast('✓ Descargando: ' + LAST_DOCX_NAME, false);
+    showToast('✓ Tratamiento cerrado — Descargando: ' + LAST_DOCX_NAME, false);
     // Alerta por email — si está configurado y la opción está activa
-    if(EMAIL_CFG.onDownload) sendEmailAlert(num, '✅ Tratamiento completo — Documento Word generado');
-    
-    document.getElementById('tPendingAlert').style.display = 'flex';
+    if(EMAIL_CFG.onDownload) sendEmailAlert(num, '✅ Tratamiento cerrado — Documento Word generado');
 
   } catch(err){
     console.error('DOCX error:', err);
     showToast('⚠ Error al generar Word: ' + err.message, true);
   } finally {
     btn.innerHTML = orig;
-    btn.disabled  = !document.getElementById('tVerificador').value.trim();
-    if(!btn.disabled){ btn.style.opacity='1'; btn.style.cursor='pointer'; }
+    btn.disabled  = false;
   }
 }
 
@@ -3903,6 +3840,18 @@ function isAdminMode(){
   const email = (info && info.email) ? info.email.toLowerCase() : '';
   // Verificar tanto contra la lista local como contra el flag isAdmin del JWT
   return ADMIN_EMAILS.includes(email) || !!(info && info.isAdmin);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CIERRE DE TRATAMIENTOS — Acceso: solo auditores habilitados
+// (misma lista que recibe el mail de aviso de auditoría)
+// ═══════════════════════════════════════════════════════════════════
+const AUDITOR_EMAILS = ['nfernandez@maniagro.com', 'eeroles@maniagro.com', 'mdip@maniagro.com', 'gdolso@maniagro.com', 'rgutierrez@maniagro.com'];
+
+function isAuditorMode(){
+  const info  = window.CURRENT_USER_INFO;
+  const email = (info && info.email) ? info.email.toLowerCase() : '';
+  return AUDITOR_EMAILS.includes(email);
 }
 
 // Mostrar el botón Admin en el topbar si corresponde
@@ -4475,11 +4424,9 @@ async function apRemoveAdmin(idx){
 
       <!-- Verificación de implementación -->
       <div class="treat-section" style="background:#f0f7ff;border-color:#90caf9">
-        <div class="treat-section-title" style="color:#1565c0">✅ Verificación de Implementación del Plan de Acción</div>
+        <div class="treat-section-title" style="color:#1565c0">✅ Evidencias de Implementación de Plan de Acción</div>
         <p style="font-size:10px;color:#607080;margin:-4px 0 10px;font-style:italic">A completar por el equipo auditor</p>
         <div class="treat-grid">
-          <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por *</span><input class="treat-input" id="tVerificador" placeholder="Nombre del auditor verificador" oninput="checkVerificador();_syncVerif()"></div>
-          <div class="treat-field"><span class="treat-label">Fecha de Verificación</span><input class="treat-input" id="tFechaVerif" type="date" onchange="_syncVerif()"></div>
           <div class="treat-field full"><span class="treat-label">Descripción / Observaciones</span><textarea class="treat-textarea" id="tDescVerifImpl" placeholder="Describir el resultado de la verificación de implementación..."></textarea></div>
         </div>
       </div>
@@ -4487,10 +4434,10 @@ async function apRemoveAdmin(idx){
       <!-- Verificación de efectividad -->
       <div class="treat-section" style="background:#f1fff3;border-color:#a5d6a7">
         <div class="treat-section-title" style="color:#2e7d32">🎯 Verificación de Efectividad del Plan de Acción</div>
-        <p style="font-size:10px;color:#607080;margin:-4px 0 10px;font-style:italic">A completar por el equipo auditor — misma persona que implementación</p>
+        <p style="font-size:10px;color:#607080;margin:-4px 0 10px;font-style:italic">A completar por el equipo auditor</p>
         <div class="treat-grid">
-          <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por</span><input class="treat-input treat-readonly" id="tVerificadorEfec" placeholder="(mismo que implementación)" readonly style="background:#f0f4f8;color:#607080"></div>
-          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input treat-readonly" id="tFechaVerifEfec" type="date" readonly style="background:#f0f4f8;color:#607080"></div>
+          <div class="treat-field"><span class="treat-label">Aprobación de Cierre — Verificado por</span><input class="treat-input" id="tVerificadorEfec" placeholder="Nombre del auditor verificador"></div>
+          <div class="treat-field"><span class="treat-label">Fecha</span><input class="treat-input" id="tFechaVerifEfec" type="date"></div>
           <div class="treat-field full"><span class="treat-label">Descripción / Observaciones</span><textarea class="treat-textarea" id="tDescVerifEfec" placeholder="Describir el resultado de la verificación de efectividad..."></textarea></div>
         </div>
       </div>
@@ -4517,15 +4464,11 @@ async function apRemoveAdmin(idx){
       <button class="treat-cancel" onclick="closeTreat()">Cancelar</button>
       <button class="treat-save" onclick="saveTreatData()" id="btnGuardarDatos" disabled title="Completá el Ishikawa y los 5 por qué para habilitar" style="background:linear-gradient(135deg,#455a64,#263238);opacity:.45;cursor:not-allowed">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Guardar Datos
+        Guardar Tratamiento
       </button>
-      <button class="treat-save" onclick="marcarCierre()" id="btnPasarCierre" style="background:linear-gradient(135deg,#2e7d32,#1b5e20)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Pasar a Cierre
-      </button>
-      <button class="treat-save" onclick="solicitarDescargaWord()" id="btnDescargaWord" disabled title="Completá 'Eficacia Verificada por' para habilitar la descarga" style="opacity:.45;cursor:not-allowed">
+      <button class="treat-save" onclick="downloadTreatmentNow()" id="btnDescargaWord" style="background:linear-gradient(135deg,#2e7d32,#1b5e20);display:none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Descargar Word
+        Cerrar Tratamiento
       </button>
 
       <div class="treat-alert-tag" id="tPendingAlert" style="display:none">
