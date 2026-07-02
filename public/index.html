@@ -931,14 +931,14 @@ td{padding:9px 12px;vertical-align:middle}
     <div class="card" onclick="openTratamientoModal()" style="cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 18px #1565c022'" onmouseout="this.style.boxShadow=''">
       <div class="card-title">
         <span class="card-dot" style="background:#1565c0"></span>
-        Hallazgos En Proceso con Tratamiento
+        Hallazgos En Proceso sobre Total Pendiente
         <span class="tag tag-b">EN PROCESO</span>
       </div>
       <div id="tratCard" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:10px">
-        <div style="font-family:'Rajdhani',sans-serif;font-size:56px;font-weight:700;color:#1565c0;line-height:1" id="tratNum">—</div>
-        <div style="font-size:12px;color:#607080">hallazgos En Proceso con tratamiento cargado</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:76px;font-weight:700;color:#1565c0;line-height:1" id="tratNum">—</div>
+        <div style="font-size:12px;color:#607080">hallazgos En Proceso</div>
         <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#2e7d32" id="tratPct">—</div>
-        <div style="font-size:11px;color:#607080">sobre <span id="tratTotal" style="font-weight:700;color:#1a2533">—</span> En Proceso totales</div>
+        <div style="font-size:11px;color:#607080">sobre <span id="tratTotal" style="font-weight:700;color:#1a2533">—</span> hallazgos pendientes (No iniciado + En proceso)</div>
         <div style="width:100%;background:#e0e8f4;border-radius:4px;height:6px;margin-top:4px">
           <div id="tratBar" style="height:6px;border-radius:4px;background:linear-gradient(90deg,#1565c0,#42a5f5);width:0%;transition:width .8s"></div>
         </div>
@@ -1442,13 +1442,13 @@ function renderPieEstado(k){
 
 function renderTratamientoCard(){
   const vd = getViewData();
-  const enProceso = vd.filter(r => r.estado === 'En proceso');
-  const total = enProceso.length;
-  const tratados = enProceso.filter(r => TREATMENTS[r.num] && Object.keys(TREATMENTS[r.num]).length > 0).length;
-  const pct = total > 0 ? ((tratados/total)*100).toFixed(1) : 0;
+  const pendientes = vd.filter(r => (r.estado === 'No iniciado' || r.estado === 'En proceso') && !(r.hallazgo || '').includes('Oportunidad'));
+  const enProceso = pendientes.filter(r => r.estado === 'En proceso').length;
+  const total = pendientes.length;
+  const pct = total > 0 ? ((enProceso/total)*100).toFixed(1) : 0;
 
   const el = id => document.getElementById(id);
-  el('tratNum').textContent  = tratados;
+  el('tratNum').textContent  = enProceso;
   el('tratPct').textContent  = pct + '%';
   el('tratTotal').textContent = total;
   el('tratBar').style.width  = pct + '%';
@@ -1460,19 +1460,20 @@ function openTratamientoModal(){
   let selectedYear = 'all';
 
   function buildRows(){
-    let data = vd.filter(r => r.estado === 'En proceso');
+    let data = vd.filter(r => (r.estado === 'No iniciado' || r.estado === 'En proceso') && !(r.hallazgo || '').includes('Oportunidad'));
     if(selectedYear !== 'all') data = data.filter(r => r.anio === selectedYear);
     const areasMap = {};
     data.forEach(r => {
       const area = r.area || '(Sin área)';
-      if(!areasMap[area]) areasMap[area] = { total:0, tratados:0 };
+      if(!areasMap[area]) areasMap[area] = { noIniciado:0, enProceso:0, total:0 };
+      if(r.estado === 'No iniciado') areasMap[area].noIniciado++;
+      if(r.estado === 'En proceso') areasMap[area].enProceso++;
       areasMap[area].total++;
-      if(TREATMENTS[r.num] && Object.keys(TREATMENTS[r.num]).length > 0) areasMap[area].tratados++;
     });
     return Object.keys(areasMap).map(area => {
-      const {total, tratados} = areasMap[area];
-      const pct = total > 0 ? (tratados/total*100) : 0;
-      return {area, anio: selectedYear==='all'?'Todos':selectedYear, tratados, total, pct};
+      const {noIniciado, enProceso, total} = areasMap[area];
+      const pct = total > 0 ? (enProceso/total*100) : 0;
+      return {area, anio: selectedYear==='all'?'Todos':selectedYear, noIniciado, enProceso, total, pct};
     }).sort((a,b) => b.pct - a.pct);
   }
 
@@ -1482,11 +1483,12 @@ function openTratamientoModal(){
       ? rows.map(r => `<tr>
           <td style="padding:8px 12px;font-size:12px">${r.area}</td>
           <td style="padding:8px 12px;font-size:12px;text-align:center">${r.anio}</td>
-          <td style="padding:8px 12px;font-size:12px;text-align:center">${r.tratados}</td>
+          <td style="padding:8px 12px;font-size:12px;text-align:center">${r.noIniciado}</td>
+          <td style="padding:8px 12px;font-size:12px;text-align:center">${r.enProceso}</td>
           <td style="padding:8px 12px;font-size:12px;text-align:center">${r.total}</td>
           <td style="padding:8px 12px;font-size:12px;text-align:center;font-weight:700;color:${r.pct>=80?'#2e7d32':r.pct>=50?'#e65100':'#c62828'}">${r.pct.toFixed(1)}%</td>
         </tr>`).join('')
-      : '<tr><td colspan="5" style="text-align:center;padding:20px;color:#607080">Sin datos para el filtro seleccionado</td></tr>';
+      : '<tr><td colspan="6" style="text-align:center;padding:20px;color:#607080">Sin datos para el filtro seleccionado</td></tr>';
 
     const body = document.getElementById('tratModalBody');
     if(body) body.innerHTML = `
@@ -1495,8 +1497,9 @@ function openTratamientoModal(){
           <tr style="background:#f0f4f8">
             <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:left;border-bottom:2px solid #dce6f0">Área</th>
             <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:center;border-bottom:2px solid #dce6f0">Año</th>
-            <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:center;border-bottom:2px solid #dce6f0">Tratados</th>
-            <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:center;border-bottom:2px solid #dce6f0">Total En Proceso</th>
+            <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:center;border-bottom:2px solid #dce6f0">No iniciado</th>
+            <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:center;border-bottom:2px solid #dce6f0">En proceso</th>
+            <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:center;border-bottom:2px solid #dce6f0">Total pendiente</th>
             <th style="padding:8px 12px;font-size:10px;text-transform:uppercase;color:#607080;text-align:center;border-bottom:2px solid #dce6f0">%</th>
           </tr>
         </thead>
