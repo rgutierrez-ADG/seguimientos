@@ -1537,6 +1537,46 @@ function openTratamientoModal(){
 }
 
 function renderBarTipos(k){
+  const ctx = document.getElementById('barTipos')?.getContext('2d');
+  if(!ctx) return;
+  if(CHARTS.tipos) CHARTS.tipos.destroy();
+
+  const labels = ['NC Menor','NC Mayor','Oport. Mejora','Observación'];
+  const values = [
+    getViewData().filter(r=>r.hallazgo==='No Conformidad Menor').length,
+    getViewData().filter(r=>r.hallazgo==='No Conformidad Mayor').length,
+    getViewData().filter(r=>r.hallazgo==='Oportunidad de Mejora').length,
+    getViewData().filter(r=>r.hallazgo==='Observación').length,
+  ];
+  const colors = ['#c62828','#4a0000','#2e7d32','#1565c0'];
+
+  CHARTS.tipos = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Cantidad',
+        data:values,
+        backgroundColor:colors.map(c=>c+'bb'),
+        borderColor:colors,
+        borderWidth:1.5, borderRadius:6
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#1a2533',titleColor:'#fff',bodyColor:'#dce6f0',
+          callbacks:{label: item => ` ${item.raw} hallazgos (${(item.raw/k.total*100).toFixed(1)}%)`}}
+      },
+      scales:{
+        x:{ticks:{color:'#607080',font:{size:10}},grid:{color:'#dce6f044'}},
+        y:{ticks:{color:'#607080',font:{size:10},stepSize:10},grid:{color:'#dce6f0'},beginAtZero:true}
+      }
+    }
+  });
+}
+  
 // ═══ TABLE ═════════════════════════════════════════════════════════════════
 function populateFilters(){
   const vd = getViewData();
