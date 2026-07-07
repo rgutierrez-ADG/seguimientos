@@ -1381,7 +1381,7 @@ function parseDate(s){
 // ═══ RENDER ALL ════════════════════════════════════════════════════════════
 let CHARTS = {};
 function renderAll(){
-  const k = calcKPIs(getViewData());
+  const k = calcKPIs(getPlantaFilteredData());
   updateTabBadges();
 
   // Banner KPIs — Grupo 1: Tipo de hallazgo (suman = total)
@@ -1668,8 +1668,7 @@ function buildPlantaDD(){
         if(cb.checked) _plantaSel.add(it.val.toUpperCase());
         else _plantaSel.delete(it.val.toUpperCase());
         updatePlantaBtn();
-        renderTratamientoCard();
-        renderTable();
+        renderAll();
       });
       const lbl = document.createElement('label');
       lbl.htmlFor = 'pcb_'+it.val; lbl.textContent = it.label;
@@ -1744,7 +1743,10 @@ function setOpts(id, vals){
 
 function resetFilters(){
   ['fArea','fResp','fEstado','fTipo'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
-  renderTable();
+  _plantaSel.clear();
+  document.querySelectorAll('#plantaDD input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updatePlantaBtn();
+  renderAll();
 }
 
 function renderTable(){
