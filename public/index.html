@@ -1627,15 +1627,15 @@ function renderBarTipos(k){
   
 // ═══ FILTRO PLANTA (multi-select con checkboxes) ════════════════════════════
 const PLANTA_MAP = [
-  { planta:'Planta Blancheado',  items:[{label:'Blancheado',        val:'Blancheado'}] },
-  { planta:'Planta Crudo',       items:[{label:'HPS1',              val:'HPS1'},{label:'HPS2',val:'HPS2'}] },
-  { planta:'Planta Maní',        items:[{label:'Tostado',           val:'Tostado'},{label:'Pasta',val:'Pasta'},{label:'Frito',val:'Frito'},{label:'Envasado',val:'Envasado'}] },
-  { planta:'Planta Alérgenos',   items:[{label:'Grageado',          val:'Grageado'},{label:'Granola',val:'Granola'},{label:'MAC',val:'MAC'},{label:'MAP',val:'MAP'}] },
+  { planta:'Planta Blancheado',  items:[{label:'Blancheado',    val:'BLANCHEADO'}] },
+  { planta:'Planta Crudo',       items:[{label:'HPS1 y HPS2',   val:'HPS1 Y HPS2'}] },
+  { planta:'Planta Maní',        items:[{label:'Maní Tostado',  val:'MANI TOSTADO'},{label:'Pasta',val:'PASTA'},{label:'Frito',val:'FRITO'},{label:'Envasado',val:'ENVASADO'}] },
+  { planta:'Planta Alérgenos',   items:[{label:'Grageado',      val:'GRAGEADO'},{label:'Granola',val:'GRANOLA'},{label:'MAC y MAP',val:'MAC Y MAP'}] },
   { planta:'Dirección - Gestión',items:[{label:'Dirección - Gestión',val:'DIRECCION-GESTION'}] },
-  { planta:'Capital Humano',     items:[{label:'Capital Humano',    val:'Capital Humano'}] },
-  { planta:'Mantenimiento',      items:[{label:'Mantenimiento',     val:'Mantenimiento'}] },
-  { planta:'Acopio',             items:[{label:'Acopio',            val:'Acopio'}] },
-  { planta:'Externa',            items:[{label:'La Anónima',        val:'LA ANONIMA'}] },
+  { planta:'Capital Humano',     items:[{label:'Capital Humano',val:'CAPITAL HUMANO'}] },
+  { planta:'Mantenimiento',      items:[{label:'Mantenimiento', val:'MANTENIMIENTO'}] },
+  { planta:'Acopio',             items:[{label:'Acopio',        val:'ACOPIO'}] },
+  { planta:'Externa',            items:[{label:'La Anónima',val:'LA ANONIMA'},{label:'Danone',val:'DANONE'},{label:'Intersnack',val:'INTERSNACK'},{label:'Importaco',val:'IMPORTACO'},{label:'Lorenz',val:'LORENZ'},{label:'Halal',val:'HALAL'}] },
 ];
 
 // Conjunto de valores clasif seleccionados (vacío = todos)
@@ -1655,10 +1655,10 @@ function buildPlantaDD(){
       row.className = 'pd-item';
       const cb = document.createElement('input');
       cb.type = 'checkbox'; cb.id = 'pcb_'+it.val; cb.value = it.val;
-      cb.checked = _plantaSel.has(it.val);
+      cb.checked = _plantaSel.has(it.val.toUpperCase());
       cb.addEventListener('change', () => {
-        if(cb.checked) _plantaSel.add(it.val);
-        else _plantaSel.delete(it.val);
+        if(cb.checked) _plantaSel.add(it.val.toUpperCase());
+        else _plantaSel.delete(it.val.toUpperCase());
         updatePlantaBtn();
         renderTable();
       });
@@ -1755,8 +1755,8 @@ function renderTable(){
   } else {
     rows = getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
   }
-  // Filtro planta: filtra por clasif; si clasif está vacío el registro siempre pasa
-  if(_plantaSel.size > 0) rows = rows.filter(r => !r.clasif || _plantaSel.has(r.clasif));
+  // Filtro planta: compara en mayúsculas para tolerar variaciones de capitalización del CSV
+  if(_plantaSel.size > 0) rows = rows.filter(r => !r.clasif || _plantaSel.has((r.clasif||'').toUpperCase()));
   if(area) rows = rows.filter(r=>r.area===area);
   if(resp) rows = rows.filter(r=>r.resp===resp);
   if(tipo) rows = rows.filter(r=>r.hallazgo===tipo);
