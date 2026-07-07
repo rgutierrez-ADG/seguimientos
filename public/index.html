@@ -1100,6 +1100,14 @@ function getViewData(){
   return d;
 }
 
+// Aplica además el filtro de planta (_plantaSel) sobre getViewData()
+// Los registros sin clasif siempre pasan (misma lógica que renderTable)
+function getPlantaFilteredData(){
+  const vd = getViewData();
+  if(_plantaSel.size === 0) return vd;
+  return vd.filter(r => !r.clasif || _plantaSel.has((r.clasif||'').toUpperCase()));
+}
+
 // Close dropdowns when clicking outside
 document.addEventListener('click', e => {
   ['ddInternas','ddExternas'].forEach(id => {
@@ -1486,7 +1494,7 @@ function renderPieEstado(k){
 }
 
 function renderTratamientoCard(){
-  const vd = getViewData();
+  const vd = getPlantaFilteredData();
   const pendientes = vd.filter(r => (r.estado === 'No iniciado' || r.estado === 'En proceso') && !(r.hallazgo || '').includes('Oportunidad'));
   const enProceso = pendientes.filter(r => r.estado === 'En proceso').length;
   const total = pendientes.length;
@@ -1660,6 +1668,7 @@ function buildPlantaDD(){
         if(cb.checked) _plantaSel.add(it.val.toUpperCase());
         else _plantaSel.delete(it.val.toUpperCase());
         updatePlantaBtn();
+        renderTratamientoCard();
         renderTable();
       });
       const lbl = document.createElement('label');
