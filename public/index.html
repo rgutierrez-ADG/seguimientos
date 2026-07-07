@@ -165,6 +165,41 @@ input[type=file]{display:none}
   padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;
   margin-bottom:14px;box-shadow:0 1px 4px #0000000a;
 }
+/* ── Dropdown multi-planta ── */
+.planta-wrap{position:relative}
+.planta-btn{
+  display:flex;align-items:center;gap:6px;
+  background:#fff;border:1px solid var(--border2);color:var(--text);
+  padding:5px 9px;border-radius:6px;font-size:11px;font-family:var(--font);
+  cursor:pointer;outline:none;white-space:nowrap;min-width:140px;
+  transition:border .15s;user-select:none;
+}
+.planta-btn:hover{border-color:var(--blue)}
+.planta-btn.active{border-color:var(--blue);background:#f0f6ff}
+.planta-btn .pb-arrow{margin-left:auto;font-size:9px;color:var(--dim);transition:transform .2s}
+.planta-btn.open .pb-arrow{transform:rotate(180deg)}
+.planta-badge{
+  background:var(--blue);color:#fff;border-radius:9px;
+  font-size:9px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;
+}
+.planta-dropdown{
+  display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:999;
+  background:#fff;border:1px solid var(--border);border-radius:8px;
+  box-shadow:0 4px 16px #0000001a;min-width:220px;max-height:320px;overflow-y:auto;
+  padding:6px 0;
+}
+.planta-dropdown.open{display:block}
+.pd-group-hdr{
+  font-size:9px;font-weight:700;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.8px;padding:8px 12px 3px;
+}
+.pd-item{
+  display:flex;align-items:center;gap:8px;padding:5px 12px;
+  font-size:11px;color:var(--text);cursor:pointer;transition:background .1s;
+}
+.pd-item:hover{background:#f4f8ff}
+.pd-item input[type=checkbox]{accent-color:var(--blue);width:13px;height:13px;cursor:pointer;flex-shrink:0}
+.pd-item label{cursor:pointer;flex:1}
 .fl{display:flex;align-items:center;gap:6px}
 .fl-lbl{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;font-weight:600;white-space:nowrap}
 select{
@@ -962,6 +997,16 @@ td{padding:9px 12px;vertical-align:middle}
   <div class="sec-title"><span>Registro de Hallazgos Pendientes</span><span class="sec-line"></span></div>
 
   <div class="filters-bar">
+    <div class="fl">
+      <span class="fl-lbl">Planta</span>
+      <div class="planta-wrap" id="plantaWrap">
+        <button type="button" class="planta-btn" id="plantaBtn" onclick="togglePlantaDD(event)">
+          <span id="plantaBtnTxt">Todas las plantas</span>
+          <span class="pb-arrow">▼</span>
+        </button>
+        <div class="planta-dropdown" id="plantaDD"></div>
+      </div>
+    </div>
     <div class="fl"><span class="fl-lbl">Área</span>
       <select id="fArea" onchange="renderTable()"><option value="">Todas las áreas</option></select>
     </div>
@@ -1580,6 +1625,93 @@ function renderBarTipos(k){
   });
 }
   
+// ═══ FILTRO PLANTA (multi-select con checkboxes) ════════════════════════════
+const PLANTA_MAP = [
+  { planta:'Planta Blancheado',  items:[{label:'Blancheado',        val:'Blancheado'}] },
+  { planta:'Planta Crudo',       items:[{label:'HPS1',              val:'HPS1'},{label:'HPS2',val:'HPS2'}] },
+  { planta:'Planta Maní',        items:[{label:'Tostado',           val:'Tostado'},{label:'Pasta',val:'Pasta'},{label:'Frito',val:'Frito'},{label:'Envasado',val:'Envasado'}] },
+  { planta:'Planta Alérgenos',   items:[{label:'Grageado',          val:'Grageado'},{label:'Granola',val:'Granola'},{label:'MAC',val:'MAC'},{label:'MAP',val:'MAP'}] },
+  { planta:'Dirección - Gestión',items:[{label:'Dirección - Gestión',val:'DIRECCION-GESTION'}] },
+  { planta:'Capital Humano',     items:[{label:'Capital Humano',    val:'Capital Humano'}] },
+  { planta:'Mantenimiento',      items:[{label:'Mantenimiento',     val:'Mantenimiento'}] },
+  { planta:'Acopio',             items:[{label:'Acopio',            val:'Acopio'}] },
+  { planta:'Externa',            items:[{label:'La Anónima',        val:'LA ANONIMA'}] },
+];
+
+// Conjunto de valores clasif seleccionados (vacío = todos)
+let _plantaSel = new Set();
+
+function buildPlantaDD(){
+  const dd = document.getElementById('plantaDD');
+  if(!dd) return;
+  dd.innerHTML = '';
+  PLANTA_MAP.forEach(grp => {
+    const hdr = document.createElement('div');
+    hdr.className = 'pd-group-hdr';
+    hdr.textContent = grp.planta;
+    dd.appendChild(hdr);
+    grp.items.forEach(it => {
+      const row = document.createElement('div');
+      row.className = 'pd-item';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.id = 'pcb_'+it.val; cb.value = it.val;
+      cb.checked = _plantaSel.has(it.val);
+      cb.addEventListener('change', () => {
+        if(cb.checked) _plantaSel.add(it.val);
+        else _plantaSel.delete(it.val);
+        updatePlantaBtn();
+        renderTable();
+      });
+      const lbl = document.createElement('label');
+      lbl.htmlFor = 'pcb_'+it.val; lbl.textContent = it.label;
+      row.appendChild(cb); row.appendChild(lbl);
+      dd.appendChild(row);
+    });
+  });
+}
+
+function updatePlantaBtn(){
+  const btn = document.getElementById('plantaBtn');
+  const txt = document.getElementById('plantaBtnTxt');
+  if(!btn || !txt) return;
+  const n = _plantaSel.size;
+  // Eliminar badge anterior si existe
+  const old = btn.querySelector('.planta-badge');
+  if(old) old.remove();
+  if(n === 0){
+    txt.textContent = 'Todas las plantas';
+    btn.classList.remove('active');
+  } else {
+    txt.textContent = 'Planta';
+    const badge = document.createElement('span');
+    badge.className = 'planta-badge';
+    badge.textContent = n;
+    btn.insertBefore(badge, btn.querySelector('.pb-arrow'));
+    btn.classList.add('active');
+  }
+}
+
+function togglePlantaDD(e){
+  e.stopPropagation();
+  const dd  = document.getElementById('plantaDD');
+  const btn = document.getElementById('plantaBtn');
+  if(!dd || !btn) return;
+  const isOpen = dd.classList.contains('open');
+  // Cerrar cualquier otro dropdown abierto
+  document.querySelectorAll('.planta-dropdown.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.planta-btn.open').forEach(el => el.classList.remove('open'));
+  if(!isOpen){
+    dd.classList.add('open');
+    btn.classList.add('open');
+  }
+}
+
+// Cerrar al hacer clic fuera
+document.addEventListener('click', () => {
+  document.querySelectorAll('.planta-dropdown.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.planta-btn.open').forEach(el => el.classList.remove('open'));
+});
+
 // ═══ TABLE ═════════════════════════════════════════════════════════════════
 function populateFilters(){
   const vd = getViewData();
@@ -1589,6 +1721,7 @@ function populateFilters(){
   setOpts('fArea', areas);
   setOpts('fResp', resps);
   setOpts('fTipo', tipos);
+  buildPlantaDD();
 }
 
 function setOpts(id, vals){
@@ -1619,6 +1752,8 @@ function renderTable(){
   } else {
     rows = getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
   }
+  // Filtro planta: filtra por clasif; si clasif está vacío el registro siempre pasa
+  if(_plantaSel.size > 0) rows = rows.filter(r => !r.clasif || _plantaSel.has(r.clasif));
   if(area) rows = rows.filter(r=>r.area===area);
   if(resp) rows = rows.filter(r=>r.resp===resp);
   if(tipo) rows = rows.filter(r=>r.hallazgo===tipo);
