@@ -295,6 +295,46 @@ td{padding:9px 12px;vertical-align:middle}
 /* TOAST */
 .toast{position:fixed;bottom:20px;right:20px;z-index:999;background:#1a2b3c;border:1px solid #2a4a6a;border-radius:8px;padding:10px 16px;font-size:12px;color:#cdd9e8;display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
+/* ── Modal de éxito al guardar tratamiento ── */
+#saveSuccessModal{
+  display:none;position:fixed;inset:0;z-index:10000;
+  align-items:center;justify-content:center;
+  background:rgba(4,28,48,.55);
+}
+#saveSuccessModal.show{display:flex}
+.ssm-box{
+  background:#fff;border-radius:14px;padding:38px 54px;
+  text-align:center;max-width:330px;width:100%;
+  border-top:4px solid #01619F;
+  box-shadow:0 12px 48px rgba(1,97,159,.25);
+  animation:ssmIn .38s cubic-bezier(.22,1,.36,1);
+}
+#saveSuccessModal.hiding .ssm-box{
+  transition:transform .3s cubic-bezier(.4,0,1,1),opacity .3s ease;
+  transform:translateY(8px) scale(.97);opacity:0;
+}
+@keyframes ssmIn{from{transform:translateY(14px) scale(.96);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.ssm-svg{width:72px;height:72px;margin:0 auto 18px;display:block}
+.ssm-circ{
+  fill:none;stroke:#016636;stroke-width:3;stroke-linecap:round;
+  stroke-dasharray:201;stroke-dashoffset:201;
+}
+.ssm-check{
+  fill:none;stroke:#016636;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:42;stroke-dashoffset:42;
+}
+#saveSuccessModal.show .ssm-circ{animation:ssmCirc .5s .15s cubic-bezier(.4,0,.2,1) forwards}
+#saveSuccessModal.show .ssm-check{animation:ssmCheck .3s .55s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes ssmCirc{to{stroke-dashoffset:0}}
+@keyframes ssmCheck{to{stroke-dashoffset:0}}
+.ssm-title{font-size:18px;font-weight:600;color:#01619F;margin-bottom:6px;letter-spacing:.2px}
+.ssm-sub{font-size:12.5px;color:#5f7389}
+.ssm-track{margin-top:24px;height:3px;border-radius:99px;background:#e4ecf3;overflow:hidden}
+.ssm-bar{
+  height:100%;width:100%;background:#01619F;border-radius:99px;transform-origin:left;
+}
+#saveSuccessModal.show .ssm-bar{animation:ssmShrink 2.5s .5s linear forwards}
+@keyframes ssmShrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .td2{width:7px;height:7px;border-radius:50%;background:#2e7d32}
 .td2.r{background:#c62828}
 
@@ -1082,6 +1122,17 @@ td{padding:9px 12px;vertical-align:middle}
 </div><!-- /main -->
 
 <div class="toast" id="toast"><div class="td2" id="td2"></div><span id="tmsg">OK</span></div>
+<div id="saveSuccessModal">
+  <div class="ssm-box">
+    <svg class="ssm-svg" viewBox="0 0 72 72">
+      <circle class="ssm-circ" cx="36" cy="36" r="32" transform="rotate(-90 36 36)"/>
+      <path class="ssm-check" d="M22 37 L32 47 L50 27"/>
+    </svg>
+    <div class="ssm-title">Tratamiento guardado</div>
+    <div class="ssm-sub">Los datos fueron registrados correctamente</div>
+    <div class="ssm-track"><div class="ssm-bar"></div></div>
+  </div>
+</div>
 
 <script>
 // ═══ DATA ══════════════════════════════════════════════════════════════════
@@ -3241,8 +3292,21 @@ function saveTreatData(){
   if(EMAIL_CFG.onSave) sendEmailAlert(CURRENT_TREAT_NUM, '📋 Tratamiento guardado — Pendiente de revisión');
   renderTableOnly();
   updateTabBadges();
-  showToast('✓ Datos guardados · Alerta de revisión pendiente generada', false);
+  showSaveSuccess();
   document.getElementById('tPendingAlert').style.display = 'flex';
+}
+
+function showSaveSuccess(){
+  const m = document.getElementById('saveSuccessModal');
+  if(!m) return;
+  // Reiniciar animaciones (por si se guarda más de una vez en la sesión)
+  m.classList.remove('show','hiding');
+  void m.offsetWidth; // forzar reflow para reiniciar keyframes
+  m.classList.add('show');
+  setTimeout(() => {
+    m.classList.add('hiding');
+    setTimeout(() => m.classList.remove('show','hiding'), 320);
+  }, 3100);
 }
 
 // Tipo de acción selector
