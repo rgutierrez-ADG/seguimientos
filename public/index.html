@@ -1159,6 +1159,20 @@ function getPlantaFilteredData(){
   return vd.filter(r => !r.clasif || _plantaSel.has((r.clasif||'').toUpperCase()));
 }
 
+// Estado efectivo de un hallazgo SOLO para la tabla de pendientes:
+// aplica el override de reapertura mientras el CSV no haya cambiado.
+// Regla: el CSV gana — si la fecha de cierre del CSV difiere de la que tenía
+// al momento de reabrir (re-cierre desde el Sheet), se ignora el override.
+function effEstado(r){
+  const tr = TREATMENTS[r.num];
+  if(!tr || !tr.estadoOverride) return r.estado;
+  // Si el CSV ya no dice Cerrado, el Sheet se actualizó: el CSV gana
+  if(r.estado !== 'Cerrado') return r.estado;
+  // Si conocemos la fecha de cierre al momento de reabrir y el CSV la cambió → re-cierre: CSV gana
+  if(tr.reopenedFromFechaCierre !== undefined && (r.fechaCierre||'') !== tr.reopenedFromFechaCierre) return r.estado;
+  return tr.estadoOverride;
+}
+
 // Close dropdowns when clicking outside
 document.addEventListener('click', e => {
   ['ddInternas','ddExternas'].forEach(id => {
@@ -1807,15 +1821,16 @@ function renderTable(){
   const tipo   = document.getElementById('fTipo')?.value || '';
 
   // Base filter: only No iniciado + En proceso (or Cerrado if explicitly selected)
+  // Usa effEstado() para respetar reaperturas hechas desde la plataforma
   let rows;
   if(estado === 'todos'){
     rows = getViewData();
   } else if(estado === 'Cerrado'){
-    rows = getViewData().filter(r => r.estado === 'Cerrado');
+    rows = getViewData().filter(r => effEstado(r) === 'Cerrado');
   } else if(estado === 'No iniciado' || estado === 'En proceso'){
-    rows = getViewData().filter(r => r.estado === estado);
+    rows = getViewData().filter(r => effEstado(r) === estado);
   } else {
-    rows = getViewData().filter(r => r.estado === 'No iniciado' || r.estado === 'En proceso');
+    rows = getViewData().filter(r => { const e = effEstado(r); return e === 'No iniciado' || e === 'En proceso'; });
   }
   // Filtro planta: compara en mayúsculas para tolerar variaciones de capitalización del CSV
   if(_plantaSel.size > 0) rows = rows.filter(r => !r.clasif || _plantaSel.has((r.clasif||'').toUpperCase()));
@@ -1837,8 +1852,9 @@ function renderTable(){
   rows.sort((a,b)=>parseInt(b.dias||0)-parseInt(a.dias||0));
 
   tbody.innerHTML = rows.map((r,i)=>{
-    const esCls = r.estado==='No iniciado'?'es-noiniciado':'es-enproceso';
-    const esDot = r.estado==='No iniciado'?'🔴':'🔵';
+    const rEstado = effEstado(r);
+    const esCls = rEstado==='No iniciado'?'es-noiniciado':'es-enproceso';
+    const esDot = rEstado==='No iniciado'?'🔴':'🔵';
     const hCls = r.hallazgo.includes('No Conformidad Mayor')?'hc-ncm hc-nc':
                  r.hallazgo.includes('No Conformidad')?'hc-nc':
                  r.hallazgo.includes('Oportunidad')?'hc-om':'hc-obs';
@@ -1880,7 +1896,7 @@ function renderTable(){
       <td style="font-size:11px">${r.resp}</td>
       <td style="font-size:11px;color:var(--dim)">${r.plazo}</td>
       <td><span style="font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:${diasCol}">${dias}</span></td>
-      <td><span class="estado-badge ${esCls}">${esDot} ${r.estado}</span></td>
+      <td><span class="estado-badge ${esCls}">${esDot} ${rEstado}</span></td>
     </tr>`;
   }).join('');
 }
@@ -3296,9 +3312,13 @@ function saveTreatData(){
   document.getElementById('tPendingAlert').style.display = 'flex';
 }
 
-function showSaveSuccess(){
+function showSaveSuccess(titulo, sub){
   const m = document.getElementById('saveSuccessModal');
   if(!m) return;
+  const t = m.querySelector('.ssm-title');
+  const s = m.querySelector('.ssm-sub');
+  if(t) t.textContent = titulo || 'Tratamiento guardado';
+  if(s) s.textContent = sub || 'Los datos fueron registrados correctamente';
   // Reiniciar animaciones (por si se guarda más de una vez en la sesión)
   m.classList.remove('show','hiding');
   void m.offsetWidth; // forzar reflow para reiniciar keyframes
@@ -3762,6 +3782,7 @@ async function downloadTreatmentNow(){
     renderDescargasTab();
     document.getElementById('badge-descargas').textContent = DESCARGAS_LOG.length;
 
+    showSaveSuccess('Hallazgo cerrado', 'El tratamiento fue cerrado y el documento Word generado');
     showToast('✓ Tratamiento cerrado — Descargando: ' + LAST_DOCX_NAME, false);
     // Alerta por email — si está configurado y la opción está activa
     if(EMAIL_CFG.onDownload) sendEmailAlert(num, '✅ Tratamiento cerrado — Documento Word generado');
@@ -4345,6 +4366,7 @@ function apReopenTreatment(num){
   if(!TREATMENTS[num]) TREATMENTS[num] = {};
   TREATMENTS[num].estadoOverride      = 'En proceso';
   TREATMENTS[num].fechaCierreOverride = '';
+  TREATMENTS[num].reopenedFromFechaCierre = r.fechaCierre || '';
   TREATMENTS[num].downloaded          = false;
   TREATMENTS[num].reopenedAt          = new Date().toISOString();
   TREATMENTS[num].reopenedBy          = window.CURRENT_USER;
