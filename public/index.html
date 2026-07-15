@@ -2982,7 +2982,7 @@ async function buildTreatmentDocx(num){
   function run(text, opts={}){
     const t2 = esc(String(text||''));
     if(!t2) return `<w:r>${rpr(opts)}<w:t xml:space="preserve"> </w:t></w:r>`;
-    const parts = t2.split('&#xA;');
+    const parts = t2.split(/\r?\n/);
     let c='';
     parts.forEach((p,i)=>{ if(i>0)c+='<w:br/>'; c+=`<w:t xml:space="preserve">${p||' '}</w:t>`; });
     return `<w:r>${rpr(opts)}${c}</w:r>`;
@@ -3024,6 +3024,8 @@ async function buildTreatmentDocx(num){
     return tc(p(run(text||'',{b,sz:SZ_BODY,col}),{sp0:60,sp1:60}),{w,bg:bg||null});
   }
   function lblX(w, text){ return tc(p(run(text||'',{b:true,sz:SZ_BODY}),{sp0:60,sp1:60}),{w,bg:'F0F4F8'}); }
+  // pMulti: un párrafo <w:p> por cada línea del texto (respeta párrafos del usuario)
+  function pMulti(text, opts={}){ const lines=String(text||'').split(/\r?\n/); return lines.map((ln,i)=>p(run(ln,{sz:SZ_BODY}),{sp0:i===0?(opts.sp0!==undefined?opts.sp0:60):20,sp1:i===lines.length-1?(opts.sp1!==undefined?opts.sp1:60):20})).join(''); }
 
   // ── Data prep ──────────────────────────────────────────────────────────────
   const isInt=(rec.tipoAud||'').toLowerCase().includes('interna');
@@ -3060,15 +3062,15 @@ async function buildTreatmentDocx(num){
     // Detectado por
     tr(300,
       lblX(BC1,'Detectado por'),
-      tcX(BC2,''),
+      lblX(BC2,''),
       lblX(BC3,'\u00c1rea'),
-      tcX(BC4,rec.fecha||'')
+      lblX(BC4,'Fecha')
     ),
     tr(280,
       tcX(BC1, auditorName),
       tcX(BC2,''),
       tcX(BC3, rec.area||''),
-      tcX(BC4,'')
+      tcX(BC4, rec.fecha||'')
     ),
   ]);
 
@@ -3079,7 +3081,7 @@ async function buildTreatmentDocx(num){
     tr(320,hdrC('TRATAMIENTO DE HALLAZGO',4)),
     tr(320,hdrC('CORRECCI\u00d3N  (Acci\u00f3n inmediata)',4,'37474F')),
     tr(280,lblC('Resoluci\u00f3n (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.causa||'',{sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    tr(500,tc(pMulti(t.causa||'',{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Tomada Por'),
       tcX(BC2,t.respImpl||rec.resp||''),
@@ -3091,10 +3093,12 @@ async function buildTreatmentDocx(num){
   // ════════════════════════════════════════════════════════════════════════
   // TABLA 3: ACCION CORRECTIVA + CAUSAS
   // ════════════════════════════════════════════════════════════════════════
-  const t3=tbl([BC1,BC2,BC3,BC4],[
-    tr(320,tc(p(run('ACCI\u00d3N  '+chk(isC)+' CORRECTIVA    '+chk(isP)+' PREVENTIVA    '+chk(!isC&&!isP)+' NO APLICABLE',{b:true,sz:SZ_BODY}),undefined,{before:80,after:80}),{w:BW,span:4,bg:'E8EEF6'})),
+  // Cabecera de sección (ACCIÓN + etiqueta de causas)
+  const t3head=tbl([BC1,BC2,BC3,BC4],[
+    tr(320,tc(p(run('ACCI\u00d3N  '+chk(isC)+' CORRECTIVA    '+chk(isP)+' PREVENTIVA    '+chk(!isC&&!isP)+' NO APLICABLE',{b:true,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,bg:'E8EEF6'})),
     tr(280,lblC('Causas que originaron el Hallazgo (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.accion||'',{sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+  ]);
+  const t3resp=tbl([BC1,BC2,BC3,BC4],[
     tr(300,
       lblX(BC1,'Responsable'),
       tcX(BC2,t.respImpl||rec.resp||''),
@@ -3102,13 +3106,61 @@ async function buildTreatmentDocx(num){
       tcX(BC4,fImplStr)
     ),
   ]);
+  // ¿Hay datos estructurados de análisis de causa?
+  const hasIshi = t.ishi && Object.values(t.ishi).some(a=>(a||[]).some(v=>v&&String(v).trim()));
+  const hasPq   = Array.isArray(t.pq) && t.pq.some(v=>v&&String(v).trim());
+  let t3;
+  if(hasIshi || hasPq || (t.causaRaiz&&t.causaRaiz.trim())){
+    // ── Grilla Ishikawa 6M (colores de la plataforma) ──
+    const IW1=Math.round(BW/3), IW2=Math.round(BW/3), IW3=BW-IW1-IW2, IWS=[IW1,IW2,IW3];
+    const ISHI_TOP=[{id:'maquina',label:'M\u00e1quina',color:'185FA5',tint:'EAF2FB'},{id:'metodo',label:'M\u00e9todo',color:'185FA5',tint:'EAF2FB'},{id:'medicion',label:'Medici\u00f3n',color:'185FA5',tint:'EAF2FB'}];
+    const ISHI_BOT=[{id:'material',label:'Material',color:'0F6E56',tint:'E9F5F0'},{id:'mano',label:'Mano de obra',color:'0F6E56',tint:'E9F5F0'},{id:'medio',label:'Medio ambiente',color:'0F6E56',tint:'E9F5F0'}];
+    function ishiHdrCell(cat,w){ return tc(p(run(cat.label,{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w,bg:cat.color,col:cat.color,bsz:6,va:'center'}); }
+    function ishiCauseCell(cat,w){
+      const causes=((t.ishi&&t.ishi[cat.id])||[]).filter(v=>v&&String(v).trim());
+      const content = causes.length
+        ? causes.map((c,i)=>p(run('\u2022 '+c,{sz:SZ_BODY}),{sp0:i===0?50:30,sp1:30})).join('')
+        : p(run('\u2014 Sin causas identificadas',{sz:SZ_BODY,it:true,col:'8A8F98'}),{al:'center',sp0:60,sp1:60});
+      return tc(content,{w,bg:cat.tint,pad:{t:40,b:40,l:110,r:110}});
+    }
+    const tIshi = hasIshi ? tbl(IWS,[
+      tr(300,tc(p(run('DIAGRAMA DE ISHIKAWA \u2014 AN\u00c1LISIS 6M',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:BW,span:3,bg:'37474F',col:'37474F',bsz:6})),
+      tr(280, ...ISHI_TOP.map((c,i)=>ishiHdrCell(c,IWS[i]))),
+      tr(700, ...ISHI_TOP.map((c,i)=>ishiCauseCell(c,IWS[i]))),
+      tr(280, ...ISHI_BOT.map((c,i)=>ishiHdrCell(c,IWS[i]))),
+      tr(700, ...ISHI_BOT.map((c,i)=>ishiCauseCell(c,IWS[i]))),
+    ]) : '';
+    // ── 5 Porqués + Causa Raíz destacada ──
+    const PQ_L=1800, PQ_R=BW-PQ_L;
+    const pqRows=[tr(300,tc(p(run('AN\u00c1LISIS DE LOS 5 PORQU\u00c9S',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:60,sp1:60}),{w:BW,span:2,bg:'37474F',col:'37474F',bsz:6}))];
+    (t.pq||[]).forEach((v,i)=>{
+      if(!v||!String(v).trim()) return;
+      pqRows.push(tr(280,
+        tc(p(run('Por qu\u00e9 '+(i+1),{b:true,sz:SZ_BODY,col:'01619F'}),{al:'center',sp0:50,sp1:50}),{w:PQ_L,bg:'F0F4F8',va:'center'}),
+        tc(p(run(v,{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:PQ_R,pad:{t:40,b:40,l:130,r:130}})
+      ));
+    });
+    if(t.causaRaiz&&t.causaRaiz.trim()){
+      pqRows.push(tr(320,
+        tc(p(run('CAUSA RA\u00cdZ',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:PQ_L,bg:'016636',col:'016636',bsz:6,va:'center'}),
+        tc(pMulti(t.causaRaiz,{sp0:50,sp1:50}),{w:PQ_R,bg:'EAF3DE',pad:{t:40,b:40,l:130,r:130}})
+      ));
+    }
+    const tPq = pqRows.length>1 ? tbl([PQ_L,PQ_R],pqRows) : '';
+    t3 = t3head + tIshi + tPq + t3resp;
+  } else {
+    // Fallback (tratamientos viejos sin datos estructurados): texto plano con saltos de línea
+    t3 = t3head + tbl([BC1,BC2,BC3,BC4],[
+      tr(500,tc(pMulti(t.accion||'',{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    ]) + t3resp;
+  }
 
   // ════════════════════════════════════════════════════════════════════════
   // TABLA 4: DESCRIPCION DE LA ACCION
   // ════════════════════════════════════════════════════════════════════════
   const t4=tbl([BC1,BC2,BC3,BC4],[
     tr(280,lblC('Descripci\u00f3n de la Acci\u00f3n (a completar por el \u00e1rea auditada):',4)),
-    tr(500,tc(p(run(t.observaciones||'',{sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
+    tr(500,tc(pMulti(t.observaciones||'',{sp0:80,sp1:80}),{w:BW,span:4,pad:{t:80,b:80,l:150,r:150}})),
     tr(300,
       lblX(BC1,'Responsable'),
       tcX(BC2, t.respImpl||rec.resp||''),
@@ -3126,11 +3178,20 @@ async function buildTreatmentDocx(num){
   // ════════════════════════════════════════════════════════════════════════
   // TABLA 5: VERIFICACION (sin espacio extra, página 2)
   // ════════════════════════════════════════════════════════════════════════
+  const verifEfecNombre = t.verificadorEfec || t.verificador || '';
+  const fVerifEfecRaw   = t.fechaVerifEfec || t.fechaVerif || '';
+  const fVerifEfecStr   = fVerifEfecRaw ? String(fVerifEfecRaw).split('-').reverse().join('/') : '';
   const t5=tbl([BC1,BC2,BC3,BC4],[
-    tr(280,tc(p(run('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n  (a completar por equipo auditor):',{b:false,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4})),
-    tr((t.descVerifImpl?400:160), tc(p(run(t.descVerifImpl||'',{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
-    tr(280,tc(p(run('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',{b:false,it:true,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4})),
-    tr((t.descVerifEfec?400:160), tc(p(run(t.descVerifEfec||'',{sz:SZ_BODY}),{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
+    tr(280,tc(p(run('Verificaci\u00f3n de implementaci\u00f3n del Plan de acci\u00f3n  (a completar por equipo auditor):',{b:false,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,bg:'F0F4F8'})),
+    tr((t.descVerifImpl?400:160), tc(pMulti(t.descVerifImpl||'',{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
+    tr(280,tc(p(run('Verificaci\u00f3n de efectividad del Plan de acci\u00f3n (a completar por equipo auditor):',{b:false,it:true,sz:SZ_BODY}),{sp0:80,sp1:80}),{w:BW,span:4,bg:'F0F4F8'})),
+    tr((t.descVerifEfec?400:160), tc(pMulti(t.descVerifEfec||'',{sp0:50,sp1:50}),{w:BW,span:4,pad:{t:50,b:50,l:150,r:150}})),
+    tr(300,
+      lblX(BC1,'Verificado por'),
+      tcX(BC2, verifEfecNombre),
+      lblX(BC3,'Fecha de verificaci\u00f3n'),
+      tcX(BC4, fVerifEfecStr)
+    ),
   ]);
 
   // ── Header ──────────────────────────────────────────────────────────────────
@@ -3149,7 +3210,7 @@ async function buildTreatmentDocx(num){
       tc(p(run(''),{sp0:20,sp1:20}),{w:HL,col:'888888',bsz:6}),
       tc(p(run('TRATAMIENTO DE HALLAZGOS',{b:true,sz:SZ_BODY,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HT,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
       tc(p(run('Fecha:',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:20,sp1:10})+p(run('20/04/2026',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:10,sp1:20}),{w:HR,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
-      tc(p(run('P\u00e1g. 1 de 1',{sz:SZ_SM,col:'FFFFFF'}),{al:'center',sp0:50,sp1:50}),{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
+      tc(`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="50" w:after="50"/></w:pPr>${run('P\u00e1g. ',{sz:SZ_SM,col:'FFFFFF'})}<w:fldSimple w:instr=" PAGE "><w:r>${rpr({sz:SZ_SM,col:'FFFFFF'})}<w:t>1</w:t></w:r></w:fldSimple>${run(' de ',{sz:SZ_SM,col:'FFFFFF'})}<w:fldSimple w:instr=" NUMPAGES "><w:r>${rpr({sz:SZ_SM,col:'FFFFFF'})}<w:t>1</w:t></w:r></w:fldSimple></w:p>`,{w:HC,bg:'1F3864',col:'1F3864',bsz:6,va:'center'}),
     ),
   ]);
 
@@ -3256,7 +3317,7 @@ async function buildTreatmentDocx(num){
   zip.file('word/_rels/header1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.jpg"/></Relationships>`);
   zip.file('word/_rels/footer1.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`);
   zip.file('word/styles.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial Narrow" w:hAnsi="Arial Narrow" w:cs="Arial Narrow"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:rPrDefault></w:docDefaults></w:styles>`);
-  zip.file('word/settings.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:defaultTabStop w:val="720"/></w:settings>`);
+  zip.file('word/settings.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:defaultTabStop w:val="720"/><w:updateFields w:val="true"/></w:settings>`);
   zip.file('word/document.xml', docXml);
   zip.file('word/header1.xml',  hdrXml);
   zip.file('word/footer1.xml',  ftrXml);
